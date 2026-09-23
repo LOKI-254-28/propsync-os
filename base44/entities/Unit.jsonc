@@ -1,0 +1,118 @@
+{
+  "name": "Unit",
+  "type": "object",
+  "properties": {
+    "unit_number": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "building": {
+      "type": "string"
+    },
+    "floor": {
+      "type": "string"
+    },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "Studio",
+        "1 Bedroom",
+        "2 Bedroom",
+        "3 Bedroom",
+        "Penthouse",
+        "Commercial",
+        "Other"
+      ],
+      "default": "1 Bedroom"
+    },
+    "bedrooms": {
+      "type": "number",
+      "default": 1
+    },
+    "bathrooms": {
+      "type": "number",
+      "default": 1
+    },
+    "size_sqm": {
+      "type": "number"
+    },
+    "monthly_rent": {
+      "type": "number",
+      "default": 0
+    },
+    "security_deposit": {
+      "type": "number",
+      "default": 0
+    },
+    "service_charge": {
+      "type": "number",
+      "default": 0
+    },
+    "furnished": {
+      "type": "boolean",
+      "default": false
+    },
+    "amenities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "Reserved",
+        "Application Pending",
+        "Occupied",
+        "Under Maintenance",
+        "Notice Given",
+        "Vacant",
+        "Inactive"
+      ],
+      "default": "Available"
+    },
+    "current_tenancy_id": {
+      "type": "string"
+    },
+    "current_tenant_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "unit_number",
+    "property_id"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

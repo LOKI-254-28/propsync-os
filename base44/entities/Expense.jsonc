@@ -1,0 +1,87 @@
+{
+  "name": "Expense",
+  "type": "object",
+  "properties": {
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Repairs",
+        "Maintenance",
+        "Utilities",
+        "Management",
+        "Security",
+        "Cleaning",
+        "Insurance",
+        "Taxes/Fees",
+        "Other"
+      ],
+      "default": "Maintenance"
+    },
+    "description": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "payment_reference": {
+      "type": "string"
+    },
+    "supporting_document_url": {
+      "type": "string"
+    },
+    "recurring": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "property_id",
+    "amount",
+    "date"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

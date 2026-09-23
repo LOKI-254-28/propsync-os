@@ -1,0 +1,86 @@
+{
+  "name": "Property",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "Apartment Complex",
+        "Building",
+        "Mixed Use",
+        "Commercial",
+        "Townhouse",
+        "Villa"
+      ],
+      "default": "Apartment Complex"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Archived"
+      ],
+      "default": "Active"
+    },
+    "acquisition_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "monthly_operating_expenses": {
+      "type": "number",
+      "default": 0
+    },
+    "currency": {
+      "type": "string",
+      "default": "KES"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

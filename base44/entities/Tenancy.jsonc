@@ -1,0 +1,122 @@
+{
+  "name": "Tenancy",
+  "type": "object",
+  "properties": {
+    "tenancy_reference": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "expected_end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "actual_end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "monthly_rent": {
+      "type": "number",
+      "default": 0
+    },
+    "security_deposit": {
+      "type": "number",
+      "default": 0
+    },
+    "service_charge": {
+      "type": "number",
+      "default": 0
+    },
+    "payment_due_day": {
+      "type": "number",
+      "default": 1
+    },
+    "grace_period_days": {
+      "type": "number",
+      "default": 7
+    },
+    "notice_period_days": {
+      "type": "number",
+      "default": 30
+    },
+    "rent_review_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "agreement_document_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Active",
+        "Expiring Soon",
+        "Notice Given",
+        "Terminated",
+        "Vacated",
+        "Archived"
+      ],
+      "default": "Pending"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "unit_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

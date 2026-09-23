@@ -1,0 +1,113 @@
+{
+  "name": "Document",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "Identification",
+        "Tenancy Agreement",
+        "Renewal",
+        "Notice",
+        "Receipt",
+        "Inspection Report",
+        "Maintenance Report",
+        "Application Document",
+        "Other"
+      ],
+      "default": "Other"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "tenancy_id": {
+      "type": "string"
+    },
+    "application_id": {
+      "type": "string"
+    },
+    "maintenance_id": {
+      "type": "string"
+    },
+    "inspection_id": {
+      "type": "string"
+    },
+    "notice_id": {
+      "type": "string"
+    },
+    "payment_id": {
+      "type": "string"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "Private",
+        "Tenant",
+        "Staff",
+        "Public"
+      ],
+      "default": "Tenant"
+    },
+    "date_uploaded": {
+      "type": "string",
+      "format": "date"
+    },
+    "uploader": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "document_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "data.visibility": {
+            "$in": [
+              "Public"
+            ]
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

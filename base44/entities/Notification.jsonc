@@ -1,0 +1,51 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_user_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "related_entity": {
+      "type": "string"
+    },
+    "related_id": {
+      "type": "string"
+    },
+    "action_link": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "recipient_user_id",
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "data.recipient_user_id": "{{user.id}}"
+    },
+    "create": {},
+    "update": {
+      "data.recipient_user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.recipient_user_id": "{{user.id}}"
+    }
+  }
+}

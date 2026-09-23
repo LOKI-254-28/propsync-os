@@ -1,0 +1,129 @@
+{
+  "name": "VacationRequest",
+  "type": "object",
+  "properties": {
+    "request_reference": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Vacation Notice",
+        "Termination Notice",
+        "Early Termination Request"
+      ],
+      "default": "Vacation Notice"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "tenancy_id": {
+      "type": "string"
+    },
+    "tenancy_reference": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "date_submitted": {
+      "type": "string",
+      "format": "date"
+    },
+    "proposed_vacation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notice_period_days": {
+      "type": "number",
+      "default": 30
+    },
+    "calculated_notice_expiry": {
+      "type": "string",
+      "format": "date"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "landlord_response": {
+      "type": "string"
+    },
+    "final_inspection_id": {
+      "type": "string"
+    },
+    "outstanding_rent": {
+      "type": "number",
+      "default": 0
+    },
+    "outstanding_charges": {
+      "type": "number",
+      "default": 0
+    },
+    "deposit_treatment": {
+      "type": "string"
+    },
+    "final_meter_reading": {
+      "type": "string"
+    },
+    "handover_notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Submitted",
+        "Acknowledged",
+        "Clarification Requested",
+        "Approved",
+        "Final Inspection Scheduled",
+        "Completed",
+        "Rejected"
+      ],
+      "default": "Submitted"
+    }
+  },
+  "required": [
+    "tenancy_id",
+    "type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

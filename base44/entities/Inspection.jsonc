@@ -1,0 +1,121 @@
+{
+  "name": "Inspection",
+  "type": "object",
+  "properties": {
+    "inspection_reference": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Pre-tenancy",
+        "Move-in",
+        "Routine",
+        "Maintenance",
+        "Move-out",
+        "Final"
+      ],
+      "default": "Routine"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "tenancy_id": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "conducted_by": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Requested",
+        "Scheduled",
+        "Completed",
+        "Cancelled",
+        "Rescheduled"
+      ],
+      "default": "Requested"
+    },
+    "condition_rating": {
+      "type": "string",
+      "enum": [
+        "Excellent",
+        "Good",
+        "Fair",
+        "Poor"
+      ],
+      "default": "Good"
+    },
+    "defects": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "created_maintenance_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "unit_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

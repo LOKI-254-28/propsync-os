@@ -1,0 +1,110 @@
+{
+  "name": "Application",
+  "type": "object",
+  "properties": {
+    "application_reference": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "applicant_name": {
+      "type": "string"
+    },
+    "applicant_email": {
+      "type": "string"
+    },
+    "applicant_phone": {
+      "type": "string"
+    },
+    "id_number": {
+      "type": "string"
+    },
+    "occupation": {
+      "type": "string"
+    },
+    "monthly_income": {
+      "type": "number"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "monthly_rent": {
+      "type": "number"
+    },
+    "proposed_start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "message": {
+      "type": "string"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Under Review",
+        "Approved",
+        "Rejected",
+        "Withdrawn",
+        "Expired"
+      ],
+      "default": "Pending"
+    },
+    "reservation_expiry": {
+      "type": "string",
+      "format": "date"
+    },
+    "landlord_response": {
+      "type": "string"
+    },
+    "submitted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "applicant_name",
+    "unit_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "name": "Notice",
+  "type": "object",
+  "properties": {
+    "notice_reference": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Rent Reminder",
+        "Arrears Notice",
+        "Breach Notice",
+        "Rent Increase",
+        "Inspection Notice",
+        "Vacation Acknowledgement",
+        "Termination Notice",
+        "General Notice"
+      ],
+      "default": "General Notice"
+    },
+    "date_issued": {
+      "type": "string",
+      "format": "date"
+    },
+    "sender": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "tenancy_id": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Issued",
+        "Acknowledged",
+        "Actioned",
+        "Expired"
+      ],
+      "default": "Issued"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "In-app",
+        "Email",
+        "SMS",
+        "WhatsApp",
+        "Manual"
+      ],
+      "default": "In-app"
+    },
+    "acknowledged": {
+      "type": "boolean",
+      "default": false
+    },
+    "attachment_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "subject"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

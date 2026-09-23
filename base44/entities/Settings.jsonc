@@ -1,0 +1,88 @@
+{
+  "name": "Settings",
+  "type": "object",
+  "properties": {
+    "organization_name": {
+      "type": "string",
+      "default": "Verdant Estates"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string",
+      "default": "KES"
+    },
+    "default_rent_due_day": {
+      "type": "number",
+      "default": 1
+    },
+    "default_grace_period_days": {
+      "type": "number",
+      "default": 7
+    },
+    "default_notice_period_days": {
+      "type": "number",
+      "default": 30
+    },
+    "reminder_schedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "offset_days": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "late_payment_rules": {
+      "type": "string"
+    },
+    "payment_methods": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notification_preferences": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "organization_name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

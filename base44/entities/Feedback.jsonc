@@ -1,0 +1,97 @@
+{
+  "name": "Feedback",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "Suggestion",
+        "Complaint",
+        "General Feedback",
+        "Improvement Idea"
+      ],
+      "default": "Suggestion"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Under Review",
+        "Responded",
+        "Resolved",
+        "Closed"
+      ],
+      "default": "Open"
+    },
+    "staff_response": {
+      "type": "string"
+    },
+    "resolution": {
+      "type": "string"
+    },
+    "date_submitted": {
+      "type": "string",
+      "format": "date"
+    },
+    "closed_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "type",
+    "description"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

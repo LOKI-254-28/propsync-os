@@ -1,0 +1,164 @@
+{
+  "name": "Maintenance",
+  "type": "object",
+  "properties": {
+    "ticket_number": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Plumbing",
+        "Electrical",
+        "Structural",
+        "Appliance",
+        "Security",
+        "Cleaning",
+        "Other"
+      ],
+      "default": "Other"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Urgent"
+      ],
+      "default": "Medium"
+    },
+    "date_reported": {
+      "type": "string",
+      "format": "date"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "tenancy_id": {
+      "type": "string"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "assigned_staff": {
+      "type": "string"
+    },
+    "contractor_id": {
+      "type": "string"
+    },
+    "contractor_name": {
+      "type": "string"
+    },
+    "estimated_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "approved_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "resolution_notes": {
+      "type": "string"
+    },
+    "public_updates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "internal_notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Submitted",
+        "Acknowledged",
+        "Assigned",
+        "Scheduled",
+        "In Progress",
+        "Awaiting Parts",
+        "Completed",
+        "Closed",
+        "Rejected"
+      ],
+      "default": "Submitted"
+    }
+  },
+  "required": [
+    "title",
+    "unit_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

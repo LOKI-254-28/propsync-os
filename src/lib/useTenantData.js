@@ -14,7 +14,18 @@ export function useTenantData() {
       const me = await base44.auth.me();
       setUser(me);
       if (!me) return;
-      const t = await base44.entities.Tenant.filter({ user_id: me.id }).then((r) => r[0]);
+      let t = await base44.entities.Tenant.filter({ user_id: me.id }).then((r) => r[0]);
+      // First-login auto-link: if no Tenant record has this user's id yet, find one by email
+      // and link it (and all its related records) so invited tenants see their data immediately.
+      if (!t && me.email) {
+        const byEmail = await base44.entities.Tenant.filter({ email: me.email }).then((r) => r[0]);
+        if (byEmail) {
+          await base44.entities.Tenant.update(byEmail.id, { user_id: me.id });
+          const rels = ["Tenancy", "RentCharge", "Payment", "Application", "Maintenance", "Inspection", "Notice", "Document", "Feedback", "VacationRequest"];
+          await Promise.all(rels.map((e) => base44.entities[e].updateMany({ tenant_id: byEmail.id }, { $set: { tenant_user_id: me.id } })));
+          t = { ...byEmail, user_id: me.id };
+        }
+      }
       setTenant(t);
       const [tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units] = await Promise.all([
         base44.entities.Tenancy.filter({ tenant_user_id: me.id }),

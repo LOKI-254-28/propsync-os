@@ -20,25 +20,33 @@ export default function BrowseUnits() {
     .filter((u) => !search || u.unit_number?.toLowerCase().includes(search.toLowerCase()) || u.property_name?.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => a.unit_number.localeCompare(b.unit_number)), [t.units, search]);
 
+  const [err, setErr] = useState("");
   const submit = async () => {
-    if (!apply || !t.tenant) return;
+    if (!apply) return;
+    setErr("");
     setBusy(true);
-    const me = t.user;
-    const ref = genRef("APP");
-    const rec = await base44.entities.Application.create({
-      application_reference: ref, tenant_user_id: me.id, tenant_id: t.tenant.id,
-      applicant_name: t.tenant.full_name, applicant_email: t.tenant.email, applicant_phone: t.tenant.phone,
-      id_number: form.id_number || t.tenant.id_number, occupation: form.occupation || t.tenant.occupation, monthly_income: form.monthly_income || t.tenant.monthly_income,
-      property_id: apply.property_id, property_name: apply.property_name, unit_id: apply.id, unit_number: apply.unit_number, monthly_rent: apply.monthly_rent,
-      proposed_start_date: form.proposed_start_date, message: form.message, status: "Pending", submitted_date: todayISO(),
-      reservation_expiry: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
-    });
-    await base44.entities.Unit.update(apply.id, { status: "Application Pending" });
-    await logAudit({ user: me, action: "Application Submitted", entity: "Application", entity_id: rec.id, entity_name: ref });
-    setBusy(false);
-    setApply(null);
-    setForm({ proposed_start_date: todayISO(), message: "", monthly_income: 0, occupation: "", id_number: "" });
-    t.reload();
+    try {
+      const me = t.user;
+      const tn = t.tenant;
+      const ref = genRef("APP");
+      const rec = await base44.entities.Application.create({
+        application_reference: ref, tenant_user_id: me.id, tenant_id: tn?.id || "",
+        applicant_name: tn?.full_name || me.full_name || me.email, applicant_email: tn?.email || me.email, applicant_phone: tn?.phone || "",
+        id_number: form.id_number || tn?.id_number || "", occupation: form.occupation || tn?.occupation || "", monthly_income: Number(form.monthly_income) || tn?.monthly_income || 0,
+        property_id: apply.property_id, property_name: apply.property_name, unit_id: apply.id, unit_number: apply.unit_number, monthly_rent: apply.monthly_rent,
+        proposed_start_date: form.proposed_start_date, message: form.message, status: "Pending", submitted_date: todayISO(),
+        reservation_expiry: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+      });
+      await base44.entities.Unit.update(apply.id, { status: "Application Pending" });
+      await logAudit({ user: me, action: "Application Submitted", entity: "Application", entity_id: rec.id, entity_name: ref });
+      setApply(null);
+      setForm({ proposed_start_date: todayISO(), message: "", monthly_income: 0, occupation: "", id_number: "" });
+      t.reload();
+    } catch (e) {
+      setErr(e.message || "Failed to submit application. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -84,6 +92,7 @@ export default function BrowseUnits() {
                 <Field label="Proposed start date"><Input type="date" value={form.proposed_start_date} onChange={(e) => setForm({ ...form, proposed_start_date: e.target.value })} /></Field>
                 <Field label="Message to landlord"><Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={3} /></Field>
                 <p className="text-xs text-slate-400">Submitting will temporarily reserve this unit for 3 days pending landlord review.</p>
+                {err && <p className="text-sm text-red-600">{err}</p>}
               </div>
               <DialogFooter><Button onClick={submit} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Submitting..." : "Submit Application"}</Button></DialogFooter>
             </>

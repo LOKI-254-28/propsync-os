@@ -47,6 +47,9 @@ import Leases from '@/pages/landlord/Leases';
 import TenantDashboard from '@/pages/tenant/TenantDashboard';
 import BrowseUnits from '@/pages/tenant/BrowseUnits';
 import MyApplications from '@/pages/tenant/MyApplications';
+import BrowseListings from '@/pages/tenant/BrowseListings';
+import ListingDetail from '@/pages/tenant/ListingDetail';
+import MyProperties from '@/pages/tenant/MyProperties';
 import MyTenancy from '@/pages/tenant/MyTenancy';
 import MyRent from '@/pages/tenant/MyRent';
 import MyMaintenance from '@/pages/tenant/MyMaintenance';
@@ -95,7 +98,10 @@ const TenantRoutes = () => (
     <Routes>
       <Route path="/portal" element={<TenantDashboard />} />
       <Route path="/portal/units" element={<BrowseUnits />} />
+      <Route path="/portal/listings" element={<BrowseListings />} />
+      <Route path="/portal/listings/:id" element={<ListingDetail />} />
       <Route path="/portal/applications" element={<MyApplications />} />
+      <Route path="/portal/my-properties" element={<MyProperties />} />
       <Route path="/portal/tenancy" element={<MyTenancy />} />
       <Route path="/portal/rent" element={<MyRent />} />
       <Route path="/portal/maintenance" element={<MyMaintenance />} />

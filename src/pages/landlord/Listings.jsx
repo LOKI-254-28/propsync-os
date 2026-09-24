@@ -51,7 +51,7 @@ export default function Listings() {
           listing_reference: genRef("LST"), property_id: form.property_id, property_name: prop?.name || "",
           unit_id: form.unit_id, unit_number: unit?.unit_number || "",
           listing_type: form.listing_type, price: Number(form.price), description: form.description,
-          status: "Pending", date_listed: todayISO(), owner_user_id: me?.id || "",
+          status: "Draft", date_listed: todayISO(), owner_user_id: me?.id || "",
         });
         await logAudit({ user: me, action: "Listing Created", entity: "Listing", entity_id: rec.id, entity_name: rec.listing_reference });
       }
@@ -104,9 +104,9 @@ export default function Listings() {
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setViewRec(l)} title="View"><Eye className="h-3.5 w-3.5" /></Button>
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(l)} title="Edit"><Edit className="h-3.5 w-3.5" /></Button>
-                        {l.status === "Pending" && <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50" disabled={submitting} onClick={() => changeStatus(l, "Active", "Published")}>Publish</Button>}
-                        {l.status === "Active" && <Button size="sm" variant="outline" className="h-7 text-xs" disabled={submitting} onClick={() => changeStatus(l, "Pending", "Unpublished")}>Unpublish</Button>}
-                        {l.status !== "Closed" && <Button size="sm" variant="outline" className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-50" disabled={submitting} onClick={() => changeStatus(l, "Closed", "Withdrawn")}>Withdraw</Button>}
+                        {l.status === "Draft" && <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50" disabled={submitting} onClick={() => changeStatus(l, "Published", "Published")}>Publish</Button>}
+                        {l.status === "Published" && <Button size="sm" variant="outline" className="h-7 text-xs" disabled={submitting} onClick={() => changeStatus(l, "Draft", "Unpublished")}>Unpublish</Button>}
+                        {!["Withdrawn", "Sold", "Rented", "Leased", "Archived"].includes(l.status) && <Button size="sm" variant="outline" className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-50" disabled={submitting} onClick={() => changeStatus(l, "Withdrawn", "Withdrawn")}>Withdraw</Button>}
                       </div>
                     </td>
                   </tr>

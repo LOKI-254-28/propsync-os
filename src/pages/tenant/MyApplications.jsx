@@ -1,29 +1,177 @@
-import React, { useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useTenantData } from "@/lib/useTenantData";
-import { KES } from "@/lib/finance";
-import { PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
-import { FileText } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { KES, logAudit, todayISO } from "@/lib/finance";
+import { PageHeader, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { FileText, Calendar, FileSignature, Wallet, Loader2, ExternalLink } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import FileUploadButton from "@/components/FileUploadButton";
 
 export default function MyApplications() {
   const t = useTenantData();
+  const [actionApp, setActionApp] = useState(null);
+  const [actionType, setActionType] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ info: "", site_visit_date: "", site_visit_time: "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "" });
+
   const list = useMemo(() => [...t.applications].sort((a, b) => new Date(b.submitted_date || b.created_date) - new Date(a.submitted_date || a.created_date)), [t.applications]);
+
+  const openAction = (app, type) => {
+    setActionApp(app);
+    setActionType(type);
+    setForm({ info: "", site_visit_date: app.site_visit_date || "", site_visit_time: app.site_visit_time || "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "" });
+  };
+
+  const submitAction = async () => {
+    if (!actionApp || !actionType) return;
+    setBusy(true);
+    try {
+      const me = t.user;
+      let updates = {};
+      let label = "";
+      if (actionType === "info") {
+        updates = { status: "Information Provided", landlord_response: form.info };
+        label = "Information Provided";
+      } else if (actionType === "sitevisit") {
+        updates = { site_visit_date: form.site_visit_date, site_visit_time: form.site_visit_time, site_visit_status: "Proposed", status: "Site Visit Scheduled" };
+        label = "Site Visit Proposed";
+      } else if (actionType === "agreement") {
+        if (!form.agreement_executed_url) { toast({ title: "Validation error", description: "Please upload the executed agreement.", variant: "destructive" }); setBusy(false); return; }
+        updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Agreement Executed" };
+        label = "Agreement Executed";
+      } else if (actionType === "payment") {
+        if (!form.payment_proof_url) { toast({ title: "Validation error", description: "Please upload payment proof.", variant: "destructive" }); setBusy(false); return; }
+        updates = { payment_proof_url: form.payment_proof_url, payment_reference: form.payment_reference, payment_status: "Proof Submitted", status: "Payment Proof Submitted" };
+        label = "Payment Proof Submitted";
+      }
+      await base44.entities.Application.update(actionApp.id, updates);
+      await logAudit({ user: me, action: `Application ${label}`, entity: "Application", entity_id: actionApp.id, entity_name: actionApp.application_reference });
+      if (actionApp.owner_user_id) {
+        try {
+          const { notify } = await import("@/lib/finance");
+          await notify({ recipient_user_id: actionApp.owner_user_id, type: "Application", title: `Application ${label}`, message: `Client has ${label.toLowerCase()} for ${actionApp.property_name}.`, related_entity: "Application", related_id: actionApp.id, action_link: "/applications" });
+        } catch (e) {}
+      }
+      toast({ title: "Success", description: `${label}.` });
+      setActionApp(null); setActionType(""); t.reload();
+    } catch (err) {
+      console.error("[Application action error]", err);
+      toast({ title: "Error", description: "Could not complete action. Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
+
   return (
     <div>
-      <PageHeader title="My Applications" description="Track the status of your unit applications." />
-      {list.length === 0 ? <EmptyState icon={FileText} title="No applications submitted" description="Browse available units to apply." /> : (
+      <PageHeader title="My Applications" description="Track your applications and respond to provider requests." />
+
+      {list.length === 0 ? <EmptyState icon={FileText} title="No applications submitted" description="Browse listings to apply for a property." /> : (
         <div className="space-y-3">
           {list.map((a) => (
             <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div><p className="font-mono text-xs text-slate-500">{a.application_reference}</p><p className="font-medium text-slate-900">{a.unit_number} · {a.property_name}</p><p className="text-xs text-slate-500">Submitted {a.submitted_date} · {KES(a.monthly_rent)}/mo</p></div>
-                <StatusBadge status={a.status} />
+                <div>
+                  <p className="font-mono text-xs text-slate-500">{a.application_reference}</p>
+                  <p className="font-medium text-slate-900">{a.unit_number || "—"} · {a.property_name}</p>
+                  <p className="text-xs text-slate-500">Submitted {a.submitted_date} · {KES(a.monthly_rent)}{a.application_type === "rental" ? "/mo" : ""}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={a.application_type} />
+                  <StatusBadge status={a.status} />
+                </div>
               </div>
-              {a.landlord_response && <div className="mt-2 rounded-lg bg-slate-50 p-2 text-sm text-slate-700"><span className="text-xs font-medium text-slate-500">Landlord response: </span>{a.landlord_response}</div>}
+
+              {/* Site visit info */}
+              {a.site_visit_status && a.site_visit_status !== "" && (
+                <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-sm">
+                  <p className="flex items-center gap-1.5 font-medium text-blue-800"><Calendar className="h-3.5 w-3.5" />Site Visit — {a.site_visit_status}</p>
+                  <p className="text-blue-700">{a.site_visit_date} {a.site_visit_time && `at ${a.site_visit_time}`}</p>
+                  {a.site_visit_notes && <p className="text-xs text-blue-600">{a.site_visit_notes}</p>}
+                </div>
+              )}
+
+              {/* Agreement info */}
+              {a.agreement_url && (
+                <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-sm">
+                  <p className="flex items-center gap-1.5 font-medium text-amber-800"><FileSignature className="h-3.5 w-3.5" />Agreement — {a.agreement_status || "Issued"}</p>
+                  <a href={a.agreement_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-amber-700 underline">View agreement <ExternalLink className="h-3 w-3" /></a>
+                  {a.agreement_executed_url && <span className="ml-3 text-emerald-700">✓ Executed copy uploaded</span>}
+                </div>
+              )}
+
+              {/* Payment info */}
+              {a.payment_status && a.payment_status !== "" && (
+                <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-sm">
+                  <p className="flex items-center gap-1.5 font-medium text-emerald-800"><Wallet className="h-3.5 w-3.5" />Payment — {a.payment_status}</p>
+                  <p className="text-emerald-700">{KES(a.payment_amount)} · Due {a.payment_due_date || "—"}</p>
+                  {a.payment_instructions && <p className="text-xs text-emerald-600">{a.payment_instructions}</p>}
+                  {a.payment_proof_url && <span className="text-emerald-700">✓ Proof uploaded</span>}
+                </div>
+              )}
+
+              {a.landlord_response && <div className="mt-2 rounded-lg bg-slate-50 p-2 text-sm text-slate-700"><span className="text-xs font-medium text-slate-500">Provider response: </span>{a.landlord_response}</div>}
+
+              {/* Client actions based on status */}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {a.status === "More Information Required" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "info")}>Provide Information</Button>}
+                {a.status === "Site Visit Requested" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "sitevisit")}>Propose Visit Date</Button>}
+                {a.status === "Agreement Issued" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "agreement")}>Upload Executed Agreement</Button>}
+                {a.status === "Payment Requested" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "payment")}>Submit Payment Proof</Button>}
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      <Dialog open={!!actionApp} onOpenChange={() => setActionApp(null)}>
+        <DialogContent className="max-w-md">
+          {actionApp && (
+            <>
+              <DialogHeader><DialogTitle>
+                {actionType === "info" ? "Provide Information" : actionType === "sitevisit" ? "Propose Site Visit" : actionType === "agreement" ? "Upload Executed Agreement" : "Submit Payment Proof"}
+              </DialogTitle></DialogHeader>
+              <div className="space-y-3 py-2">
+                {actionType === "info" && <Field label="Your response"><Textarea value={form.info} onChange={(e) => setForm({ ...form, info: e.target.value })} rows={4} placeholder="Provide the requested information..." /></Field>}
+                {actionType === "sitevisit" && (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="Preferred date"><Input type="date" value={form.site_visit_date} onChange={(e) => setForm({ ...form, site_visit_date: e.target.value })} /></Field>
+                      <Field label="Preferred time"><Input type="time" value={form.site_visit_time} onChange={(e) => setForm({ ...form, site_visit_time: e.target.value })} /></Field>
+                    </div>
+                    <p className="text-xs text-slate-500">The provider will confirm or propose an alternative time.</p>
+                  </>
+                )}
+                {actionType === "agreement" && (
+                  <>
+                    {actionApp.agreement_url && <a href={actionApp.agreement_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-amber-700 underline">View original agreement <ExternalLink className="h-3 w-3" /></a>}
+                    <Field label="Upload executed (signed) agreement"><FileUploadButton onUploaded={(file) => setForm({ ...form, agreement_executed_url: file.file_url })} label="Upload signed agreement" /></Field>
+                  </>
+                )}
+                {actionType === "payment" && (
+                  <>
+                    <div className="rounded-lg bg-emerald-50 p-3 text-sm">
+                      <p className="font-medium text-emerald-800">Amount: {KES(actionApp.payment_amount)}</p>
+                      <p className="text-emerald-700">Due: {actionApp.payment_due_date || "—"}</p>
+                      <p className="text-emerald-700">Method: {actionApp.payment_method || "—"}</p>
+                      {actionApp.payment_instructions && <p className="mt-1 text-xs text-emerald-600">{actionApp.payment_instructions}</p>}
+                    </div>
+                    <Field label="Payment reference (optional)"><Input value={form.payment_reference} onChange={(e) => setForm({ ...form, payment_reference: e.target.value })} placeholder="M-Pesa code, bank ref, etc." /></Field>
+                    <Field label="Upload payment proof"><FileUploadButton onUploaded={(file) => setForm({ ...form, payment_proof_url: file.file_url })} label="Upload payment receipt/screenshot" /></Field>
+                  </>
+                )}
+              </div>
+              <DialogFooter><Button onClick={submitAction} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Submitting...</> : "Submit"}</Button></DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

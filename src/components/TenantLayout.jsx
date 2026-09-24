@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import {
   Leaf, LogOut, Menu, UserX, Clock,
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
-  ClipboardCheck, Bell, FolderOpen, MessageSquare, User, Circle,
+  ClipboardCheck, Bell, FolderOpen, MessageSquare, User, Circle, Tag, Building2,
 } from "lucide-react";
 
 const ICONS = {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
-  ClipboardCheck, Bell, FolderOpen, MessageSquare, LogOut: LogOut, User, Circle,
+  ClipboardCheck, Bell, FolderOpen, MessageSquare, LogOut: LogOut, User, Circle, Tag, Building2,
 };
 
 export default function TenantLayout({ children }) {

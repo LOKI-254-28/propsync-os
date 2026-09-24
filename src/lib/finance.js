@@ -145,6 +145,7 @@ export async function generateMonthlyCharges({ tenancies, existingCharges, billi
       amount_paid: 0,
       outstanding: Number(t.monthly_rent || 0) + Number(t.service_charge || 0),
       status: "Unpaid",
+      owner_user_id: t.owner_user_id || "",
     });
   }
   if (toCreate.length) await base44.entities.RentCharge.bulkCreate(toCreate);
@@ -173,6 +174,7 @@ export async function recordPayment({ tenant, tenancy, amount, method, paymentDa
     allocations,
     receipt_number: genRef("RCP"),
     recorded_by: recordedBy,
+    owner_user_id: tenancy.owner_user_id || "",
   });
   // Apply allocations to charges
   for (const a of allocations) {

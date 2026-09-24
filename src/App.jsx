@@ -39,6 +39,9 @@ import StaffPermissions from '@/pages/landlord/StaffPermissions';
 import Settings from '@/pages/landlord/Settings';
 import Feedback from '@/pages/landlord/Feedback';
 import VacationRequests from '@/pages/landlord/VacationRequests';
+import Listings from '@/pages/landlord/Listings';
+import Sales from '@/pages/landlord/Sales';
+import Leases from '@/pages/landlord/Leases';
 
 // Tenant pages
 import TenantDashboard from '@/pages/tenant/TenantDashboard';
@@ -79,6 +82,9 @@ const LandlordRoutes = () => (
       <Route path="/settings" element={<Settings />} />
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
+      <Route path="/listings" element={<Listings />} />
+      <Route path="/sales" element={<Sales />} />
+      <Route path="/leases" element={<Leases />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </Layout>
@@ -124,7 +130,7 @@ const AuthenticatedApp = () => {
     }
   }
 
-  const isLandlord = user?.account_type === 'landlord' || (!user?.account_type && user?.role === 'admin');
+  const isLandlord = user?.account_type === 'admin' || user?.account_type === 'landowner' || (!user?.account_type && user?.role === 'admin');
 
   return (
     <Routes>

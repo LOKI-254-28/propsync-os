@@ -21,7 +21,8 @@ export default function Properties() {
 
   const create = async () => {
     if (!form.name) return;
-    const rec = await base44.entities.Property.create({ ...form, code: form.code || genRef("PRP"), status: "Active", currency: "KES" });
+    const me = await base44.auth.me();
+    const rec = await base44.entities.Property.create({ ...form, code: form.code || genRef("PRP"), status: "Active", currency: "KES", owner_user_id: me?.id || "" });
     await logAudit({ user: await base44.auth.me(), action: "Property Created", entity: "Property", entity_id: rec.id, entity_name: rec.name });
     setOpen(false);
     setForm({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "" });

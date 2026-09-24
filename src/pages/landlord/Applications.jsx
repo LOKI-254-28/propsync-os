@@ -57,6 +57,7 @@ export default function Applications() {
       start_date: review.proposed_start_date || todayISO(), expected_end_date: "",
       monthly_rent: review.monthly_rent || unit.monthly_rent, security_deposit: unit.security_deposit, service_charge: unit.service_charge,
       payment_due_day: 1, grace_period_days: 7, notice_period_days: 30, status: "Active",
+      owner_user_id: unit.owner_user_id || me.id,
     });
     await base44.entities.Unit.update(unit.id, { status: "Occupied", current_tenancy_id: tenancy.id, current_tenant_name: tenantRec.full_name });
     await base44.entities.Application.update(review.id, { status: "Approved", landlord_response: response || "Application approved — tenancy created." });

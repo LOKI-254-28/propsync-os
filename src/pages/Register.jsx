@@ -13,9 +13,21 @@ import { safeReturnTo } from "@/lib/authReturnTo";
 import { genRef, todayISO } from "@/lib/finance";
 import { cn } from "@/lib/utils";
 
+const LANDOWNER_PROFILES = [
+  { value: "landlord", label: "Landlord", desc: "Manage rental properties" },
+  { value: "vendor", label: "Vendor", desc: "Sell properties" },
+  { value: "lessor", label: "Lessor", desc: "Lease properties" },
+];
+const CLIENT_PROFILES = [
+  { value: "tenant", label: "Tenant", desc: "Rent a property" },
+  { value: "purchaser", label: "Purchaser", desc: "Buy a property" },
+  { value: "lessee", label: "Lessee", desc: "Lease a property" },
+];
+
 export default function Register() {
   const [step, setStep] = useState("role"); // 'role' | 'form' | 'otp'
-  const [role, setRole] = useState("");
+  const [accountType, setAccountType] = useState(""); // 'landowner' | 'client'
+  const [profiles, setProfiles] = useState([]);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,18 +40,22 @@ export default function Register() {
   const [otpCode, setOtpCode] = useState("");
 
   useEffect(() => {
-    if (role === "tenant") {
+    if (accountType === "client") {
       base44.entities.Property.filter({ status: "Active" }).then(setProperties).catch(() => {});
     }
-  }, [role]);
+  }, [accountType]);
+
+  const toggleProfile = (p) => setProfiles((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
+  const profileOptions = accountType === "landowner" ? LANDOWNER_PROFILES : CLIENT_PROFILES;
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     if (!fullName.trim()) { setError("Please enter your full name."); return; }
+    if (profiles.length === 0) { setError("Select at least one operational profile."); return; }
     if (password !== confirmPassword) { setError("Passwords do not match"); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    if (role === "tenant" && !inviteCode.trim() && !propertyId) {
+    if (accountType === "client" && !inviteCode.trim() && !propertyId) {
       setError("Enter an invite code or select a property to request joining."); return;
     }
     setLoading(true);
@@ -62,10 +78,11 @@ export default function Register() {
       const me = await base44.auth.me();
       await base44.auth.updateMe({
         full_name: fullName,
-        account_type: role,
-        approval_status: role === "landlord" ? "approved" : "pending",
+        account_type: accountType,
+        operational_profiles: profiles,
+        approval_status: accountType === "landowner" ? "approved" : "pending",
       });
-      if (role === "tenant") {
+      if (accountType === "client") {
         let unit = null;
         if (inviteCode.trim()) {
           const units = await base44.entities.Unit.filter({ invite_code: inviteCode.trim().toUpperCase() });
@@ -73,6 +90,7 @@ export default function Register() {
           if (!unit) { setError("Invalid invite code. Please check and try again."); setLoading(false); return; }
         }
         const prop = unit ? null : properties.find((p) => p.id === propertyId);
+        const appType = profiles.includes("tenant") ? "rental" : profiles.includes("purchaser") ? "purchase" : "lease";
         await base44.entities.Application.create({
           application_reference: genRef("APP"),
           tenant_user_id: me.id,
@@ -85,6 +103,8 @@ export default function Register() {
           monthly_rent: unit?.monthly_rent || 0,
           status: "Pending",
           submitted_date: todayISO(),
+          application_type: appType,
+          owner_user_id: unit?.owner_user_id || prop?.owner_user_id || "",
         });
         window.location.href = "/portal";
       } else {
@@ -107,9 +127,7 @@ export default function Register() {
     }
   };
 
-  const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", safeReturnTo());
-  };
+  const handleGoogle = () => base44.auth.loginWithProvider("google", safeReturnTo());
 
   // Step 3: OTP
   if (step === "otp") {
@@ -135,28 +153,54 @@ export default function Register() {
     );
   }
 
-  // Step 1: Role selection
+  // Step 1: Account type + profiles
   if (step === "role") {
     return (
-      <AuthLayout icon={UserPlus} title="Create your account" subtitle="Choose your account type to get started"
+      <AuthLayout icon={UserPlus} title="Create your account" subtitle="Choose your account type and operational profile(s)"
         footer={<>Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Log in</Link></>}>
-        <div className="space-y-3">
-          <button onClick={() => { setRole("landlord"); setStep("form"); }}
-            className="flex w-full items-start gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-emerald-500 hover:bg-emerald-50/50">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><Building2 className="h-5 w-5" /></div>
-            <div>
-              <p className="font-semibold text-foreground">I'm a Landlord / Manager</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">Manage properties, units, tenants, rent and maintenance.</p>
+        <div className="space-y-4">
+          {/* Account type selector */}
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => { setAccountType("landowner"); setProfiles([]); }}
+              className={cn("flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
+                accountType === "landowner" ? "border-emerald-500 bg-emerald-50/50" : "border-border hover:border-emerald-300")}>
+              <Building2 className={cn("h-7 w-7", accountType === "landowner" ? "text-emerald-600" : "text-slate-400")} />
+              <span className="text-sm font-semibold text-foreground">Landowner</span>
+              <span className="text-[10px] text-muted-foreground text-center">Property Provider</span>
+            </button>
+            <button onClick={() => { setAccountType("client"); setProfiles([]); }}
+              className={cn("flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
+                accountType === "client" ? "border-amber-500 bg-amber-50/50" : "border-border hover:border-amber-300")}>
+              <Home className={cn("h-7 w-7", accountType === "client" ? "text-amber-600" : "text-slate-400")} />
+              <span className="text-sm font-semibold text-foreground">Client</span>
+              <span className="text-[10px] text-muted-foreground text-center">Tenant / Buyer</span>
+            </button>
+          </div>
+
+          {/* Profile selection */}
+          {accountType && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Select your operational profile(s)</p>
+              <p className="text-xs text-muted-foreground">You can select more than one — a single account supports multiple profiles.</p>
+              <div className="space-y-2">
+                {profileOptions.map((p) => (
+                  <button key={p.value} onClick={() => toggleProfile(p.value)} type="button"
+                    className={cn("flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                      profiles.includes(p.value) ? "border-emerald-500 bg-emerald-50/50" : "border-border hover:bg-slate-50")}>
+                    <div className={cn("flex h-5 w-5 items-center justify-center rounded border-2",
+                      profiles.includes(p.value) ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300")}>
+                      {profiles.includes(p.value) && <Check className="h-3 w-3" />}
+                    </div>
+                    <div><p className="text-sm font-medium text-foreground">{p.label}</p><p className="text-xs text-muted-foreground">{p.desc}</p></div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </button>
-          <button onClick={() => { setRole("tenant"); setStep("form"); }}
-            className="flex w-full items-start gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-emerald-500 hover:bg-emerald-50/50">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700"><Home className="h-5 w-5" /></div>
-            <div>
-              <p className="font-semibold text-foreground">I'm a Tenant</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">View your unit, pay rent, report issues and track documents.</p>
-            </div>
-          </button>
+          )}
+
+          {accountType && profiles.length > 0 && (
+            <Button onClick={() => setStep("form")} className="w-full h-12 font-medium">Continue</Button>
+          )}
         </div>
       </AuthLayout>
     );
@@ -164,7 +208,7 @@ export default function Register() {
 
   // Step 2: Form
   return (
-    <AuthLayout icon={role === "landlord" ? Building2 : Home} title={role === "landlord" ? "Landlord account" : "Tenant account"} subtitle="Fill in your details to create your account"
+    <AuthLayout icon={accountType === "landowner" ? Building2 : Home} title={accountType === "landowner" ? "Landowner Account" : "Client Account"} subtitle="Fill in your details to create your account"
       footer={<>
         Already have an account?{" "}
         <Link to="/login" className="text-primary font-medium hover:underline">Log in</Link>
@@ -208,7 +252,7 @@ export default function Register() {
           </div>
         </div>
 
-        {role === "tenant" && (
+        {accountType === "client" && (
           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
             <div className="space-y-2">
               <Label htmlFor="invite">Invite code (optional)</Label>
@@ -216,7 +260,7 @@ export default function Register() {
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
                 <Input id="invite" placeholder="e.g. VE-A1B2C3" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} className="pl-10 h-12 font-mono uppercase" />
               </div>
-              <p className="text-xs text-muted-foreground">Enter the code your landlord gave you to apply for a specific unit.</p>
+              <p className="text-xs text-muted-foreground">Enter the code your landowner gave you to apply for a specific unit.</p>
             </div>
             {!inviteCode.trim() && (
               <div className="space-y-2">
@@ -225,7 +269,7 @@ export default function Register() {
                   <option value="">Select a property...</option>
                   {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
-                <p className="text-xs text-muted-foreground">Request to join a property — the landlord will review your application.</p>
+                <p className="text-xs text-muted-foreground">Request to join a property — the landowner will review your application.</p>
               </div>
             )}
           </div>
@@ -234,7 +278,7 @@ export default function Register() {
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating account...</> : "Create account"}
         </Button>
-        <button type="button" onClick={() => { setStep("role"); setRole(""); setError(""); }} className="flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <button type="button" onClick={() => { setStep("role"); setAccountType(""); setProfiles([]); setError(""); }} className="flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-3.5 w-3.5" />Back to account type
         </button>
       </form>

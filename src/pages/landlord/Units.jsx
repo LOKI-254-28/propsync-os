@@ -29,7 +29,7 @@ export default function Units() {
     if (!form.unit_number || !form.property_id) return;
     const prop = data.properties.find((p) => p.id === form.property_id);
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const rec = await base44.entities.Unit.create({ ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, status: "Available" });
+    const rec = await base44.entities.Unit.create({ ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, owner_user_id: prop?.owner_user_id || "", status: "Available" });
     await logAudit({ user: await base44.auth.me(), action: "Unit Created", entity: "Unit", entity_id: rec.id, entity_name: rec.unit_number });
     setOpen(false);
     setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });

@@ -17,8 +17,8 @@ export function useTenantData() {
       const me = await base44.auth.me();
       setUser(me);
       if (!me) return;
-      // Auto-link tenant profile on first login (non-admin only)
-      if (me.role !== "admin") {
+      // Auto-link client profile on first login (clients only)
+      if (me.account_type === "client" || (!me.account_type && me.role !== "admin")) {
         try {
           const res = await base44.functions.invoke("linkTenant", {});
           if (res.data?.notFound) {

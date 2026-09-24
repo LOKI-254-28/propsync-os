@@ -28,12 +28,12 @@ export default function TenantLayout({ children }) {
     base44.auth.me().then(async (u) => {
       setUser(u);
       if (!u) return;
-      if (u.account_type === "tenant" && u.approval_status === "pending") {
+      if (u.account_type === "client" && u.approval_status === "pending") {
         setPendingApproval(true);
         return;
       }
       setPendingApproval(false);
-      if (u.role !== "admin") {
+      if (u.account_type === "client" || (!u.account_type && u.role !== "admin")) {
         try {
           const res = await base44.functions.invoke("linkTenant", {});
           if (res.data?.notFound) {
@@ -113,7 +113,7 @@ export default function TenantLayout({ children }) {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-emerald-900"><Leaf className="h-5 w-5" /></div>
           <div>
             <p className="font-heading text-sm font-semibold text-white">Verdant Estates</p>
-            <p className="text-[10px] uppercase tracking-wider text-emerald-200/70">Tenant Portal</p>
+            <p className="text-[10px] uppercase tracking-wider text-emerald-200/70">Client Portal</p>
           </div>
         </div>
         <nav className="flex h-[calc(100vh-180px)] flex-col gap-0.5 overflow-y-auto pr-1">
@@ -124,7 +124,7 @@ export default function TenantLayout({ children }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">{tenant?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "T"}</div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-medium text-white">{tenant?.full_name || user?.email || "Tenant"}</p>
-              <p className="text-[10px] text-emerald-200/70">Tenant</p>
+              <p className="text-[10px] text-emerald-200/70">Client</p>
             </div>
             <button onClick={handleLogout} className="rounded-md p-1.5 text-emerald-200/70 hover:bg-emerald-700 hover:text-white" title="Sign out"><LogOut className="h-4 w-4" /></button>
           </div>
@@ -135,7 +135,7 @@ export default function TenantLayout({ children }) {
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:px-8">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {tenant?.full_name?.split(" ")[0] || "Tenant"}</div>
-          <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Tenant</span>
+          <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Client</span>
         </header>
         <main className="px-4 py-6 lg:px-8">{children}</main>
       </div>

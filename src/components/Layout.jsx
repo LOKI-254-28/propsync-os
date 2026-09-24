@@ -8,12 +8,13 @@ import {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, FolderOpen, Receipt, BarChart3,
   Columns3, BellRing, ShieldCheck, Settings as SettingsIcon, Circle,
+  Tag, FileSignature, Banknote,
 } from "lucide-react";
 
 const ICONS = {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, Bell, FolderOpen, Receipt, BarChart3,
-  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle,
+  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote,
 };
 
 export default function Layout({ children }) {
@@ -73,7 +74,7 @@ export default function Layout({ children }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">{user?.email?.[0]?.toUpperCase() || "A"}</div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-medium text-white">{user?.email || "Administrator"}</p>
-              <p className="text-[10px] text-emerald-200/70">Landlord / Admin</p>
+              <p className="text-[10px] text-emerald-200/70">{user?.account_type === 'admin' ? 'Administrator' : 'Landowner'}</p>
             </div>
             <button onClick={handleLogout} className="rounded-md p-1.5 text-emerald-200/70 hover:bg-emerald-700 hover:text-white" title="Sign out"><LogOut className="h-4 w-4" /></button>
           </div>
@@ -84,7 +85,7 @@ export default function Layout({ children }) {
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:px-8">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden items-center gap-3 lg:flex">
-            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Landlord</span>
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">{user?.account_type === 'admin' ? 'Admin' : 'Landowner'}</span>
             <span className="text-sm text-slate-500">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
           </div>
           <Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" />{unread > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />}</Link>

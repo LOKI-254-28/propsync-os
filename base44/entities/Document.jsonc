@@ -17,6 +17,7 @@
         "Inspection Report",
         "Insurance/Compliance Certificate",
         "Title Deed",
+        "Sale Agreement",
         "Other"
       ],
       "default": "Other"
@@ -105,6 +106,9 @@
     },
     "notes": {
       "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
     }
   },
   "required": [
@@ -128,18 +132,37 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
         }
       ]
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "account_type": "landowner"
+          }
+        }
+      ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        }
+      ]
     },
     "delete": {
       "user_condition": {

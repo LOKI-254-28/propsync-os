@@ -11,10 +11,26 @@
     "account_type": {
       "type": "string",
       "enum": [
-        "landlord",
-        "tenant"
+        "admin",
+        "landowner",
+        "client"
       ],
-      "description": "Self-selected at registration: landlord (admin access) or tenant (portal access)"
+      "description": "Top-level account type: admin (platform), landowner (property provider), or client (end user)"
+    },
+    "operational_profiles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "landlord",
+          "vendor",
+          "lessor",
+          "tenant",
+          "purchaser",
+          "lessee"
+        ]
+      },
+      "description": "Operational roles this user can act as. Landowners: landlord/vendor/lessor. Clients: tenant/purchaser/lessee."
     },
     "approval_status": {
       "type": "string",
@@ -23,7 +39,7 @@
         "approved",
         "rejected"
       ],
-      "description": "Tenants start pending until a landlord approves their application; landlords are approved immediately"
+      "description": "Clients start pending until a landowner approves their application; landowners and admins are approved immediately"
     }
   },
   "required": [

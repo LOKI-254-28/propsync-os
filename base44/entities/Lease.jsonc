@@ -1,0 +1,131 @@
+{
+  "name": "Lease",
+  "type": "object",
+  "properties": {
+    "lease_reference": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
+    "unit_id": {
+      "type": "string"
+    },
+    "unit_number": {
+      "type": "string"
+    },
+    "listing_id": {
+      "type": "string"
+    },
+    "application_id": {
+      "type": "string"
+    },
+    "lessor_user_id": {
+      "type": "string"
+    },
+    "lessee_user_id": {
+      "type": "string"
+    },
+    "lessee_tenant_id": {
+      "type": "string"
+    },
+    "lessee_name": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "monthly_fee": {
+      "type": "number",
+      "default": 0
+    },
+    "security_deposit": {
+      "type": "number",
+      "default": 0
+    },
+    "payment_due_day": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Active",
+        "Expiring Soon",
+        "Terminated",
+        "Completed"
+      ],
+      "default": "Pending"
+    },
+    "agreement_document_url": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "property_id",
+    "start_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "data.lessee_user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "account_type": "landowner"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

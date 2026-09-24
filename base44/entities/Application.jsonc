@@ -76,6 +76,24 @@
     "submitted_date": {
       "type": "string",
       "format": "date"
+    },
+    "application_type": {
+      "type": "string",
+      "enum": [
+        "rental",
+        "purchase",
+        "lease"
+      ],
+      "default": "rental",
+      "description": "Type of transaction being applied for"
+    },
+    "listing_id": {
+      "type": "string",
+      "description": "The listing this application is for"
+    },
+    "owner_user_id": {
+      "type": "string",
+      "description": "The landowner who owns the property/listing"
     }
   },
   "required": [
@@ -92,14 +110,24 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
         }
       ]
     },
     "create": {},
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        }
+      ]
     },
     "delete": {
       "user_condition": {

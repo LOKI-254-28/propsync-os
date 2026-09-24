@@ -53,6 +53,16 @@
     },
     "profile_image": {
       "type": "string"
+    },
+    "profile_type": {
+      "type": "string",
+      "enum": [
+        "tenant",
+        "purchaser",
+        "lessee"
+      ],
+      "default": "tenant",
+      "description": "Client operational profile: tenant (renting), purchaser (buying), or lessee (leasing)"
     }
   },
   "required": [
@@ -68,13 +78,27 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "account_type": "landowner"
+          }
         }
       ]
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "account_type": "landowner"
+          }
+        }
+      ]
     },
     "update": {
       "$or": [
@@ -84,6 +108,11 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "account_type": "landowner"
           }
         }
       ]

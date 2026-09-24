@@ -87,6 +87,9 @@
     },
     "created_maintenance_id": {
       "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
     }
   },
   "required": [
@@ -103,14 +106,24 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
         }
       ]
     },
     "create": {},
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        }
+      ]
     },
     "delete": {
       "user_condition": {

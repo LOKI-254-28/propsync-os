@@ -124,7 +124,7 @@ const AuthenticatedApp = () => {
     }
   }
 
-  const isStaff = user?.role === 'admin';
+  const isLandlord = user?.account_type === 'landlord' || (!user?.account_type && user?.role === 'admin');
 
   return (
     <Routes>
@@ -133,7 +133,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/*" element={isStaff ? <LandlordRoutes /> : <TenantRoutes />} />
+        <Route path="/*" element={isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />
       </Route>
     </Routes>
   );

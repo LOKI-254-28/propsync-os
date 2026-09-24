@@ -60,8 +60,12 @@ export default function Applications() {
     });
     await base44.entities.Unit.update(unit.id, { status: "Occupied", current_tenancy_id: tenancy.id, current_tenant_name: tenantRec.full_name });
     await base44.entities.Application.update(review.id, { status: "Approved", landlord_response: response || "Application approved — tenancy created." });
+    const tUserId = tenantRec.user_id || review.tenant_user_id;
+    if (tUserId) {
+      try { await base44.entities.User.update(tUserId, { approval_status: "approved" }); } catch (e) {}
+    }
     await logAudit({ user: me, action: "Application Approved → Tenancy Created", entity: "Tenancy", entity_id: tenancy.id, entity_name: ref });
-    if (tenantRec.user_id || review.tenant_user_id) await notify({ recipient_user_id: tenantRec.user_id || review.tenant_user_id, type: "Tenancy", title: "Application Approved!", message: `Your tenancy for ${unit.unit_number} has been created.`, related_entity: "Tenancy", related_id: tenancy.id, action_link: "/portal/tenancy" });
+    if (tUserId) await notify({ recipient_user_id: tUserId, type: "Tenancy", title: "Application Approved!", message: `Your tenancy for ${unit.unit_number} has been created.`, related_entity: "Tenancy", related_id: tenancy.id, action_link: "/portal/tenancy" });
     setBusy(false);
     setReview(null);
     setResponse("");

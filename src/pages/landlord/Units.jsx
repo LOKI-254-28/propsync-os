@@ -28,7 +28,8 @@ export default function Units() {
   const create = async () => {
     if (!form.unit_number || !form.property_id) return;
     const prop = data.properties.find((p) => p.id === form.property_id);
-    const rec = await base44.entities.Unit.create({ ...form, property_name: prop?.name, status: "Available" });
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const rec = await base44.entities.Unit.create({ ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, status: "Available" });
     await logAudit({ user: await base44.auth.me(), action: "Unit Created", entity: "Unit", entity_id: rec.id, entity_name: rec.unit_number });
     setOpen(false);
     setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
@@ -63,13 +64,18 @@ export default function Units() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500">
-                <th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Property</th><th className="pb-2 font-medium">Type</th><th className="pb-2 font-medium">Tenant</th><th className="pb-2 text-right font-medium">Rent</th><th className="pb-2 text-right font-medium">Status</th>
+                <th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Property</th><th className="pb-2 font-medium">Invite Code</th><th className="pb-2 font-medium">Type</th><th className="pb-2 font-medium">Tenant</th><th className="pb-2 text-right font-medium">Rent</th><th className="pb-2 text-right font-medium">Status</th>
               </tr></thead>
               <tbody>
                 {filtered.map((u) => (
                   <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                     <td className="py-2.5 font-medium text-slate-800">{u.unit_number}</td>
                     <td className="py-2.5 text-slate-600">{u.property_name}</td>
+                    <td className="py-2.5">
+                      {u.invite_code ? (
+                        <button onClick={() => { navigator.clipboard?.writeText(u.invite_code); }} title="Click to copy" className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-600 hover:bg-slate-100">{u.invite_code}</button>
+                      ) : <span className="text-xs text-slate-400">—</span>}
+                    </td>
                     <td className="py-2.5 text-slate-600">{u.unit_type} · {u.bedrooms}BR</td>
                     <td className="py-2.5 text-slate-600">{u.current_tenant_name || "—"}</td>
                     <td className="py-2.5 text-right font-medium text-slate-900">{KES(u.monthly_rent)}</td>

@@ -7,6 +7,23 @@
         "admin",
         "user"
       ]
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "landlord",
+        "tenant"
+      ],
+      "description": "Self-selected at registration: landlord (admin access) or tenant (portal access)"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "description": "Tenants start pending until a landlord approves their application; landlords are approved immediately"
     }
   },
   "required": [

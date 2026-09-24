@@ -5,7 +5,7 @@ import { TENANT_NAV } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Leaf, LogOut, Menu, UserX,
+  Leaf, LogOut, Menu, UserX, Clock,
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
   ClipboardCheck, Bell, FolderOpen, MessageSquare, User, Circle,
 } from "lucide-react";
@@ -20,6 +20,7 @@ export default function TenantLayout({ children }) {
   const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
   const [notLinked, setNotLinked] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -27,6 +28,11 @@ export default function TenantLayout({ children }) {
     base44.auth.me().then(async (u) => {
       setUser(u);
       if (!u) return;
+      if (u.account_type === "tenant" && u.approval_status === "pending") {
+        setPendingApproval(true);
+        return;
+      }
+      setPendingApproval(false);
       if (u.role !== "admin") {
         try {
           const res = await base44.functions.invoke("linkTenant", {});
@@ -50,6 +56,23 @@ export default function TenantLayout({ children }) {
     await base44.auth.logout();
     window.location.href = "/login";
   };
+
+  if (pendingApproval) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+            <Clock className="h-7 w-7 text-amber-600" />
+          </div>
+          <h2 className="font-heading text-xl font-semibold text-slate-900">Awaiting approval</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Your application has been submitted. Your landlord will review it and approve your account. You'll get access to the tenant portal once approved. Please check back soon.
+          </p>
+          <Button onClick={handleLogout} variant="outline" className="mt-5">Sign out</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (notLinked) {
     return (
@@ -112,6 +135,7 @@ export default function TenantLayout({ children }) {
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:px-8">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {tenant?.full_name?.split(" ")[0] || "Tenant"}</div>
+          <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Tenant</span>
         </header>
         <main className="px-4 py-6 lg:px-8">{children}</main>
       </div>

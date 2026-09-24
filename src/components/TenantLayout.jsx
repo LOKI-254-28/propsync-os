@@ -3,8 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { TENANT_NAV } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
-  Leaf, LogOut, Menu,
+  Leaf, LogOut, Menu, UserX,
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
   ClipboardCheck, Bell, FolderOpen, MessageSquare, User, Circle,
 } from "lucide-react";
@@ -18,28 +19,54 @@ export default function TenantLayout({ children }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
+  const [notLinked, setNotLinked] = useState(false);
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(async (u) => {
       setUser(u);
-      if (u) {
-        const t = await base44.entities.Tenant.filter({ user_id: u.id }).then((r) => r[0]);
-        setTenant(t);
+      if (!u) return;
+      if (u.role !== "admin") {
+        try {
+          const res = await base44.functions.invoke("linkTenant", {});
+          if (res.data?.notFound) {
+            setNotLinked(true);
+            return;
+          }
+        } catch (e) {}
       }
+      const t = await base44.entities.Tenant.filter({ user_id: u.id }).then((r) => r[0]);
+      setTenant(t);
     }).catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || notLinked) return;
     base44.entities.Notification.filter({ recipient_user_id: user.id }).then((n) => setUnread(n.filter((x) => !x.read).length)).catch(() => {});
-  }, [user, location.pathname]);
+  }, [user, location.pathname, notLinked]);
 
   const handleLogout = async () => {
     await base44.auth.logout();
     window.location.href = "/login";
   };
+
+  if (notLinked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+            <UserX className="h-7 w-7 text-amber-600" />
+          </div>
+          <h2 className="font-heading text-xl font-semibold text-slate-900">Your profile isn't ready yet</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Your landlord hasn't linked your account to a tenant profile. Once they do, you'll see your tenancy, rent, and documents here. Please contact your landlord to complete setup.
+          </p>
+          <Button onClick={handleLogout} variant="outline" className="mt-5">Sign out</Button>
+        </div>
+      </div>
+    );
+  }
 
   const NavItem = ({ item }) => {
     const Icon = ICONS[item.icon] || Circle;

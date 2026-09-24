@@ -2,18 +2,32 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 
 // Loads the current tenant's own records only (RLS enforces isolation server-side too).
+// On first login, calls the linkTenant backend function to auto-link by email.
 export function useTenantData() {
   const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
+  const [notLinked, setNotLinked] = useState(false);
   const [data, setData] = useState({ tenancies: [], charges: [], payments: [], applications: [], maintenance: [], inspections: [], notices: [], documents: [], feedback: [], vacationRequests: [], units: [] });
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
+    setNotLinked(false);
     try {
       const me = await base44.auth.me();
       setUser(me);
       if (!me) return;
+      // Auto-link tenant profile on first login (non-admin only)
+      if (me.role !== "admin") {
+        try {
+          const res = await base44.functions.invoke("linkTenant", {});
+          if (res.data?.notFound) {
+            setNotLinked(true);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {}
+      }
       const t = await base44.entities.Tenant.filter({ user_id: me.id }).then((r) => r[0]);
       setTenant(t);
       const [tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units] = await Promise.all([
@@ -36,5 +50,5 @@ export function useTenantData() {
   };
 
   useEffect(() => { load(); }, []);
-  return { user, tenant, ...data, loading, reload: load, ensureTenant: load };
+  return { user, tenant, notLinked, ...data, loading, reload: load, ensureTenant: load };
 }

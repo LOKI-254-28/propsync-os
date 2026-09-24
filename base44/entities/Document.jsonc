@@ -2,26 +2,37 @@
   "name": "Document",
   "type": "object",
   "properties": {
-    "name": {
+    "title": {
       "type": "string"
     },
-    "document_type": {
+    "category": {
       "type": "string",
       "enum": [
-        "Identification",
-        "Tenancy Agreement",
-        "Renewal",
-        "Notice",
+        "Lease Agreement",
+        "ID/Passport",
+        "KRA PIN",
+        "Proof of Income",
+        "Employer Letter",
         "Receipt",
         "Inspection Report",
-        "Maintenance Report",
-        "Application Document",
+        "Insurance/Compliance Certificate",
+        "Title Deed",
         "Other"
       ],
       "default": "Other"
     },
-    "file_url": {
+    "file_uri": {
       "type": "string"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "size": {
+      "type": "number",
+      "default": 0
     },
     "property_id": {
       "type": "string"
@@ -53,43 +64,65 @@
     "payment_id": {
       "type": "string"
     },
+    "uploaded_by": {
+      "type": "string"
+    },
+    "uploaded_by_role": {
+      "type": "string",
+      "enum": [
+        "staff",
+        "tenant"
+      ],
+      "default": "staff"
+    },
     "visibility": {
       "type": "string",
       "enum": [
-        "Private",
-        "Tenant",
-        "Staff",
-        "Public"
+        "tenant_visible",
+        "staff_only"
       ],
-      "default": "Tenant"
+      "default": "staff_only"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verified",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "review_note": {
+      "type": "string"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date"
     },
     "date_uploaded": {
       "type": "string",
       "format": "date"
-    },
-    "uploader": {
-      "type": "string"
     },
     "notes": {
       "type": "string"
     }
   },
   "required": [
-    "name",
-    "document_type"
+    "title",
+    "category"
   ],
   "rls": {
     "read": {
       "$or": [
         {
-          "data.tenant_user_id": "{{user.id}}"
-        },
-        {
-          "data.visibility": {
-            "$in": [
-              "Public"
-            ]
-          }
+          "$and": [
+            {
+              "data.tenant_user_id": "{{user.id}}"
+            },
+            {
+              "data.visibility": "tenant_visible"
+            }
+          ]
         },
         {
           "user_condition": {
@@ -98,7 +131,11 @@
         }
       ]
     },
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "update": {
       "user_condition": {
         "role": "admin"

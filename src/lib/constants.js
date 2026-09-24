@@ -75,4 +75,9 @@ export const STATUS_COLORS = {
   Failed: "rose",
   Reversed: "rose",
   Cancelled: "slate",
+  pending: "amber",
+  verified: "emerald",
+  rejected: "rose",
+  tenant_visible: "emerald",
+  staff_only: "slate",
 };

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DoorOpen, Search, MapPin, Bed, Bath, Maximize } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 export default function BrowseUnits() {
   const t = useTenantData();
@@ -36,14 +37,18 @@ export default function BrowseUnits() {
         property_id: apply.property_id, property_name: apply.property_name, unit_id: apply.id, unit_number: apply.unit_number, monthly_rent: apply.monthly_rent,
         proposed_start_date: form.proposed_start_date, message: form.message, status: "Pending", submitted_date: todayISO(),
         reservation_expiry: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+        application_type: "rental", owner_user_id: apply.owner_user_id || "",
       });
       await base44.entities.Unit.update(apply.id, { status: "Application Pending" });
       await logAudit({ user: me, action: "Application Submitted", entity: "Application", entity_id: rec.id, entity_name: ref });
+      if (apply.owner_user_id) await notify({ recipient_user_id: apply.owner_user_id, type: "Application", title: "New Application", message: `New application for ${apply.unit_number} from ${tn?.full_name || me.email}.`, related_entity: "Application", related_id: rec.id, action_link: "/applications" });
+      toast({ title: "Success", description: "Application submitted successfully." });
       setApply(null);
       setForm({ proposed_start_date: todayISO(), message: "", monthly_income: 0, occupation: "", id_number: "" });
       t.reload();
     } catch (e) {
       setErr(e.message || "Failed to submit application. Please try again.");
+      toast({ title: "Error", description: e.message || "Failed to submit application.", variant: "destructive" });
     } finally {
       setBusy(false);
     }

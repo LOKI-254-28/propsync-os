@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Wrench, Search, Eye } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 const STATUSES = ["Submitted", "Acknowledged", "Assigned", "Scheduled", "In Progress", "Awaiting Parts", "Completed", "Closed", "Rejected"];
 
@@ -29,28 +30,35 @@ export default function Maintenance() {
   const save = async () => {
     if (!view) return;
     setBusy(true);
-    const me = await base44.auth.me();
-    const contractor = data.contractors.find((c) => c.id === update.contractor_id);
-    const public_updates = view.public_updates || [];
-    if (update.public_message) public_updates.push({ date: todayISO(), status: update.status, message: update.public_message });
-    const patch = {
-      status: update.status,
-      contractor_id: update.contractor_id,
-      contractor_name: contractor?.name || "",
-      estimated_cost: Number(update.estimated_cost),
-      approved_cost: Number(update.approved_cost),
-      actual_cost: Number(update.actual_cost),
-      internal_notes: update.internal_notes,
-      resolution_notes: update.resolution_notes,
-      public_updates,
-      completion_date: ["Completed", "Closed"].includes(update.status) ? todayISO() : view.completion_date,
-    };
-    await base44.entities.Maintenance.update(view.id, patch);
-    await logAudit({ user: me, action: "Maintenance Updated", entity: "Maintenance", entity_id: view.id, entity_name: view.ticket_number, new_value: patch });
-    if (view.tenant_user_id && update.public_message) await notify({ recipient_user_id: view.tenant_user_id, type: "Maintenance", title: "Maintenance Update", message: update.public_message, related_entity: "Maintenance", related_id: view.id, action_link: "/portal/maintenance" });
-    setBusy(false);
-    setView(null);
-    data.reload();
+    try {
+      const me = await base44.auth.me();
+      const contractor = data.contractors.find((c) => c.id === update.contractor_id);
+      const public_updates = view.public_updates || [];
+      if (update.public_message) public_updates.push({ date: todayISO(), status: update.status, message: update.public_message });
+      const patch = {
+        status: update.status,
+        contractor_id: update.contractor_id,
+        contractor_name: contractor?.name || "",
+        estimated_cost: Number(update.estimated_cost),
+        approved_cost: Number(update.approved_cost),
+        actual_cost: Number(update.actual_cost),
+        internal_notes: update.internal_notes,
+        resolution_notes: update.resolution_notes,
+        public_updates,
+        completion_date: ["Completed", "Closed"].includes(update.status) ? todayISO() : view.completion_date,
+      };
+      await base44.entities.Maintenance.update(view.id, patch);
+      await logAudit({ user: me, action: "Maintenance Updated", entity: "Maintenance", entity_id: view.id, entity_name: view.ticket_number, new_value: patch });
+      if (view.tenant_user_id && update.public_message) await notify({ recipient_user_id: view.tenant_user_id, type: "Maintenance", title: "Maintenance Update", message: update.public_message, related_entity: "Maintenance", related_id: view.id, action_link: "/portal/maintenance" });
+      toast({ title: "Success", description: "Maintenance ticket updated." });
+      setView(null);
+      data.reload();
+    } catch (err) {
+      console.error("[Maintenance update error]", err);
+      toast({ title: "Error", description: "Could not update maintenance ticket. Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

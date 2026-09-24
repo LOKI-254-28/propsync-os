@@ -57,14 +57,27 @@
     "status": {
       "type": "string",
       "enum": [
-        "Pending",
+        "Submitted",
         "Under Review",
+        "More Information Required",
+        "Information Provided",
+        "Site Visit Requested",
+        "Site Visit Scheduled",
+        "Site Visit Completed",
+        "Agreement Issued",
+        "Agreement Executed",
+        "Payment Requested",
+        "Payment Proof Submitted",
+        "Payment Verified",
         "Approved",
+        "Completed",
         "Rejected",
         "Withdrawn",
-        "Expired"
+        "Cancelled",
+        "Expired",
+        "Pending"
       ],
-      "default": "Pending"
+      "default": "Submitted"
     },
     "reservation_expiry": {
       "type": "string",
@@ -84,16 +97,84 @@
         "purchase",
         "lease"
       ],
-      "default": "rental",
-      "description": "Type of transaction being applied for"
+      "default": "rental"
     },
     "listing_id": {
-      "type": "string",
-      "description": "The listing this application is for"
+      "type": "string"
     },
     "owner_user_id": {
+      "type": "string"
+    },
+    "site_visit_date": {
       "type": "string",
-      "description": "The landowner who owns the property/listing"
+      "format": "date"
+    },
+    "site_visit_time": {
+      "type": "string"
+    },
+    "site_visit_status": {
+      "type": "string",
+      "enum": [
+        "",
+        "Requested",
+        "Proposed",
+        "Confirmed",
+        "Rescheduled",
+        "Completed",
+        "Cancelled",
+        "No Show"
+      ],
+      "default": ""
+    },
+    "site_visit_notes": {
+      "type": "string"
+    },
+    "agreement_url": {
+      "type": "string"
+    },
+    "agreement_executed_url": {
+      "type": "string"
+    },
+    "agreement_status": {
+      "type": "string",
+      "enum": [
+        "",
+        "Issued",
+        "Executed",
+        "Rejected"
+      ],
+      "default": ""
+    },
+    "payment_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "payment_due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_method": {
+      "type": "string"
+    },
+    "payment_instructions": {
+      "type": "string"
+    },
+    "payment_proof_url": {
+      "type": "string"
+    },
+    "payment_reference": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "",
+        "Requested",
+        "Proof Submitted",
+        "Verified",
+        "Rejected"
+      ],
+      "default": ""
     }
   },
   "required": [
@@ -126,6 +207,9 @@
         },
         {
           "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "data.tenant_user_id": "{{user.id}}"
         }
       ]
     },

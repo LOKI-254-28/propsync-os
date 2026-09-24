@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Receipt, Plus, Search } from "lucide-react";
+import { Receipt, Plus, Search, Loader2 } from "lucide-react";
+import { useCrud } from "@/lib/useCrud";
+import { toast } from "@/components/ui/use-toast";
 
 const CATEGORIES = ["Repairs", "Maintenance", "Utilities", "Management", "Security", "Cleaning", "Insurance", "Taxes/Fees", "Other"];
 
 export default function Expenses() {
   const data = usePortfolioData();
+  const { submitting, run } = useCrud();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ property_id: "", unit_id: "", category: "Maintenance", description: "", amount: 0, date: todayISO(), vendor: "", payment_reference: "", recurring: false, notes: "" });
@@ -25,15 +28,18 @@ export default function Expenses() {
   const byCategory = CATEGORIES.map((c) => ({ c, total: data.expenses.filter((e) => e.category === c).reduce((s, e) => s + Number(e.amount || 0), 0) })).filter((x) => x.total > 0);
 
   const create = async () => {
-    if (!form.property_id || !form.amount) return;
-    const me = await base44.auth.me();
-    const prop = data.properties.find((p) => p.id === form.property_id);
-    const unit = data.units.find((u) => u.id === form.unit_id);
-    const rec = await base44.entities.Expense.create({ ...form, property_name: prop?.name, unit_number: unit?.unit_number || "" });
-    await logAudit({ user: me, action: "Expense Recorded", entity: "Expense", entity_id: rec.id, new_value: { amount: form.amount, category: form.category } });
-    setOpen(false);
-    setForm({ property_id: "", unit_id: "", category: "Maintenance", description: "", amount: 0, date: todayISO(), vendor: "", payment_reference: "", recurring: false, notes: "" });
-    data.reload();
+    if (!form.property_id) { toast({ title: "Validation error", description: "Property is required.", variant: "destructive" }); return; }
+    if (!form.amount || Number(form.amount) <= 0) { toast({ title: "Validation error", description: "Amount must be greater than zero.", variant: "destructive" }); return; }
+    await run(async () => {
+      const me = await base44.auth.me();
+      const prop = data.properties.find((p) => p.id === form.property_id);
+      const unit = data.units.find((u) => u.id === form.unit_id);
+      const rec = await base44.entities.Expense.create({ ...form, amount: Number(form.amount), property_name: prop?.name, unit_number: unit?.unit_number || "", owner_user_id: prop?.owner_user_id || me?.id || "" });
+      await logAudit({ user: me, action: "Expense Recorded", entity: "Expense", entity_id: rec.id, new_value: { amount: form.amount, category: form.category } });
+      setOpen(false);
+      setForm({ property_id: "", unit_id: "", category: "Maintenance", description: "", amount: 0, date: todayISO(), vendor: "", payment_reference: "", recurring: false, notes: "" });
+      data.reload();
+    }, { success: "Expense recorded successfully.", error: "Could not record expense. Please try again." });
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -88,7 +94,7 @@ export default function Expenses() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.recurring} onChange={(e) => setForm({ ...form, recurring: e.target.checked })} className="rounded" /> Recurring expense</label>
             <Field label="Notes"><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></Field>
           </div>
-          <DialogFooter><Button onClick={create} className="bg-emerald-600 hover:bg-emerald-700">Record Expense</Button></DialogFooter>
+          <DialogFooter><Button onClick={create} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Recording...</> : "Record Expense"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

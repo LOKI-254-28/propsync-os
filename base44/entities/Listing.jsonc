@@ -42,12 +42,21 @@
     "status": {
       "type": "string",
       "enum": [
+        "Draft",
+        "Published",
+        "Reserved",
+        "Under Application",
+        "Rented",
+        "Leased",
+        "Sold",
+        "Withdrawn",
+        "Expired",
+        "Archived",
         "Active",
         "Pending",
-        "Closed",
-        "Expired"
+        "Closed"
       ],
-      "default": "Active"
+      "default": "Draft"
     },
     "date_listed": {
       "type": "string",

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { MessageSquare, Plus } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { notify } from "@/lib/finance";
 
 const TYPES = ["Suggestion", "Complaint", "General Feedback", "Improvement Idea"];
 
@@ -20,19 +22,28 @@ export default function MyFeedback() {
   const list = useMemo(() => [...t.feedback].sort((a, b) => new Date(b.date_submitted || b.created_date) - new Date(a.date_submitted || a.created_date)), [t.feedback]);
 
   const create = async () => {
-    if (!form.description) return;
+    if (!form.description) { toast({ title: "Validation error", description: "Description is required.", variant: "destructive" }); return; }
     setBusy(true);
-    const me = t.user;
-    const rec = await base44.entities.Feedback.create({
-      type: form.type, tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name,
-      property_id: activeTenancy?.property_id, property_name: activeTenancy?.property_name, unit_id: activeTenancy?.unit_id, unit_number: activeTenancy?.unit_number,
-      category: form.category, description: form.description, status: "Open", date_submitted: todayISO(),
-    });
-    await logAudit({ user: me, action: "Feedback Submitted", entity: "Feedback", entity_id: rec.id });
-    setBusy(false);
-    setOpen(false);
-    setForm({ type: "Suggestion", category: "", description: "" });
-    t.reload();
+    try {
+      const me = t.user;
+      const rec = await base44.entities.Feedback.create({
+        type: form.type, tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name,
+        property_id: activeTenancy?.property_id, property_name: activeTenancy?.property_name, unit_id: activeTenancy?.unit_id, unit_number: activeTenancy?.unit_number,
+        category: form.category, description: form.description, status: "Open", date_submitted: todayISO(),
+        owner_user_id: activeTenancy?.owner_user_id || "",
+      });
+      await logAudit({ user: me, action: "Feedback Submitted", entity: "Feedback", entity_id: rec.id });
+      if (activeTenancy?.owner_user_id) await notify({ recipient_user_id: activeTenancy.owner_user_id, type: "Feedback", title: "New Feedback", message: `${form.type}: ${form.description.slice(0, 80)}`, related_entity: "Feedback", related_id: rec.id, action_link: "/feedback" });
+      toast({ title: "Success", description: "Feedback submitted." });
+      setOpen(false);
+      setForm({ type: "Suggestion", category: "", description: "" });
+      t.reload();
+    } catch (err) {
+      console.error("[Feedback create error]", err);
+      toast({ title: "Error", description: "Could not submit feedback. Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

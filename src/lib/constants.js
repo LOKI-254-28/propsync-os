@@ -24,8 +24,9 @@ export const LANDLORD_NAV = [
 
 export const TENANT_NAV = [
   { label: "Dashboard", path: "/portal", icon: "LayoutDashboard" },
-  { label: "Browse Units", path: "/portal/units", icon: "DoorOpen" },
+  { label: "Browse Listings", path: "/portal/listings", icon: "Tag" },
   { label: "My Applications", path: "/portal/applications", icon: "FileText" },
+  { label: "My Properties", path: "/portal/my-properties", icon: "Building2" },
   { label: "My Tenancy", path: "/portal/tenancy", icon: "ScrollText" },
   { label: "Rent & Payments", path: "/portal/rent", icon: "Wallet" },
   { label: "Maintenance", path: "/portal/maintenance", icon: "Wrench" },
@@ -71,7 +72,6 @@ export const STATUS_COLORS = {
   Withdrawn: "slate",
   Expired: "slate",
   Open: "amber",
-  "Under Review": "amber",
   Responded: "blue",
   Resolved: "emerald",
   Successful: "emerald",
@@ -83,4 +83,29 @@ export const STATUS_COLORS = {
   rejected: "rose",
   tenant_visible: "emerald",
   staff_only: "slate",
+  // Listing statuses
+  Draft: "slate",
+  Published: "emerald",
+  Rented: "blue",
+  Leased: "blue",
+  Sold: "emerald",
+  // Application workflow statuses
+  "More Information Required": "amber",
+  "Information Provided": "blue",
+  "Site Visit Requested": "amber",
+  "Site Visit Scheduled": "blue",
+  "Site Visit Completed": "blue",
+  "Agreement Issued": "amber",
+  "Agreement Executed": "blue",
+  "Payment Requested": "amber",
+  "Payment Proof Submitted": "blue",
+  "Payment Verified": "emerald",
+  // Listing types
+  Rent: "blue",
+  Sale: "emerald",
+  Lease: "amber",
+  // Application types
+  rental: "blue",
+  purchase: "emerald",
+  lease: "amber",
 };

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { FileText, Check, X, MessageSquare, Search } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Applications() {
   const data = usePortfolioData();
@@ -25,52 +26,62 @@ export default function Applications() {
   const decide = async (status) => {
     if (!review) return;
     setBusy(true);
-    const me = await base44.auth.me();
-    const app = await base44.entities.Application.update(review.id, { status, landlord_response: response });
-    await logAudit({ user: me, action: `Application ${status}`, entity: "Application", entity_id: review.id, entity_name: review.application_reference, new_value: { response } });
-    if (review.tenant_user_id) await notify({ recipient_user_id: review.tenant_user_id, type: "Application", title: `Application ${status}`, message: `Your application for ${review.unit_number} has been ${status.toLowerCase()}.`, related_entity: "Application", related_id: review.id, action_link: "/portal/applications" });
-    if (status === "Rejected") {
-      // release unit reservation if it was held
-      const unit = data.units.find((u) => u.id === review.unit_id);
-      if (unit && unit.status === "Application Pending") await base44.entities.Unit.update(unit.id, { status: "Available" });
+    try {
+      const me = await base44.auth.me();
+      await base44.entities.Application.update(review.id, { status, landlord_response: response });
+      await logAudit({ user: me, action: `Application ${status}`, entity: "Application", entity_id: review.id, entity_name: review.application_reference, new_value: { response } });
+      if (review.tenant_user_id) await notify({ recipient_user_id: review.tenant_user_id, type: "Application", title: `Application ${status}`, message: `Your application for ${review.unit_number} has been ${status.toLowerCase()}.`, related_entity: "Application", related_id: review.id, action_link: "/portal/applications" });
+      if (status === "Rejected") {
+        const unit = data.units.find((u) => u.id === review.unit_id);
+        if (unit && unit.status === "Application Pending") await base44.entities.Unit.update(unit.id, { status: "Available" });
+      }
+      toast({ title: "Success", description: `Application ${status.toLowerCase()}.` });
+      setReview(null); setResponse(""); data.reload();
+    } catch (err) {
+      console.error("[Application decide error]", err);
+      toast({ title: "Error", description: `Could not ${status.toLowerCase()} application. Please try again.`, variant: "destructive" });
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
-    setReview(null);
-    setResponse("");
-    data.reload();
   };
 
   const approveAndCreateTenancy = async () => {
     if (!review) return;
     setBusy(true);
-    const me = await base44.auth.me();
-    const unit = data.units.find((u) => u.id === review.unit_id);
-    const tenant = data.tenants.find((t) => t.id === review.tenant_id) || data.tenants.find((t) => t.email === review.applicant_email);
-    let tenantRec = tenant;
-    if (!tenantRec) {
-      tenantRec = await base44.entities.Tenant.create({ full_name: review.applicant_name, email: review.applicant_email, phone: review.applicant_phone, id_number: review.id_number, occupation: review.occupation, monthly_income: review.monthly_income, user_id: review.tenant_user_id, status: "Active" });
+    try {
+      const me = await base44.auth.me();
+      const unit = data.units.find((u) => u.id === review.unit_id);
+      if (!unit) throw new Error("Unit not found for this application.");
+      const tenant = data.tenants.find((t) => t.id === review.tenant_id) || data.tenants.find((t) => t.email === review.applicant_email);
+      let tenantRec = tenant;
+      if (!tenantRec) {
+        tenantRec = await base44.entities.Tenant.create({ full_name: review.applicant_name, email: review.applicant_email, phone: review.applicant_phone, id_number: review.id_number, occupation: review.occupation, monthly_income: review.monthly_income, user_id: review.tenant_user_id, status: "Active" });
+      }
+      const ref = genRef("TEN");
+      const tenancy = await base44.entities.Tenancy.create({
+        tenancy_reference: ref, tenant_id: tenantRec.id, tenant_name: tenantRec.full_name, tenant_user_id: tenantRec.user_id || review.tenant_user_id,
+        property_id: unit.property_id, property_name: unit.property_name, unit_id: unit.id, unit_number: unit.unit_number,
+        start_date: review.proposed_start_date || todayISO(), expected_end_date: "",
+        monthly_rent: review.monthly_rent || unit.monthly_rent, security_deposit: unit.security_deposit, service_charge: unit.service_charge,
+        payment_due_day: 1, grace_period_days: 7, notice_period_days: 30, status: "Active",
+        owner_user_id: unit.owner_user_id || me.id,
+      });
+      await base44.entities.Unit.update(unit.id, { status: "Occupied", current_tenancy_id: tenancy.id, current_tenant_name: tenantRec.full_name });
+      await base44.entities.Application.update(review.id, { status: "Approved", landlord_response: response || "Application approved — tenancy created." });
+      const tUserId = tenantRec.user_id || review.tenant_user_id;
+      if (tUserId) {
+        try { await base44.entities.User.update(tUserId, { approval_status: "approved" }); } catch (e) {}
+      }
+      await logAudit({ user: me, action: "Application Approved → Tenancy Created", entity: "Tenancy", entity_id: tenancy.id, entity_name: ref });
+      if (tUserId) await notify({ recipient_user_id: tUserId, type: "Tenancy", title: "Application Approved!", message: `Your tenancy for ${unit.unit_number} has been created.`, related_entity: "Tenancy", related_id: tenancy.id, action_link: "/portal/tenancy" });
+      toast({ title: "Success", description: "Application approved — tenancy created." });
+      setReview(null); setResponse(""); data.reload();
+    } catch (err) {
+      console.error("[Application approve error]", err);
+      toast({ title: "Error", description: "Could not approve application and create tenancy. Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
     }
-    const ref = genRef("TEN");
-    const tenancy = await base44.entities.Tenancy.create({
-      tenancy_reference: ref, tenant_id: tenantRec.id, tenant_name: tenantRec.full_name, tenant_user_id: tenantRec.user_id || review.tenant_user_id,
-      property_id: unit.property_id, property_name: unit.property_name, unit_id: unit.id, unit_number: unit.unit_number,
-      start_date: review.proposed_start_date || todayISO(), expected_end_date: "",
-      monthly_rent: review.monthly_rent || unit.monthly_rent, security_deposit: unit.security_deposit, service_charge: unit.service_charge,
-      payment_due_day: 1, grace_period_days: 7, notice_period_days: 30, status: "Active",
-      owner_user_id: unit.owner_user_id || me.id,
-    });
-    await base44.entities.Unit.update(unit.id, { status: "Occupied", current_tenancy_id: tenancy.id, current_tenant_name: tenantRec.full_name });
-    await base44.entities.Application.update(review.id, { status: "Approved", landlord_response: response || "Application approved — tenancy created." });
-    const tUserId = tenantRec.user_id || review.tenant_user_id;
-    if (tUserId) {
-      try { await base44.entities.User.update(tUserId, { approval_status: "approved" }); } catch (e) {}
-    }
-    await logAudit({ user: me, action: "Application Approved → Tenancy Created", entity: "Tenancy", entity_id: tenancy.id, entity_name: ref });
-    if (tUserId) await notify({ recipient_user_id: tUserId, type: "Tenancy", title: "Application Approved!", message: `Your tenancy for ${unit.unit_number} has been created.`, related_entity: "Tenancy", related_id: tenancy.id, action_link: "/portal/tenancy" });
-    setBusy(false);
-    setReview(null);
-    setResponse("");
-    data.reload();
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

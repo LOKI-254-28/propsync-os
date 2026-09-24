@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DoorOpen, Plus, Search } from "lucide-react";
+import { DoorOpen, Plus, Search, Loader2 } from "lucide-react";
+import { useCrud } from "@/lib/useCrud";
+import { toast } from "@/components/ui/use-toast";
 
 const AMENITIES = ["Parking", "Balcony", "Lift", "Gym", "Pool", "Security", "Borehole", "Backup Generator", "Internet", "Garden"];
 
 export default function Units() {
   const data = usePortfolioData();
+  const { submitting, run } = useCrud();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filterProp, setFilterProp] = useState("");
@@ -26,14 +29,19 @@ export default function Units() {
   ), [data.units, search, filterProp, filterStatus]);
 
   const create = async () => {
-    if (!form.unit_number || !form.property_id) return;
-    const prop = data.properties.find((p) => p.id === form.property_id);
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const rec = await base44.entities.Unit.create({ ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, owner_user_id: prop?.owner_user_id || "", status: "Available" });
-    await logAudit({ user: await base44.auth.me(), action: "Unit Created", entity: "Unit", entity_id: rec.id, entity_name: rec.unit_number });
-    setOpen(false);
-    setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
-    data.reload();
+    if (!form.unit_number) { toast({ title: "Validation error", description: "Unit number is required.", variant: "destructive" }); return; }
+    if (!form.property_id) { toast({ title: "Validation error", description: "Please select a property for this unit.", variant: "destructive" }); return; }
+    await run(async () => {
+      const me = await base44.auth.me();
+      const prop = data.properties.find((p) => p.id === form.property_id);
+      if (!prop) throw new Error("Selected property not found.");
+      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const rec = await base44.entities.Unit.create({ ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, owner_user_id: prop?.owner_user_id || me?.id || "", status: "Available" });
+      await logAudit({ user: me, action: "Unit Created", entity: "Unit", entity_id: rec.id, entity_name: rec.unit_number });
+      setOpen(false);
+      setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
+      data.reload();
+    }, { success: "Unit created successfully.", error: "Could not create unit. Please try again." });
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -124,7 +132,7 @@ export default function Units() {
             </div>
             <div className="col-span-2"><Field label="Description"><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
           </div>
-          <DialogFooter><Button onClick={create} className="bg-emerald-600 hover:bg-emerald-700">Create Unit</Button></DialogFooter>
+          <DialogFooter><Button onClick={create} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Creating...</> : "Create Unit"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

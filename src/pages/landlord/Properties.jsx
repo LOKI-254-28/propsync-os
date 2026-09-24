@@ -9,10 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Building2, Plus, Search, MapPin } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Loader2 } from "lucide-react";
+import { useCrud } from "@/lib/useCrud";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Properties() {
   const data = usePortfolioData();
+  const { submitting, run } = useCrud();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "" });
@@ -20,13 +23,15 @@ export default function Properties() {
   const filtered = data.properties.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()) || p.code?.toLowerCase().includes(search.toLowerCase()));
 
   const create = async () => {
-    if (!form.name) return;
-    const me = await base44.auth.me();
-    const rec = await base44.entities.Property.create({ ...form, code: form.code || genRef("PRP"), status: "Active", currency: "KES", owner_user_id: me?.id || "" });
-    await logAudit({ user: await base44.auth.me(), action: "Property Created", entity: "Property", entity_id: rec.id, entity_name: rec.name });
-    setOpen(false);
-    setForm({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "" });
-    data.reload();
+    if (!form.name) { toast({ title: "Validation error", description: "Property name is required.", variant: "destructive" }); return; }
+    await run(async () => {
+      const me = await base44.auth.me();
+      const rec = await base44.entities.Property.create({ ...form, code: form.code || genRef("PRP"), status: "Active", currency: "KES", owner_user_id: me?.id || "" });
+      await logAudit({ user: me, action: "Property Created", entity: "Property", entity_id: rec.id, entity_name: rec.name });
+      setOpen(false);
+      setForm({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "" });
+      data.reload();
+    }, { success: "Property created successfully.", error: "Could not create property. Please try again." });
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -85,7 +90,7 @@ export default function Properties() {
             <Field label="Contact email"><Input value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} /></Field>
             <div className="col-span-2"><Field label="Description"><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
           </div>
-          <DialogFooter><Button onClick={create} className="bg-emerald-600 hover:bg-emerald-700">Create Property</Button></DialogFooter>
+          <DialogFooter><Button onClick={create} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Creating...</> : "Create Property"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -7,7 +7,7 @@ export function useTenantData() {
   const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
   const [notLinked, setNotLinked] = useState(false);
-  const [data, setData] = useState({ tenancies: [], charges: [], payments: [], applications: [], maintenance: [], inspections: [], notices: [], documents: [], feedback: [], vacationRequests: [], units: [] });
+  const [data, setData] = useState({ tenancies: [], charges: [], payments: [], applications: [], maintenance: [], inspections: [], notices: [], documents: [], feedback: [], vacationRequests: [], units: [], listings: [], saleTransactions: [], leases: [] });
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -30,7 +30,7 @@ export function useTenantData() {
       }
       const t = await base44.entities.Tenant.filter({ user_id: me.id }).then((r) => r[0]);
       setTenant(t);
-      const [tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units] = await Promise.all([
+      const [tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units, listings, saleTransactions, leases] = await Promise.all([
         base44.entities.Tenancy.filter({ tenant_user_id: me.id }),
         base44.entities.RentCharge.filter({ tenant_user_id: me.id }),
         base44.entities.Payment.filter({ tenant_user_id: me.id }),
@@ -42,8 +42,11 @@ export function useTenantData() {
         base44.entities.Feedback.filter({ tenant_user_id: me.id }),
         base44.entities.VacationRequest.filter({ tenant_user_id: me.id }),
         base44.entities.Unit.list("-created_date", 500),
+        base44.entities.Listing.filter({ status: "Published" }),
+        base44.entities.SaleTransaction.filter({ buyer_user_id: me.id }),
+        base44.entities.Lease.filter({ lessee_user_id: me.id }),
       ]);
-      setData({ tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units });
+      setData({ tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units, listings, saleTransactions, leases });
     } finally {
       setLoading(false);
     }

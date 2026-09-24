@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { LogOut, Plus, Eye } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { notify } from "@/lib/finance";
 
 export default function MyVacation() {
   const t = useTenantData();
@@ -19,23 +21,33 @@ export default function MyVacation() {
   const list = useMemo(() => [...t.vacationRequests].sort((a, b) => new Date(b.date_submitted || b.created_date) - new Date(a.date_submitted || a.created_date)), [t.vacationRequests]);
 
   const create = async () => {
-    if (!form.proposed_vacation_date || !activeTenancy) return;
+    if (!form.proposed_vacation_date) { toast({ title: "Validation error", description: "Proposed vacation date is required.", variant: "destructive" }); return; }
+    if (!activeTenancy) { toast({ title: "Error", description: "You need an active tenancy to submit a notice.", variant: "destructive" }); return; }
     setBusy(true);
-    const me = t.user;
-    const noticeExpiry = new Date(new Date().getTime() + (activeTenancy.notice_period_days || 30) * 86400000).toISOString().slice(0, 10);
-    const ref = genRef("VAC");
-    const rec = await base44.entities.VacationRequest.create({
-      request_reference: ref, type: form.type, tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name,
-      tenancy_id: activeTenancy.id, tenancy_reference: activeTenancy.tenancy_reference, property_id: activeTenancy.property_id, property_name: activeTenancy.property_name, unit_id: activeTenancy.unit_id, unit_number: activeTenancy.unit_number,
-      date_submitted: todayISO(), proposed_vacation_date: form.proposed_vacation_date, notice_period_days: activeTenancy.notice_period_days, calculated_notice_expiry: noticeExpiry, reason: form.reason, status: "Submitted",
-    });
-    await base44.entities.Tenancy.update(activeTenancy.id, { status: "Notice Given" });
-    await base44.entities.Unit.update(activeTenancy.unit_id, { status: "Notice Given" });
-    await logAudit({ user: me, action: "Vacation Notice Submitted", entity: "VacationRequest", entity_id: rec.id, entity_name: ref });
-    setBusy(false);
-    setOpen(false);
-    setForm({ type: "Vacation Notice", proposed_vacation_date: "", reason: "" });
-    t.reload();
+    try {
+      const me = t.user;
+      const noticeExpiry = new Date(new Date().getTime() + (activeTenancy.notice_period_days || 30) * 86400000).toISOString().slice(0, 10);
+      const ref = genRef("VAC");
+      const rec = await base44.entities.VacationRequest.create({
+        request_reference: ref, type: form.type, tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name,
+        tenancy_id: activeTenancy.id, tenancy_reference: activeTenancy.tenancy_reference, property_id: activeTenancy.property_id, property_name: activeTenancy.property_name, unit_id: activeTenancy.unit_id, unit_number: activeTenancy.unit_number,
+        date_submitted: todayISO(), proposed_vacation_date: form.proposed_vacation_date, notice_period_days: activeTenancy.notice_period_days, calculated_notice_expiry: noticeExpiry, reason: form.reason, status: "Submitted",
+        owner_user_id: activeTenancy.owner_user_id || "",
+      });
+      await base44.entities.Tenancy.update(activeTenancy.id, { status: "Notice Given" });
+      await base44.entities.Unit.update(activeTenancy.unit_id, { status: "Notice Given" });
+      await logAudit({ user: me, action: "Vacation Notice Submitted", entity: "VacationRequest", entity_id: rec.id, entity_name: ref });
+      if (activeTenancy.owner_user_id) await notify({ recipient_user_id: activeTenancy.owner_user_id, type: "Vacation", title: "Vacation Notice Submitted", message: `${t.tenant?.full_name} submitted a ${form.type}.`, related_entity: "VacationRequest", related_id: rec.id, action_link: "/vacation-requests" });
+      toast({ title: "Success", description: "Vacation notice submitted." });
+      setOpen(false);
+      setForm({ type: "Vacation Notice", proposed_vacation_date: "", reason: "" });
+      t.reload();
+    } catch (err) {
+      console.error("[Vacation create error]", err);
+      toast({ title: "Error", description: "Could not submit vacation notice. Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Wrench, Plus, Eye } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 const CATEGORIES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "Other"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
@@ -23,20 +24,30 @@ export default function MyMaintenance() {
   const list = useMemo(() => [...t.maintenance].sort((a, b) => new Date(b.date_reported || b.created_date) - new Date(a.date_reported || a.created_date)), [t.maintenance]);
 
   const create = async () => {
-    if (!form.title || !activeTenancy) return;
+    if (!form.title) { toast({ title: "Validation error", description: "Title is required.", variant: "destructive" }); return; }
+    if (!activeTenancy) { toast({ title: "Error", description: "You need an active tenancy to report maintenance.", variant: "destructive" }); return; }
     setBusy(true);
-    const me = t.user;
-    const ref = genRef("MNT");
-    const rec = await base44.entities.Maintenance.create({
-      ticket_number: ref, title: form.title, description: form.description, category: form.category, priority: form.priority, date_reported: todayISO(),
-      property_id: activeTenancy.property_id, property_name: activeTenancy.property_name, unit_id: activeTenancy.unit_id, unit_number: activeTenancy.unit_number,
-      tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name, tenancy_id: activeTenancy.id, status: "Submitted", public_updates: [],
-    });
-    await logAudit({ user: me, action: "Maintenance Submitted", entity: "Maintenance", entity_id: rec.id, entity_name: ref });
-    setBusy(false);
-    setOpen(false);
-    setForm({ title: "", description: "", category: "Plumbing", priority: "Medium" });
-    t.reload();
+    try {
+      const me = t.user;
+      const ref = genRef("MNT");
+      const rec = await base44.entities.Maintenance.create({
+        ticket_number: ref, title: form.title, description: form.description, category: form.category, priority: form.priority, date_reported: todayISO(),
+        property_id: activeTenancy.property_id, property_name: activeTenancy.property_name, unit_id: activeTenancy.unit_id, unit_number: activeTenancy.unit_number,
+        tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name, tenancy_id: activeTenancy.id, status: "Submitted", public_updates: [],
+        owner_user_id: activeTenancy.owner_user_id || "",
+      });
+      await logAudit({ user: me, action: "Maintenance Submitted", entity: "Maintenance", entity_id: rec.id, entity_name: ref });
+      if (activeTenancy.owner_user_id) await notify({ recipient_user_id: activeTenancy.owner_user_id, type: "Maintenance", title: "New Maintenance Request", message: `${form.title} — ${activeTenancy.unit_number}`, related_entity: "Maintenance", related_id: rec.id, action_link: "/maintenance" });
+      toast({ title: "Success", description: "Maintenance request submitted." });
+      setOpen(false);
+      setForm({ title: "", description: "", category: "Plumbing", priority: "Medium" });
+      t.reload();
+    } catch (err) {
+      console.error("[Maintenance create error]", err);
+      toast({ title: "Error", description: "Could not submit maintenance request. Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

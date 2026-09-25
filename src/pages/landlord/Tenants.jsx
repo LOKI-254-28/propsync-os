@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Users, Plus, Search, Phone, Mail } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { secureCreate } from "@/lib/secureCreate";
 
 export default function Tenants() {
   const data = usePortfolioData();
@@ -27,7 +28,7 @@ export default function Tenants() {
 
   const create = async () => {
     if (!form.full_name) return;
-    await base44.entities.Tenant.create({ ...form, status: "Active" });
+    await secureCreate("Tenant", { ...form, status: "Active" });
     setOpen(false);
     setForm({ full_name: "", email: "", phone: "", id_number: "", occupation: "", employer: "", monthly_income: 0, emergency_contact_name: "", emergency_contact_phone: "", current_address: "", notes: "" });
     data.reload();

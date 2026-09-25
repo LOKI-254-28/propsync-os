@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { usePortfolioData } from "@/lib/useAppData";
-import { propertyStats, KES, genRef, logAudit } from "@/lib/finance";
+import { propertyStats, KES, genRef } from "@/lib/finance";
 import { base44 } from "@/api/base44Client";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,13 +26,11 @@ export default function Properties() {
   const create = async () => {
     if (!form.name) { toast({ title: "Validation error", description: "Property name is required.", variant: "destructive" }); return; }
     await run(async () => {
-      const me = await base44.auth.me();
-      const rec = await base44.entities.Property.create({ ...form, code: form.code || genRef("PRP"), status: "Active", currency: "KES", owner_user_id: me?.id || "" });
-      await logAudit({ user: me, action: "Property Created", entity: "Property", entity_id: rec.id, entity_name: rec.name });
+      await secureCreate("Property", { ...form, code: form.code || genRef("PRP"), status: "Active", currency: "KES" });
       setOpen(false);
       setForm({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "" });
       data.reload();
-    }, { success: "Property created successfully.", error: "Could not create property. Please try again." });
+    }, { success: "Property created successfully.", error: "Could not create property. Your account may still be awaiting approval." });
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

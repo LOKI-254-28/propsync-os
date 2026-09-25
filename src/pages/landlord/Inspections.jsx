@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import { genRef, logAudit, notify, todayISO } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,13 +27,12 @@ export default function Inspections() {
     const unit = data.units.find((u) => u.id === form.unit_id);
     const tenancy = data.tenancies.find((t) => t.unit_id === unit.id && ["Active", "Expiring Soon", "Notice Given"].includes(t.status));
     const ref = genRef("INS");
-    const rec = await base44.entities.Inspection.create({
+    const rec = await secureCreate("Inspection", {
       inspection_reference: ref, type: form.type,
       property_id: unit.property_id, property_name: unit.property_name, unit_id: unit.id, unit_number: unit.unit_number,
       tenancy_id: tenancy?.id, tenant_id: tenancy?.tenant_id, tenant_user_id: tenancy?.tenant_user_id, tenant_name: tenancy?.tenant_name,
       scheduled_date: form.scheduled_date, status: "Scheduled", notes: form.notes,
     });
-    await logAudit({ user: me, action: "Inspection Scheduled", entity: "Inspection", entity_id: rec.id, entity_name: ref });
     if (tenancy?.tenant_user_id) await notify({ recipient_user_id: tenancy.tenant_user_id, type: "Inspection", title: "Inspection Scheduled", message: `A ${form.type} inspection is scheduled for ${form.scheduled_date}.`, related_entity: "Inspection", related_id: rec.id, action_link: "/portal/inspections" });
     setBusy(false);
     setOpen(false);

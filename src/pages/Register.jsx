@@ -80,7 +80,7 @@ export default function Register() {
         full_name: fullName,
         account_type: accountType,
         operational_profiles: profiles,
-        approval_status: accountType === "landowner" ? "approved" : "pending",
+        approval_status: "pending",
       });
       if (accountType === "client") {
         let unit = null;

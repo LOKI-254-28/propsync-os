@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
-import { KES, genRef, logAudit, todayISO, daysBetween, notify } from "@/lib/finance";
+import { KES, genRef, todayISO, daysBetween, notify } from "@/lib/finance";
 import { base44 } from "@/api/base44Client";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field, Money } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,7 @@ export default function Tenancies() {
     const tenant = data.tenants.find((t) => t.id === form.tenant_id);
     const unit = data.units.find((u) => u.id === form.unit_id);
     const ref = genRef("TEN");
-    const rec = await base44.entities.Tenancy.create({
+    const rec = await secureCreate("Tenancy", {
       tenancy_reference: ref,
       tenant_id: tenant.id, tenant_name: tenant.full_name, tenant_user_id: tenant.user_id,
       property_id: unit.property_id, property_name: unit.property_name,
@@ -38,7 +39,6 @@ export default function Tenancies() {
       status: "Active",
     });
     await base44.entities.Unit.update(unit.id, { status: "Occupied", current_tenancy_id: rec.id, current_tenant_name: tenant.full_name });
-    await logAudit({ user: await base44.auth.me(), action: "Tenancy Created", entity: "Tenancy", entity_id: rec.id, entity_name: ref });
     if (tenant.user_id) await notify({ recipient_user_id: tenant.user_id, type: "Tenancy", title: "Tenancy Activated", message: `Your tenancy for ${unit.unit_number} has been activated.`, related_entity: "Tenancy", related_id: rec.id, action_link: "/portal/tenancy" });
     setOpen(false);
     setForm({ tenant_id: "", unit_id: "", start_date: todayISO(), expected_end_date: "", monthly_rent: 0, security_deposit: 0, service_charge: 0, payment_due_day: 1, grace_period_days: 7, notice_period_days: 30 });

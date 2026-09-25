@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import { KES, genRef, logAudit, todayISO } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,13 +48,12 @@ export default function Listings() {
         });
         await logAudit({ user: me, action: "Listing Updated", entity: "Listing", entity_id: editRec.id, entity_name: editRec.listing_reference });
       } else {
-        const rec = await base44.entities.Listing.create({
+        await secureCreate("Listing", {
           listing_reference: genRef("LST"), property_id: form.property_id, property_name: prop?.name || "",
           unit_id: form.unit_id, unit_number: unit?.unit_number || "",
           listing_type: form.listing_type, price: Number(form.price), description: form.description,
-          status: "Draft", date_listed: todayISO(), owner_user_id: me?.id || "",
+          status: "Draft", date_listed: todayISO(),
         });
-        await logAudit({ user: me, action: "Listing Created", entity: "Listing", entity_id: rec.id, entity_name: rec.listing_reference });
       }
       setOpen(false); setForm(empty); setEditRec(null); data.reload();
     }, { success: editRec ? "Listing updated successfully." : "Listing created successfully.", error: "Could not save listing. Please try again." });

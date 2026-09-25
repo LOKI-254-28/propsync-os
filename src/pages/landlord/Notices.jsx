@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
-import { genRef, logAudit, notify, todayISO } from "@/lib/finance";
+import { genRef, notify, todayISO } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,13 +29,12 @@ export default function Notices() {
     const me = await base44.auth.me();
     const tenancy = data.tenancies.find((t) => t.id === form.tenancy_id);
     const ref = genRef("NOT");
-    const rec = await base44.entities.Notice.create({
+    const rec = await secureCreate("Notice", {
       notice_reference: ref, type: form.type, date_issued: todayISO(), sender: me?.email || "Landlord",
       property_id: tenancy?.property_id, property_name: tenancy?.property_name, unit_id: tenancy?.unit_id, unit_number: tenancy?.unit_number,
       tenant_id: tenancy?.tenant_id, tenant_user_id: tenancy?.tenant_user_id, tenant_name: tenancy?.tenant_name, tenancy_id: tenancy?.id,
       subject: form.subject, content: form.content, status: "Issued", channel: form.channel, acknowledged: false,
     });
-    await logAudit({ user: me, action: "Notice Issued", entity: "Notice", entity_id: rec.id, entity_name: ref, new_value: { type: form.type, subject: form.subject } });
     if (tenancy?.tenant_user_id) await notify({ recipient_user_id: tenancy.tenant_user_id, type: "Notice", title: form.subject, message: form.content, related_entity: "Notice", related_id: rec.id, action_link: "/portal/notices" });
     setBusy(false);
     setOpen(false);

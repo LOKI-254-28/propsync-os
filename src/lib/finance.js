@@ -121,35 +121,13 @@ export function propertyStats(property, { units, tenancies, charges, payments, e
   };
 }
 
-// Generate monthly rent charges for active tenancies (no duplicates)
+// Generate monthly rent charges for active tenancies (no duplicates).
+// Delegates to the generateRentCharges backend function which validates
+// permissions and stamps owner_user_id server-side.
 export async function generateMonthlyCharges({ tenancies, existingCharges, billingPeriod, dueDay = 1 }) {
-  const [y, m] = billingPeriod.split("-").map(Number);
-  const dueDate = `${y}-${String(m).padStart(2, "0")}-${String(dueDay).padStart(2, "0")}`;
-  const existing = new Set(existingCharges.filter((c) => c.billing_period === billingPeriod).map((c) => c.tenancy_id));
-  const toCreate = [];
-  for (const t of tenancies) {
-    if (!["Active", "Expiring Soon", "Notice Given"].includes(t.status)) continue;
-    if (existing.has(t.id)) continue;
-    toCreate.push({
-      tenancy_id: t.id,
-      tenant_id: t.tenant_id,
-      tenant_user_id: t.tenant_user_id,
-      tenant_name: t.tenant_name,
-      property_id: t.property_id,
-      property_name: t.property_name,
-      unit_id: t.unit_id,
-      unit_number: t.unit_number,
-      billing_period: billingPeriod,
-      due_date: dueDate,
-      amount: Number(t.monthly_rent || 0) + Number(t.service_charge || 0),
-      amount_paid: 0,
-      outstanding: Number(t.monthly_rent || 0) + Number(t.service_charge || 0),
-      status: "Unpaid",
-      owner_user_id: t.owner_user_id || "",
-    });
-  }
-  if (toCreate.length) await base44.entities.RentCharge.bulkCreate(toCreate);
-  return { created: toCreate.length, skipped: existing.size };
+  const tenancyIds = tenancies.map((t) => t.id);
+  const response = await base44.functions.invoke("generateRentCharges", { billingPeriod, dueDay, tenancyIds });
+  return response.data;
 }
 
 // Record a payment and allocate it across outstanding charges (oldest first)

@@ -3,8 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { LANDLORD_NAV } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
-  Leaf, LogOut, Bell, Menu,
+  Leaf, LogOut, Bell, Menu, Clock,
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, FolderOpen, Receipt, BarChart3,
   Columns3, BellRing, ShieldCheck, Settings as SettingsIcon, Circle,
@@ -23,9 +24,15 @@ export default function Layout({ children }) {
   const [settings, setSettings] = useState(null);
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then((u) => {
+      setUser(u);
+      if (u && u.account_type === 'landowner' && u.approval_status === 'pending') {
+        setPendingApproval(true);
+      }
+    }).catch(() => {});
     base44.entities.Settings.list().then((s) => setSettings(s[0])).catch(() => {});
   }, []);
 
@@ -40,6 +47,23 @@ export default function Layout({ children }) {
     await base44.auth.logout();
     window.location.href = "/login";
   };
+
+  if (pendingApproval) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+            <Clock className="h-7 w-7 text-amber-600" />
+          </div>
+          <h2 className="font-heading text-xl font-semibold text-slate-900">Awaiting admin approval</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Your landowner registration has been submitted. An administrator will review your application and approve your account. You will be able to create properties and manage your portfolio once approved.
+          </p>
+          <Button onClick={handleLogout} variant="outline" className="mt-5">Sign out</Button>
+        </div>
+      </div>
+    );
+  }
 
   const NavItem = ({ item }) => {
     const Icon = ICONS[item.icon] || Circle;

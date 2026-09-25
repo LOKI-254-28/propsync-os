@@ -1,8 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { usePortfolioData } from "@/lib/useAppData";
+import { base44 } from "@/api/base44Client";
 import { portfolioStats, KES, monthKey, monthLabel } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
+import AdminApprovalSection from "@/components/AdminApprovalSection";
 import {
   Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, TrendingUp,
   Receipt, Columns3, ArrowRight, ClipboardCheck, FileText, ScrollText,
@@ -11,6 +13,10 @@ import {
 export default function Dashboard() {
   const data = usePortfolioData();
   const stats = useMemo(() => portfolioStats(data), [data]);
+  const [user, setUser] = useState(null);
+  const isAdmin = user?.role === "admin" || user?.account_type === "admin";
+
+  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
@@ -21,7 +27,9 @@ export default function Dashboard() {
 
   return (
     <div>
-      <PageHeader title="Portfolio Dashboard" description="Live performance across all properties — every figure is computed from real records." />
+      <PageHeader title={isAdmin ? "Admin Dashboard" : "Portfolio Dashboard"} description={isAdmin ? "Platform overview and pending account approvals." : "Live performance across all properties — every figure is computed from real records."} />
+
+      {isAdmin && <AdminApprovalSection />}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Properties" value={stats.propertiesCount} icon={Building2} accent="emerald" />

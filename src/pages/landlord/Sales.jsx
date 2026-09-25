@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import { KES, genRef, logAudit } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,13 +46,12 @@ export default function Sales() {
         });
         await logAudit({ user: me, action: "Sale Updated", entity: "SaleTransaction", entity_id: editRec.id, entity_name: editRec.transaction_reference });
       } else {
-        const rec = await base44.entities.SaleTransaction.create({
+        await secureCreate("SaleTransaction", {
           transaction_reference: genRef("SAL"), property_id: form.property_id, property_name: prop?.name || "",
           unit_id: form.unit_id, unit_number: unit?.unit_number || "", buyer_name: form.buyer_name,
           sale_price: Number(form.sale_price), deposit_paid: Number(form.deposit_paid),
-          balance: Number(form.sale_price) - Number(form.deposit_paid), status: "Pending", owner_user_id: me?.id || "",
+          balance: Number(form.sale_price) - Number(form.deposit_paid), status: "Pending",
         });
-        await logAudit({ user: me, action: "Sale Created", entity: "SaleTransaction", entity_id: rec.id, entity_name: rec.transaction_reference });
       }
       setOpen(false); setForm(empty); setEditRec(null); data.reload();
     }, { success: editRec ? "Sale updated successfully." : "Sale created successfully.", error: "Could not save sale. Please try again." });

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
-import { KES, genRef, logAudit } from "@/lib/finance";
+import { KES, genRef } from "@/lib/finance";
 import { base44 } from "@/api/base44Client";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,16 +33,14 @@ export default function Units() {
     if (!form.unit_number) { toast({ title: "Validation error", description: "Unit number is required.", variant: "destructive" }); return; }
     if (!form.property_id) { toast({ title: "Validation error", description: "Please select a property for this unit.", variant: "destructive" }); return; }
     await run(async () => {
-      const me = await base44.auth.me();
       const prop = data.properties.find((p) => p.id === form.property_id);
       if (!prop) throw new Error("Selected property not found.");
       const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const rec = await base44.entities.Unit.create({ ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, owner_user_id: prop?.owner_user_id || me?.id || "", status: "Available" });
-      await logAudit({ user: me, action: "Unit Created", entity: "Unit", entity_id: rec.id, entity_name: rec.unit_number });
+      await secureCreate("Unit", { ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, status: "Available" });
       setOpen(false);
       setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
       data.reload();
-    }, { success: "Unit created successfully.", error: "Could not create unit. Please try again." });
+    }, { success: "Unit created successfully.", error: "Could not create unit. Your account may still be awaiting approval." });
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

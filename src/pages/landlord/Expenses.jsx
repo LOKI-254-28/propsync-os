@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
-import { KES, logAudit, todayISO } from "@/lib/finance";
+import { KES, todayISO } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatCard, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,15 +32,13 @@ export default function Expenses() {
     if (!form.property_id) { toast({ title: "Validation error", description: "Property is required.", variant: "destructive" }); return; }
     if (!form.amount || Number(form.amount) <= 0) { toast({ title: "Validation error", description: "Amount must be greater than zero.", variant: "destructive" }); return; }
     await run(async () => {
-      const me = await base44.auth.me();
       const prop = data.properties.find((p) => p.id === form.property_id);
       const unit = data.units.find((u) => u.id === form.unit_id);
-      const rec = await base44.entities.Expense.create({ ...form, amount: Number(form.amount), property_name: prop?.name, unit_number: unit?.unit_number || "", owner_user_id: prop?.owner_user_id || me?.id || "" });
-      await logAudit({ user: me, action: "Expense Recorded", entity: "Expense", entity_id: rec.id, new_value: { amount: form.amount, category: form.category } });
+      await secureCreate("Expense", { ...form, amount: Number(form.amount), property_name: prop?.name, unit_number: unit?.unit_number || "" });
       setOpen(false);
       setForm({ property_id: "", unit_id: "", category: "Maintenance", description: "", amount: 0, date: todayISO(), vendor: "", payment_reference: "", recurring: false, notes: "" });
       data.reload();
-    }, { success: "Expense recorded successfully.", error: "Could not record expense. Please try again." });
+    }, { success: "Expense recorded successfully.", error: "Could not record expense. Your account may still be awaiting approval." });
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;

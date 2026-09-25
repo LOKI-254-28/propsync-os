@@ -81,9 +81,7 @@
           "data.owner_user_id": "{{user.id}}"
         },
         {
-          "user_condition": {
-            "account_type": "client"
-          }
+          "data.status": "Active"
         }
       ]
     },

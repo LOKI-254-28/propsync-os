@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import { KES, genRef, logAudit, notify, todayISO } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,19 +84,19 @@ export default function Applications() {
       const unit = data.units.find((u) => u.id === review.unit_id);
       let tenantRec = data.tenants.find((t) => t.id === review.tenant_id) || data.tenants.find((t) => t.email === review.applicant_email);
       if (!tenantRec) {
-        tenantRec = await base44.entities.Tenant.create({ full_name: review.applicant_name, email: review.applicant_email, phone: review.applicant_phone, id_number: review.id_number, occupation: review.occupation, monthly_income: review.monthly_income, user_id: review.tenant_user_id, status: "Active", profile_type: review.application_type === "purchase" ? "purchaser" : review.application_type === "lease" ? "lessee" : "tenant" });
+        tenantRec = await secureCreate("Tenant", { full_name: review.applicant_name, email: review.applicant_email, phone: review.applicant_phone, id_number: review.id_number, occupation: review.occupation, monthly_income: review.monthly_income, user_id: review.tenant_user_id, status: "Active", profile_type: review.application_type === "purchase" ? "purchaser" : review.application_type === "lease" ? "lessee" : "tenant" });
       }
       const tUserId = tenantRec.user_id || review.tenant_user_id;
 
       if (review.application_type === "rental") {
         if (!unit) throw new Error("Unit not found for this application.");
         const ref = genRef("TEN");
-        const tenancy = await base44.entities.Tenancy.create({
+        const tenancy = await secureCreate("Tenancy", {
           tenancy_reference: ref, tenant_id: tenantRec.id, tenant_name: tenantRec.full_name, tenant_user_id: tUserId,
           property_id: unit.property_id, property_name: unit.property_name, unit_id: unit.id, unit_number: unit.unit_number,
           start_date: review.proposed_start_date || todayISO(), expected_end_date: "",
           monthly_rent: review.monthly_rent || unit.monthly_rent, security_deposit: unit.security_deposit, service_charge: unit.service_charge,
-          payment_due_day: 1, grace_period_days: 7, notice_period_days: 30, status: "Active", owner_user_id: unit.owner_user_id || me.id,
+          payment_due_day: 1, grace_period_days: 7, notice_period_days: 30, status: "Active",
         });
         await base44.entities.Unit.update(unit.id, { status: "Occupied", current_tenancy_id: tenancy.id, current_tenant_name: tenantRec.full_name });
         if (review.listing_id) await base44.entities.Listing.update(review.listing_id, { status: "Rented", date_closed: todayISO() });
@@ -103,12 +104,12 @@ export default function Applications() {
         if (tUserId) await notify({ recipient_user_id: tUserId, type: "Tenancy", title: "Application Approved!", message: `Your tenancy for ${unit.unit_number} has been created.`, related_entity: "Tenancy", related_id: tenancy.id, action_link: "/portal/tenancy" });
       } else if (review.application_type === "purchase") {
         const ref = genRef("SAL");
-        const sale = await base44.entities.SaleTransaction.create({
+        const sale = await secureCreate("SaleTransaction", {
           transaction_reference: ref, property_id: review.property_id, property_name: review.property_name,
           unit_id: review.unit_id, unit_number: review.unit_number, listing_id: review.listing_id, application_id: review.id,
           seller_user_id: review.owner_user_id, buyer_user_id: tUserId, buyer_tenant_id: tenantRec.id, buyer_name: tenantRec.full_name,
           sale_price: review.monthly_rent || 0, deposit_paid: review.payment_amount || 0, balance: (review.monthly_rent || 0) - (review.payment_amount || 0),
-          status: "Completed", completion_date: todayISO(), owner_user_id: review.owner_user_id || me.id,
+          status: "Completed", completion_date: todayISO(),
         });
         if (unit) await base44.entities.Unit.update(unit.id, { status: "Vacant" });
         if (review.listing_id) await base44.entities.Listing.update(review.listing_id, { status: "Sold", date_closed: todayISO() });
@@ -116,12 +117,12 @@ export default function Applications() {
         if (tUserId) await notify({ recipient_user_id: tUserId, type: "Sale", title: "Purchase Completed!", message: `Your purchase of ${review.property_name} has been completed.`, related_entity: "SaleTransaction", related_id: sale.id, action_link: "/portal/my-properties" });
       } else if (review.application_type === "lease") {
         const ref = genRef("LSR");
-        const lease = await base44.entities.Lease.create({
+        const lease = await secureCreate("Lease", {
           lease_reference: ref, property_id: review.property_id, property_name: review.property_name,
           unit_id: review.unit_id, unit_number: review.unit_number, listing_id: review.listing_id, application_id: review.id,
           lessor_user_id: review.owner_user_id, lessee_user_id: tUserId, lessee_tenant_id: tenantRec.id, lessee_name: tenantRec.full_name,
           start_date: review.proposed_start_date || todayISO(), end_date: "", monthly_fee: review.monthly_rent || 0,
-          security_deposit: 0, payment_due_day: 1, status: "Active", owner_user_id: review.owner_user_id || me.id,
+          security_deposit: 0, payment_due_day: 1, status: "Active",
         });
         if (unit) await base44.entities.Unit.update(unit.id, { status: "Occupied" });
         if (review.listing_id) await base44.entities.Listing.update(review.listing_id, { status: "Leased", date_closed: todayISO() });

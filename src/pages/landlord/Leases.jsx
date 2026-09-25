@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import { KES, genRef, logAudit, todayISO } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,13 +46,12 @@ export default function Leases() {
         });
         await logAudit({ user: me, action: "Lease Updated", entity: "Lease", entity_id: editRec.id, entity_name: editRec.lease_reference });
       } else {
-        const rec = await base44.entities.Lease.create({
+        await secureCreate("Lease", {
           lease_reference: genRef("LSR"), property_id: form.property_id, property_name: prop?.name || "",
           unit_id: form.unit_id, unit_number: unit?.unit_number || "", lessee_name: form.lessee_name,
           start_date: form.start_date, end_date: form.end_date, monthly_fee: Number(form.monthly_fee),
-          security_deposit: Number(form.security_deposit), status: "Active", owner_user_id: me?.id || "",
+          security_deposit: Number(form.security_deposit), status: "Active",
         });
-        await logAudit({ user: me, action: "Lease Created", entity: "Lease", entity_id: rec.id, entity_name: rec.lease_reference });
       }
       setOpen(false); setForm(empty); setEditRec(null); data.reload();
     }, { success: editRec ? "Lease updated successfully." : "Lease created successfully.", error: "Could not save lease. Please try again." });

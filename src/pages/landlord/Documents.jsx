@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import { logAudit, notify, todayISO } from "@/lib/finance";
+import { secureCreate } from "@/lib/secureCreate";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +66,7 @@ export default function Documents() {
       } else if (form.target_type === "property") {
         property_id = data.properties.find((p) => p.id === form.target_id)?.id || "";
       }
-      const rec = await base44.entities.Document.create({
+      const rec = await secureCreate("Document", {
         title: form.title, category: form.category,
         file_uri: uploaded.file_uri, file_name: uploaded.file_name, mime_type: uploaded.mime_type, size: uploaded.size,
         tenant_id, tenant_user_id, tenancy_id, property_id, unit_id,
@@ -73,7 +74,6 @@ export default function Documents() {
         visibility: form.visibility, status: "verified",
         date_uploaded: todayISO(), notes: form.notes, expiry_date: form.expiry_date || "",
       });
-      await logAudit({ user: me, action: "Document Uploaded", entity: "Document", entity_id: rec.id, entity_name: form.title });
       if (form.visibility === "tenant_visible" && tenant_user_id) {
         await notify({ recipient_user_id: tenant_user_id, type: "document_shared", title: "New document shared with you", message: `"${form.title}" (${form.category}) is now available in your documents.`, related_entity: "Document", related_id: rec.id });
       }

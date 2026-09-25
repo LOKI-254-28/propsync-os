@@ -30,18 +30,11 @@ export default function TenantLayout({ children }) {
       const u = normalizeUser(raw);
       setUser(u);
       if (!u) return;
-      if (u.account_type === "client" && u.approval_status === "pending") {
-        setPendingApproval(true);
-        return;
-      }
-      setPendingApproval(false);
+      setPendingApproval(u.account_type === "client" && u.approval_status === "pending");
       if (u.account_type === "client" || (!u.account_type && u.role !== "admin")) {
         try {
           const res = await base44.functions.invoke("linkTenant", {});
-          if (res.data?.notFound) {
-            setNotLinked(true);
-            return;
-          }
+          setNotLinked(!!res.data?.notFound);
         } catch (e) {}
       }
       const t = await base44.entities.Tenant.filter({ user_id: u.id }).then((r) => r[0]);
@@ -58,40 +51,6 @@ export default function TenantLayout({ children }) {
     await base44.auth.logout();
     window.location.href = "/login";
   };
-
-  if (pendingApproval) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-            <Clock className="h-7 w-7 text-amber-600" />
-          </div>
-          <h2 className="font-heading text-xl font-semibold text-slate-900">Awaiting approval</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Your application has been submitted. Your landlord will review it and approve your account. You'll get access to the tenant portal once approved. Please check back soon.
-          </p>
-          <Button onClick={handleLogout} variant="outline" className="mt-5">Sign out</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (notLinked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-            <UserX className="h-7 w-7 text-amber-600" />
-          </div>
-          <h2 className="font-heading text-xl font-semibold text-slate-900">Your profile isn't ready yet</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Your landlord hasn't linked your account to a tenant profile. Once they do, you'll see your tenancy, rent, and documents here. Please contact your landlord to complete setup.
-          </p>
-          <Button onClick={handleLogout} variant="outline" className="mt-5">Sign out</Button>
-        </div>
-      </div>
-    );
-  }
 
   const NavItem = ({ item }) => {
     const Icon = ICONS[item.icon] || Circle;
@@ -139,7 +98,19 @@ export default function TenantLayout({ children }) {
           <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {tenant?.full_name?.split(" ")[0] || "Tenant"}</div>
           <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Client</span>
         </header>
-        <main className="px-4 py-6 lg:px-8">{children}</main>
+        <main className="px-4 py-6 lg:px-8">
+          {pendingApproval && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <strong>Account pending approval.</strong> You can browse listings and submit applications while your account is reviewed.
+            </div>
+          )}
+          {notLinked && (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <strong>No tenancy linked yet.</strong> Browse available listings and apply to join a property to get started.
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

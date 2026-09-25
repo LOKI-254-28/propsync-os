@@ -50,23 +50,6 @@ export default function Layout({ children }) {
     window.location.href = "/login";
   };
 
-  if (pendingApproval) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-            <Clock className="h-7 w-7 text-amber-600" />
-          </div>
-          <h2 className="font-heading text-xl font-semibold text-slate-900">Awaiting admin approval</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Your landowner registration has been submitted. An administrator will review your application and approve your account. You will be able to create properties and manage your portfolio once approved.
-          </p>
-          <Button onClick={handleLogout} variant="outline" className="mt-5">Sign out</Button>
-        </div>
-      </div>
-    );
-  }
-
   const NavItem = ({ item }) => {
     const Icon = ICONS[item.icon] || Circle;
     const active = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
@@ -116,7 +99,14 @@ export default function Layout({ children }) {
           </div>
           <Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" />{unread > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />}</Link>
         </header>
-        <main className="px-4 py-6 lg:px-8">{children}</main>
+        <main className="px-4 py-6 lg:px-8">
+          {pendingApproval && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <strong>Awaiting admin approval.</strong> You can prepare your portfolio now — properties and listings will go live once an administrator approves your account.
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

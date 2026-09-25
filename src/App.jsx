@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import AdminLayout from '@/components/AdminLayout';
 import TenantLayout from '@/components/TenantLayout';
+import GuestLayout from '@/components/GuestLayout';
 
 // Auth pages
 import Login from '@/pages/Login';
@@ -65,6 +66,13 @@ import MyDocuments from '@/pages/tenant/MyDocuments';
 import MyFeedback from '@/pages/tenant/MyFeedback';
 import MyVacation from '@/pages/tenant/MyVacation';
 import MyProfile from '@/pages/tenant/MyProfile';
+
+// Guest pages
+import GuestDashboard from '@/pages/guest/GuestDashboard';
+import GuestProfile from '@/pages/guest/GuestProfile';
+import GuestExplore from '@/pages/guest/GuestExplore';
+import GuestApplications from '@/pages/guest/GuestApplications';
+import GuestNotifications from '@/pages/guest/GuestNotifications';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -156,6 +164,19 @@ const TenantRoutes = () => (
   </TenantLayout>
 );
 
+const GuestRoutes = () => (
+  <GuestLayout>
+    <Routes>
+      <Route path="/guest" element={<GuestDashboard />} />
+      <Route path="/guest/explore" element={<GuestExplore />} />
+      <Route path="/guest/applications" element={<GuestApplications />} />
+      <Route path="/guest/profile" element={<GuestProfile />} />
+      <Route path="/guest/notifications" element={<GuestNotifications />} />
+      <Route path="*" element={<Navigate to="/guest" replace />} />
+    </Routes>
+  </GuestLayout>
+);
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, user, navigateToLogin } = useAuth();
 
@@ -178,6 +199,7 @@ const AuthenticatedApp = () => {
 
   const isAdmin = user?.account_type === 'admin' || (!user?.account_type && user?.role === 'admin');
   const isLandlord = user?.account_type === 'landowner';
+  const isGuest = user?.account_type === 'guest';
 
   return (
     <Routes>
@@ -187,8 +209,8 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/" : "/portal"} replace />} />
-        <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />
+        <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/" : isGuest ? "/guest" : "/portal"} replace />} />
+        <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : isGuest ? <GuestRoutes /> : <TenantRoutes />} />
       </Route>
     </Routes>
   );

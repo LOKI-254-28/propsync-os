@@ -13,9 +13,10 @@
       "enum": [
         "admin",
         "landowner",
-        "client"
+        "client",
+        "guest"
       ],
-      "description": "Top-level account type: admin (platform), landowner (property provider), or client (end user)"
+      "description": "Top-level account type: admin (platform), landowner (property provider), client (end user), or guest (basic browsing account)"
     },
     "operational_profiles": {
       "type": "array",
@@ -39,7 +40,32 @@
         "approved",
         "rejected"
       ],
-      "description": "Clients start pending until a landowner approves their application; landowners and admins are approved immediately"
+      "description": "Clients start pending until a landowner approves their application; landowners and admins are approved immediately; guests are approved immediately"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Street address"
+    },
+    "city": {
+      "type": "string"
+    },
+    "region": {
+      "type": "string",
+      "description": "State, county, or region"
+    },
+    "postal_code": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "profile_image": {
+      "type": "string",
+      "description": "Profile photo URL"
     }
   },
   "required": [

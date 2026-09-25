@@ -61,6 +61,14 @@ export const TENANT_NAV = [
   { label: "Profile", path: "/portal/profile", icon: "User" },
 ];
 
+export const GUEST_NAV = [
+  { label: "Dashboard", path: "/guest", icon: "LayoutDashboard" },
+  { label: "Explore Properties", path: "/guest/explore", icon: "Search" },
+  { label: "My Applications", path: "/guest/applications", icon: "FileText" },
+  { label: "Profile", path: "/guest/profile", icon: "User" },
+  { label: "Notifications", path: "/guest/notifications", icon: "Bell" },
+];
+
 export const STATUS_COLORS = {
   Available: "emerald",
   Occupied: "blue",

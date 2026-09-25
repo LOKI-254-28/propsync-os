@@ -22,6 +22,29 @@ export const LANDLORD_NAV = [
   { label: "Settings", path: "/settings", icon: "Settings" },
 ];
 
+export const ADMIN_NAV = [
+  { label: "Admin Dashboard", path: "/", icon: "LayoutDashboard" },
+  { label: "User Management", path: "/admin/users", icon: "UserCog" },
+  { label: "Properties", path: "/properties", icon: "Building2" },
+  { label: "Units", path: "/units", icon: "DoorOpen" },
+  { label: "Tenants", path: "/tenants", icon: "Users" },
+  { label: "Applications", path: "/applications", icon: "FileText" },
+  { label: "Tenancies", path: "/tenancies", icon: "ScrollText" },
+  { label: "Rent & Payments", path: "/rent", icon: "Wallet" },
+  { label: "Arrears", path: "/arrears", icon: "AlertTriangle" },
+  { label: "Maintenance", path: "/maintenance", icon: "Wrench" },
+  { label: "Inspections", path: "/inspections", icon: "ClipboardCheck" },
+  { label: "Notices", path: "/notices", icon: "Bell" },
+  { label: "Documents", path: "/documents", icon: "FolderOpen" },
+  { label: "Expenses", path: "/expenses", icon: "Receipt" },
+  { label: "Reports", path: "/reports", icon: "BarChart3" },
+  { label: "Listings", path: "/listings", icon: "Tag" },
+  { label: "Leases", path: "/leases", icon: "FileSignature" },
+  { label: "Sales", path: "/sales", icon: "Banknote" },
+  { label: "Notifications", path: "/notifications", icon: "BellRing" },
+  { label: "Settings", path: "/settings", icon: "Settings" },
+];
+
 export const TENANT_NAV = [
   { label: "Dashboard", path: "/portal", icon: "LayoutDashboard" },
   { label: "Browse Listings", path: "/portal/listings", icon: "Tag" },

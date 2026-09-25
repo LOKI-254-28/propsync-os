@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import TenantLayout from '@/components/TenantLayout';
 
 // Auth pages
@@ -42,6 +43,10 @@ import VacationRequests from '@/pages/landlord/VacationRequests';
 import Listings from '@/pages/landlord/Listings';
 import Sales from '@/pages/landlord/Sales';
 import Leases from '@/pages/landlord/Leases';
+
+// Admin pages
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import UserManagement from '@/pages/admin/UserManagement';
 
 // Tenant pages
 import TenantDashboard from '@/pages/tenant/TenantDashboard';
@@ -93,6 +98,40 @@ const LandlordRoutes = () => (
   </Layout>
 );
 
+const AdminRoutes = () => (
+  <AdminLayout>
+    <Routes>
+      <Route path="/" element={<AdminDashboard />} />
+      <Route path="/admin/users" element={<UserManagement />} />
+      <Route path="/properties" element={<Properties />} />
+      <Route path="/properties/:id" element={<PropertyDetail />} />
+      <Route path="/units" element={<Units />} />
+      <Route path="/tenants" element={<Tenants />} />
+      <Route path="/applications" element={<Applications />} />
+      <Route path="/tenancies" element={<Tenancies />} />
+      <Route path="/rent" element={<RentPayments />} />
+      <Route path="/arrears" element={<Arrears />} />
+      <Route path="/maintenance" element={<Maintenance />} />
+      <Route path="/inspections" element={<Inspections />} />
+      <Route path="/notices" element={<Notices />} />
+      <Route path="/documents" element={<Documents />} />
+      <Route path="/expenses" element={<Expenses />} />
+      <Route path="/contractors" element={<Contractors />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="/comparison" element={<PropertyComparison />} />
+      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/staff" element={<StaffPermissions />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/feedback" element={<Feedback />} />
+      <Route path="/vacation-requests" element={<VacationRequests />} />
+      <Route path="/listings" element={<Listings />} />
+      <Route path="/sales" element={<Sales />} />
+      <Route path="/leases" element={<Leases />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </AdminLayout>
+);
+
 const TenantRoutes = () => (
   <TenantLayout>
     <Routes>
@@ -136,7 +175,8 @@ const AuthenticatedApp = () => {
     }
   }
 
-  const isLandlord = user?.account_type === 'admin' || user?.account_type === 'landowner' || (!user?.account_type && user?.role === 'admin');
+  const isAdmin = user?.account_type === 'admin' || (!user?.account_type && user?.role === 'admin');
+  const isLandlord = user?.account_type === 'landowner';
 
   return (
     <Routes>
@@ -145,7 +185,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/*" element={isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />
+        <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />
       </Route>
     </Routes>
   );

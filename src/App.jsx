@@ -46,6 +46,7 @@ import Leases from '@/pages/landlord/Leases';
 
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
+import AdminLogin from '@/pages/admin/AdminLogin';
 import UserManagement from '@/pages/admin/UserManagement';
 
 // Tenant pages
@@ -181,10 +182,12 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/admin-login" element={<AdminLogin />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/" : "/portal"} replace />} />
         <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />
       </Route>
     </Routes>

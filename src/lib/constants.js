@@ -23,7 +23,7 @@ export const LANDLORD_NAV = [
 ];
 
 export const ADMIN_NAV = [
-  { label: "Admin Dashboard", path: "/", icon: "LayoutDashboard" },
+  { label: "Admin Dashboard", path: "/admin", icon: "LayoutDashboard" },
   { label: "User Management", path: "/admin/users", icon: "UserCog" },
   { label: "Properties", path: "/properties", icon: "Building2" },
   { label: "Units", path: "/units", icon: "DoorOpen" },

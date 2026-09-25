@@ -7,7 +7,8 @@ export default async function(req: Request): Promise<Response> {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Staff/admin users don't need tenant linking
-    if (user.role === 'admin' || user.account_type === 'admin' || user.account_type === 'landowner') return Response.json({ linked: true, role: user.account_type || 'admin' });
+    const acctType = user.account_type || user.data?.account_type;
+    if (user.role === 'admin' || acctType === 'admin' || acctType === 'landowner') return Response.json({ linked: true, role: acctType || 'admin' });
 
     // Already linked?
     const existing = await base44.asServiceRole.entities.Tenant.filter({ user_id: user.id }).then((r) => r[0]);

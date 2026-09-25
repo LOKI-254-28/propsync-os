@@ -81,7 +81,18 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      const rawUser = await base44.auth.me();
+      // Normalize custom fields: SDK versions differ on whether custom user fields
+      // are returned at the top level or nested under `data`. Flatten so the rest
+      // of the app can always read account_type / approval_status directly.
+      const currentUser = rawUser
+        ? {
+            ...rawUser,
+            account_type: rawUser.account_type || rawUser.data?.account_type,
+            approval_status: rawUser.approval_status || rawUser.data?.approval_status,
+            operational_profiles: rawUser.operational_profiles || rawUser.data?.operational_profiles,
+          }
+        : rawUser;
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);

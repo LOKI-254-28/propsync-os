@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { normalizeUser } from "@/lib/normalizeUser";
 
 // Loads portfolio records for admin/landowner dashboards.
 // Landowners see only their own records (filtered by owner_user_id).
@@ -17,7 +18,7 @@ export function usePortfolioData() {
   const load = async () => {
     setLoading(true);
     try {
-      const me = await base44.auth.me();
+      const me = normalizeUser(await base44.auth.me());
       const isLandowner = me?.account_type === 'landowner';
       const f = isLandowner ? { owner_user_id: me.id } : {};
       // Helper: filter by owner for landowners, list all for admins

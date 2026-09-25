@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { normalizeUser } from "@/lib/normalizeUser";
 
 // Loads the current tenant's own records only (RLS enforces isolation server-side too).
 // On first login, calls the linkTenant backend function to auto-link by email.
@@ -14,7 +15,7 @@ export function useTenantData() {
     setLoading(true);
     setNotLinked(false);
     try {
-      const me = await base44.auth.me();
+      const me = normalizeUser(await base44.auth.me());
       setUser(me);
       if (!me) return;
       // Auto-link client profile on first login (clients only)

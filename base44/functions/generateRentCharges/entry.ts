@@ -9,8 +9,9 @@ export default async function(req: Request): Promise<Response> {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
-    const isAdmin = user.role === 'admin' || user.account_type === 'admin';
-    const isApprovedLandowner = user.account_type === 'landowner' && user.approval_status === 'approved';
+    const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
+    const isApprovedLandowner = (user.account_type === 'landowner' || user.data?.account_type === 'landowner')
+      && (user.approval_status === 'approved' || user.data?.approval_status === 'approved');
     if (!isAdmin && !isApprovedLandowner) {
       return Response.json({ error: 'Your account may still be awaiting approval.' }, { status: 403 });
     }

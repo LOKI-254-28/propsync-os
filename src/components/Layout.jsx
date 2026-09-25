@@ -11,6 +11,7 @@ import {
   Columns3, BellRing, ShieldCheck, Settings as SettingsIcon, Circle,
   Tag, FileSignature, Banknote,
 } from "lucide-react";
+import { normalizeUser } from "@/lib/normalizeUser";
 
 const ICONS = {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
@@ -27,7 +28,8 @@ export default function Layout({ children }) {
   const [pendingApproval, setPendingApproval] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then((u) => {
+    base44.auth.me().then((raw) => {
+      const u = normalizeUser(raw);
       setUser(u);
       if (u && u.account_type === 'landowner' && u.approval_status === 'pending') {
         setPendingApproval(true);

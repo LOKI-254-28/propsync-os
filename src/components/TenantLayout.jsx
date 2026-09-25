@@ -9,6 +9,7 @@ import {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
   ClipboardCheck, Bell, FolderOpen, MessageSquare, User, Circle, Tag, Building2,
 } from "lucide-react";
+import { normalizeUser } from "@/lib/normalizeUser";
 
 const ICONS = {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
@@ -25,7 +26,8 @@ export default function TenantLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(async (u) => {
+    base44.auth.me().then(async (raw) => {
+      const u = normalizeUser(raw);
       setUser(u);
       if (!u) return;
       if (u.account_type === "client" && u.approval_status === "pending") {

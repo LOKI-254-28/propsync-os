@@ -16,7 +16,7 @@ const ENTITIES_WITH_OWNER = [
 // Validate that child-entity references belong to the authenticated landowner.
 // Admins skip this check.
 async function validateParentOwnership(base44, user, entity, data) {
-  const isAdmin = user.role === 'admin' || user.account_type === 'admin';
+  const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
   if (isAdmin) return null;
 
   // property_id — used by Unit, Listing, Tenancy, Lease, SaleTransaction, Expense, Notice, Inspection, Document
@@ -52,8 +52,9 @@ export default async function(req: Request): Promise<Response> {
     if (!entity || !data) return Response.json({ error: 'Entity and data are required' }, { status: 400 });
     if (!PROVIDER_ENTITIES.includes(entity)) return Response.json({ error: 'Entity type not supported by this function' }, { status: 400 });
 
-    const isAdmin = user.role === 'admin' || user.account_type === 'admin';
-    const isApprovedLandowner = user.account_type === 'landowner' && user.approval_status === 'approved';
+    const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
+    const isApprovedLandowner = (user.account_type === 'landowner' || user.data?.account_type === 'landowner')
+      && (user.approval_status === 'approved' || user.data?.approval_status === 'approved');
 
     if (!isAdmin && !isApprovedLandowner) {
       const reason = user.account_type === 'landowner' && user.approval_status !== 'approved'

@@ -75,6 +75,7 @@ import GuestNotifications from '@/pages/guest/GuestNotifications';
 
 // Public pages
 import HowItWorks from '@/pages/HowItWorks';
+import TestProfileApp from '@/components/TestProfileApp';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -179,19 +180,6 @@ const GuestRoutes = () => (
   </GuestLayout>
 );
 
-const TestProfileRoutes = () => (
-  <GuestLayout>
-    <Routes>
-      <Route path="/test-profile" element={<GuestDashboard />} />
-      <Route path="/test-profile/explore" element={<GuestExplore />} />
-      <Route path="/test-profile/applications" element={<GuestApplications />} />
-      <Route path="/test-profile/profile" element={<GuestProfile />} />
-      <Route path="/test-profile/notifications" element={<GuestNotifications />} />
-      <Route path="*" element={<Navigate to="/test-profile" replace />} />
-    </Routes>
-  </GuestLayout>
-);
-
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, user, navigateToLogin } = useAuth();
 
@@ -220,7 +208,7 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
-      <Route path="/test-profile/*" element={<TestProfileRoutes />} />
+      <Route path="/test-profile/*" element={<TestProfileApp />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />

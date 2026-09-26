@@ -2,13 +2,20 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { isTestMode, getTestNotifications } from "@/lib/testProfile";
 import { Bell } from "lucide-react";
 
 export default function GuestNotifications() {
+  const testMode = isTestMode();
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!testMode);
 
   useEffect(() => {
+    if (testMode) {
+      setNotifications(getTestNotifications());
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const me = normalizeUser(await base44.auth.me());
@@ -20,7 +27,7 @@ export default function GuestNotifications() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [testMode]);
 
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 

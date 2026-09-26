@@ -4,15 +4,40 @@ import { KES } from "@/lib/finance";
 import { PageHeader, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { Input } from "@/components/ui/input";
 import { Search, Tag, MapPin, Bed, Bath } from "lucide-react";
+import { isTestMode } from "@/lib/testProfile";
+
+const MOCK_LISTINGS = [
+  { id: 'mock1', property_name: 'Riverside Apartments', unit_number: 'A101', listing_type: 'Rent', price: 85000, images: [] },
+  { id: 'mock2', property_name: 'Hillside Villas', unit_number: 'V1', listing_type: 'Sale', price: 12500000, images: [] },
+  { id: 'mock3', property_name: 'Garden Court', unit_number: 'B12', listing_type: 'Rent', price: 65000, images: [] },
+];
+const MOCK_PROPERTIES = [
+  { id: 'p1', name: 'Riverside Apartments', address: 'Riverside Drive, Nairobi' },
+  { id: 'p2', name: 'Hillside Villas', address: 'Karen, Nairobi' },
+  { id: 'p3', name: 'Garden Court', address: 'Westlands, Nairobi' },
+];
+const MOCK_UNITS = [
+  { id: 'u1', unit_number: 'A101', unit_type: '2 Bedroom', bedrooms: 2, bathrooms: 2 },
+  { id: 'u2', unit_number: 'V1', unit_type: 'Villa', bedrooms: 4, bathrooms: 3 },
+  { id: 'u3', unit_number: 'B12', unit_type: '1 Bedroom', bedrooms: 1, bathrooms: 1 },
+];
 
 export default function GuestExplore() {
+  const testMode = isTestMode();
   const [listings, setListings] = useState([]);
   const [properties, setProperties] = useState([]);
   const [units, setUnits] = useState([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!testMode);
 
   useEffect(() => {
+    if (testMode) {
+      setListings(MOCK_LISTINGS);
+      setProperties(MOCK_PROPERTIES);
+      setUnits(MOCK_UNITS);
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const [l, p, u] = await Promise.all([
@@ -27,7 +52,7 @@ export default function GuestExplore() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [testMode]);
 
   const filtered = useMemo(() => listings.filter((l) => {
     if (!search) return true;

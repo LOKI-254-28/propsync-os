@@ -3,13 +3,20 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { PageHeader, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { isTestMode, getTestApplications } from "@/lib/testProfile";
 import { FileText } from "lucide-react";
 
 export default function GuestApplications() {
+  const testMode = isTestMode();
   const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!testMode);
 
   useEffect(() => {
+    if (testMode) {
+      setApplications(getTestApplications());
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const me = normalizeUser(await base44.auth.me());
@@ -21,15 +28,17 @@ export default function GuestApplications() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [testMode]);
 
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
+
+  const exploreLink = testMode ? "/test-profile/explore" : "/guest/explore";
 
   return (
     <div>
       <PageHeader title="My Applications" description="Track the status of your property applications." />
       {applications.length === 0 ? (
-        <EmptyState icon={FileText} title="No applications yet" description="Explore properties and apply to get started." action={<Link to="/guest/explore" className="text-emerald-700 hover:underline">Explore properties →</Link>} />
+        <EmptyState icon={FileText} title="No applications yet" description="Explore properties and apply to get started." action={<Link to={exploreLink} className="text-emerald-700 hover:underline">Explore properties →</Link>} />
       ) : (
         <div className="space-y-3">
           {applications.map((a) => (

@@ -77,15 +77,6 @@ export default function Register() {
       const result = await base44.auth.verifyOtp({ email, otpCode });
       if (result?.access_token) base44.auth.setToken(result.access_token);
       const me = await base44.auth.me();
-      if (accountType === "guest") {
-        await base44.auth.updateMe({
-          full_name: fullName,
-          account_type: "guest",
-          approval_status: "approved",
-        });
-        window.location.href = "/guest";
-        return;
-      }
       await base44.auth.updateMe({
         full_name: fullName,
         account_type: accountType,
@@ -170,7 +161,7 @@ export default function Register() {
         footer={<>Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Log in</Link></>}>
         <div className="space-y-4">
           {/* Account type selector */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <button onClick={() => { setAccountType("landowner"); setProfiles([]); }}
               className={cn("flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
                 accountType === "landowner" ? "border-emerald-500 bg-emerald-50/50" : "border-border hover:border-emerald-300")}>
@@ -185,17 +176,10 @@ export default function Register() {
               <span className="text-sm font-semibold text-foreground">Client</span>
               <span className="text-[10px] text-muted-foreground text-center">Tenant / Buyer</span>
             </button>
-            <button onClick={() => { setAccountType("guest"); setProfiles([]); }}
-              className={cn("flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
-                accountType === "guest" ? "border-emerald-500 bg-emerald-50/50" : "border-border hover:border-emerald-300")}>
-              <User className={cn("h-7 w-7", accountType === "guest" ? "text-emerald-600" : "text-slate-400")} />
-              <span className="text-sm font-semibold text-foreground">Guest</span>
-              <span className="text-[10px] text-muted-foreground text-center">Browse & Explore</span>
-            </button>
           </div>
 
           {/* Profile selection */}
-          {accountType && accountType !== "guest" && (
+          {accountType && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground">Select your operational profile(s)</p>
               <p className="text-xs text-muted-foreground">You can select more than one — a single account supports multiple profiles.</p>
@@ -215,10 +199,7 @@ export default function Register() {
             </div>
           )}
 
-          {accountType === "guest" && (
-            <Button onClick={() => setStep("form")} className="w-full h-12 font-medium">Continue</Button>
-          )}
-          {accountType && accountType !== "guest" && profiles.length > 0 && (
+          {accountType && profiles.length > 0 && (
             <Button onClick={() => setStep("form")} className="w-full h-12 font-medium">Continue</Button>
           )}
         </div>
@@ -228,7 +209,7 @@ export default function Register() {
 
   // Step 2: Form
   return (
-    <AuthLayout icon={accountType === "landowner" ? Building2 : accountType === "guest" ? User : Home} title={accountType === "landowner" ? "Landowner Account" : accountType === "guest" ? "Guest Account" : "Client Account"} subtitle="Fill in your details to create your account"
+    <AuthLayout icon={accountType === "landowner" ? Building2 : Home} title={accountType === "landowner" ? "Landowner Account" : "Client Account"} subtitle="Fill in your details to create your account"
       footer={<>
         Already have an account?{" "}
         <Link to="/login" className="text-primary font-medium hover:underline">Log in</Link>

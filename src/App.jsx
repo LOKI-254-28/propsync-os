@@ -47,7 +47,6 @@ import Leases from '@/pages/landlord/Leases';
 
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
-import AdminLogin from '@/pages/admin/AdminLogin';
 import UserManagement from '@/pages/admin/UserManagement';
 
 // Tenant pages
@@ -73,6 +72,9 @@ import GuestProfile from '@/pages/guest/GuestProfile';
 import GuestExplore from '@/pages/guest/GuestExplore';
 import GuestApplications from '@/pages/guest/GuestApplications';
 import GuestNotifications from '@/pages/guest/GuestNotifications';
+
+// Public pages
+import HowItWorks from '@/pages/HowItWorks';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -177,6 +179,19 @@ const GuestRoutes = () => (
   </GuestLayout>
 );
 
+const TestProfileRoutes = () => (
+  <GuestLayout>
+    <Routes>
+      <Route path="/test-profile" element={<GuestDashboard />} />
+      <Route path="/test-profile/explore" element={<GuestExplore />} />
+      <Route path="/test-profile/applications" element={<GuestApplications />} />
+      <Route path="/test-profile/profile" element={<GuestProfile />} />
+      <Route path="/test-profile/notifications" element={<GuestNotifications />} />
+      <Route path="*" element={<Navigate to="/test-profile" replace />} />
+    </Routes>
+  </GuestLayout>
+);
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, user, navigateToLogin } = useAuth();
 
@@ -204,7 +219,8 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/admin-login" element={<AdminLogin />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/test-profile/*" element={<TestProfileRoutes />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />

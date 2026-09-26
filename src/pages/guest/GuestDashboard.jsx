@@ -3,19 +3,29 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { isTestMode, getTestProfile, getTestApplications, getTestNotifications } from "@/lib/testProfile";
+import { toast } from "@/components/ui/use-toast";
 import {
   Home, Building2, Wrench, User, Search, FileText, Bell,
-  Circle, ArrowRight, Loader2, Check,
+  Circle, ArrowRight, Loader2,
 } from "lucide-react";
 
 export default function GuestDashboard() {
+  const testMode = isTestMode();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!testMode);
   const [applications, setApplications] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [transitioning, setTransitioning] = useState("");
 
   useEffect(() => {
+    if (testMode) {
+      setUser(getTestProfile());
+      setApplications(getTestApplications());
+      setNotifications(getTestNotifications());
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const me = normalizeUser(await base44.auth.me());
@@ -32,7 +42,7 @@ export default function GuestDashboard() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [testMode]);
 
   const profileCompletion = useMemo(() => {
     if (!user) return 0;
@@ -42,6 +52,10 @@ export default function GuestDashboard() {
   }, [user]);
 
   const transition = async (type) => {
+    if (testMode) {
+      toast({ title: "Test Profile mode", description: "Role transitions aren't available in test mode. Register to continue." });
+      return;
+    }
     setTransitioning(type);
     try {
       if (type === "tenant") {
@@ -70,9 +84,17 @@ export default function GuestDashboard() {
     { key: "profile_image", label: "Profile photo" },
   ].filter((f) => !user?.[f.key]);
 
+  const p = testMode ? "/test-profile" : "/guest";
+
   return (
     <div>
-      <PageHeader title={`Welcome, ${user?.full_name?.split(" ")[0] || "Guest"}`} description="Explore PropWiz and choose your path." />
+      <PageHeader title={`Welcome, ${user?.full_name?.split(" ")[0] || "Test User"}`} description="Explore PropWiz and choose your path." />
+
+      {testMode && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <strong>Test Profile mode:</strong> You're exploring a demo. No data is saved to the real system.
+        </div>
+      )}
 
       <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
@@ -88,7 +110,7 @@ export default function GuestDashboard() {
         {missingFields.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {missingFields.map((f) => (
-              <Link key={f.key} to="/guest/profile" className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-700 hover:bg-amber-100">
+              <Link key={f.key} to={`${p}/profile`} className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-700 hover:bg-amber-100">
                 <Circle className="h-3 w-3" /> {f.label}
               </Link>
             ))}
@@ -105,15 +127,15 @@ export default function GuestDashboard() {
       </SectionCard>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <QuickLink to="/guest/explore" icon={Search} label="Explore Properties" />
-        <QuickLink to="/guest/applications" icon={FileText} label="My Applications" />
-        <QuickLink to="/guest/profile" icon={User} label="Edit Profile" />
-        <QuickLink to="/guest/notifications" icon={Bell} label="Notifications" />
+        <QuickLink to={`${p}/explore`} icon={Search} label="Explore Properties" />
+        <QuickLink to={`${p}/applications`} icon={FileText} label="My Applications" />
+        <QuickLink to={`${p}/profile`} icon={User} label="Edit Profile" />
+        <QuickLink to={`${p}/notifications`} icon={Bell} label="Notifications" />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SectionCard title="Recent Applications" actions={<Link to="/guest/applications" className="text-sm text-emerald-700 hover:underline">All →</Link>}>
-          {applications.length === 0 ? <EmptyState icon={FileText} title="No applications yet" description="Explore properties and apply to get started." action={<Link to="/guest/explore" className="text-emerald-700 hover:underline">Explore properties →</Link>} /> : (
+        <SectionCard title="Recent Applications" actions={<Link to={`${p}/applications`} className="text-sm text-emerald-700 hover:underline">All →</Link>}>
+          {applications.length === 0 ? <EmptyState icon={FileText} title="No applications yet" description="Explore properties and apply to get started." action={<Link to={`${p}/explore`} className="text-emerald-700 hover:underline">Explore properties →</Link>} /> : (
             <div className="space-y-2">
               {applications.slice(0, 4).map((a) => (
                 <div key={a.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
@@ -125,7 +147,7 @@ export default function GuestDashboard() {
           )}
         </SectionCard>
 
-        <SectionCard title="Notifications" actions={<Link to="/guest/notifications" className="text-sm text-emerald-700 hover:underline">All →</Link>}>
+        <SectionCard title="Notifications" actions={<Link to={`${p}/notifications`} className="text-sm text-emerald-700 hover:underline">All →</Link>}>
           {notifications.length === 0 ? <EmptyState icon={Bell} title="No notifications" /> : (
             <div className="space-y-2">
               {notifications.slice(0, 4).map((n) => (

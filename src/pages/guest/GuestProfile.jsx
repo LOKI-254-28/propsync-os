@@ -7,14 +7,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { Save, Upload, Loader2, Check } from "lucide-react";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { toast } from "@/components/ui/use-toast";
+import { isTestMode, getTestProfile, setTestProfile } from "@/lib/testProfile";
 
 export default function GuestProfile() {
+  const testMode = isTestMode();
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({});
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    if (testMode) {
+      const u = getTestProfile();
+      setUser(u);
+      setForm({
+        full_name: u?.full_name || "",
+        phone: u?.phone || "",
+        address: u?.address || "",
+        city: u?.city || "",
+        region: u?.region || "",
+        postal_code: u?.postal_code || "",
+        country: u?.country || "",
+        profile_image: u?.profile_image || "",
+      });
+      return;
+    }
     base44.auth.me().then((raw) => {
       const u = normalizeUser(raw);
       setUser(u);
@@ -29,13 +46,20 @@ export default function GuestProfile() {
         profile_image: u?.profile_image || "",
       });
     }).catch(() => {});
-  }, []);
+  }, [testMode]);
 
   const upd = (k, v) => setForm({ ...form, [k]: v });
 
   const save = async () => {
     setBusy(true);
     try {
+      if (testMode) {
+        const updated = { ...getTestProfile(), ...form };
+        setTestProfile(updated);
+        setUser(updated);
+        toast({ title: "Profile updated (Test Mode)", description: "Changes are stored locally only." });
+        return;
+      }
       await base44.auth.updateMe(form);
       const raw = await base44.auth.me();
       setUser(normalizeUser(raw));
@@ -50,6 +74,22 @@ export default function GuestProfile() {
   const handlePhoto = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (testMode) {
+      setUploading(true);
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          upd("profile_image", reader.result);
+          const updated = { ...getTestProfile(), profile_image: reader.result };
+          setTestProfile(updated);
+          setUser(updated);
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setUploading(false);
+      }
+      return;
+    }
     setUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
@@ -78,7 +118,7 @@ export default function GuestProfile() {
             <p className="text-sm text-slate-500">{user.email}</p>
             <div className="mt-3 flex items-center justify-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700"><Check className="h-3 w-3" /> Active</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">Guest</span>
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">Test Profile</span>
             </div>
             <label className="mt-4 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
               {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}

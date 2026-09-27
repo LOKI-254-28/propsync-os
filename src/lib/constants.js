@@ -1,5 +1,5 @@
 export const LANDLORD_NAV = [
-  { label: "Dashboard", path: "/", icon: "LayoutDashboard" },
+  { label: "Dashboard", path: "/dashboard", icon: "LayoutDashboard" },
   { label: "Properties", path: "/properties", icon: "Building2" },
   { label: "Units", path: "/units", icon: "DoorOpen" },
   { label: "Tenants", path: "/tenants", icon: "Users" },
@@ -14,7 +14,7 @@ export const LANDLORD_NAV = [
   { label: "Expenses", path: "/expenses", icon: "Receipt" },
   { label: "Reports", path: "/reports", icon: "BarChart3" },
   { label: "Property Comparison", path: "/comparison", icon: "Columns3" },
-  { label: "Listings", path: "/listings", icon: "Tag" },
+  { label: "Listings", path: "/my-listings", icon: "Tag" },
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Staff & Permissions", path: "/staff", icon: "ShieldCheck" },
   { label: "Settings", path: "/settings", icon: "Settings" },
@@ -36,7 +36,7 @@ export const ADMIN_NAV = [
   { label: "Documents", path: "/documents", icon: "FolderOpen" },
   { label: "Expenses", path: "/expenses", icon: "Receipt" },
   { label: "Reports", path: "/reports", icon: "BarChart3" },
-  { label: "Listings", path: "/listings", icon: "Tag" },
+  { label: "Listings", path: "/my-listings", icon: "Tag" },
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Settings", path: "/settings", icon: "Settings" },
 ];

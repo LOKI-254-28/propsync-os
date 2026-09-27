@@ -35,6 +35,14 @@ export default function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [listingId, setListingId] = useState("");
+  const [returnTo, setReturnTo] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setListingId(params.get("listing") || "");
+    setReturnTo(params.get("returnTo") || "");
+  }, []);
 
   useEffect(() => {
     if (accountType === "client") {
@@ -80,32 +88,52 @@ export default function Register() {
         approval_status: "pending",
       });
       if (accountType === "client") {
-        let unit = null;
-        if (inviteCode.trim()) {
-          const units = await base44.entities.Unit.filter({ invite_code: inviteCode.trim().toUpperCase() });
-          unit = units[0];
-          if (!unit) { setError("Invalid invite code. Please check and try again."); setLoading(false); return; }
+        if (listingId) {
+          const l = await base44.entities.Listing.get(listingId);
+          await base44.entities.Application.create({
+            application_reference: genRef("APP"),
+            tenant_user_id: me.id,
+            applicant_name: fullName,
+            applicant_email: email,
+            property_id: l.property_id,
+            property_name: l.property_name,
+            unit_id: l.unit_id || "",
+            unit_number: l.unit_number || "",
+            monthly_rent: l.price || 0,
+            status: "Submitted",
+            submitted_date: todayISO(),
+            application_type: "rental",
+            listing_id: l.id,
+            owner_user_id: l.owner_user_id || "",
+          });
+          window.location.href = returnTo || "/portal";
+        } else {
+          let unit = null;
+          if (inviteCode.trim()) {
+            const units = await base44.entities.Unit.filter({ invite_code: inviteCode.trim().toUpperCase() });
+            unit = units[0];
+            if (!unit) { setError("Invalid invite code. Please check and try again."); setLoading(false); return; }
+          }
+          const prop = unit ? null : properties.find((p) => p.id === propertyId);
+          await base44.entities.Application.create({
+            application_reference: genRef("APP"),
+            tenant_user_id: me.id,
+            applicant_name: fullName,
+            applicant_email: email,
+            property_id: unit?.property_id || propertyId,
+            property_name: unit?.property_name || prop?.name || "",
+            unit_id: unit?.id || "",
+            unit_number: unit?.unit_number || "",
+            monthly_rent: unit?.monthly_rent || 0,
+            status: "Pending",
+            submitted_date: todayISO(),
+            application_type: "rental",
+            owner_user_id: unit?.owner_user_id || prop?.owner_user_id || "",
+          });
+          window.location.href = "/portal";
         }
-        const prop = unit ? null : properties.find((p) => p.id === propertyId);
-        const appType = "rental";
-        await base44.entities.Application.create({
-          application_reference: genRef("APP"),
-          tenant_user_id: me.id,
-          applicant_name: fullName,
-          applicant_email: email,
-          property_id: unit?.property_id || propertyId,
-          property_name: unit?.property_name || prop?.name || "",
-          unit_id: unit?.id || "",
-          unit_number: unit?.unit_number || "",
-          monthly_rent: unit?.monthly_rent || 0,
-          status: "Pending",
-          submitted_date: todayISO(),
-          application_type: appType,
-          owner_user_id: unit?.owner_user_id || prop?.owner_user_id || "",
-        });
-        window.location.href = "/portal";
       } else {
-        window.location.href = "/";
+        window.location.href = "/dashboard";
       }
     } catch (err) {
       setError(err.message || "Verification failed");

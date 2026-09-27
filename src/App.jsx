@@ -73,11 +73,15 @@ import GuestNotifications from '@/pages/guest/GuestNotifications';
 
 // Public pages
 import HowItWorks from '@/pages/HowItWorks';
+import PublicHome from '@/pages/public/PublicHome';
+import PublicListings from '@/pages/public/PublicListings';
+import PublicListingDetail from '@/pages/public/PublicListingDetail';
 
 const LandlordRoutes = () => (
   <Layout>
     <Routes>
-      <Route path="/" element={<Dashboard />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/properties" element={<Properties />} />
       <Route path="/properties/:id" element={<PropertyDetail />} />
       <Route path="/units" element={<Units />} />
@@ -99,8 +103,8 @@ const LandlordRoutes = () => (
       <Route path="/settings" element={<Settings />} />
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
-      <Route path="/listings" element={<Listings />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/my-listings" element={<Listings />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   </Layout>
 );
@@ -109,6 +113,7 @@ const AdminRoutes = () => (
   <AdminLayout>
     <Routes>
       <Route path="/" element={<AdminDashboard />} />
+      <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
       <Route path="/admin/users" element={<UserManagement />} />
       <Route path="/properties" element={<Properties />} />
       <Route path="/properties/:id" element={<PropertyDetail />} />
@@ -131,8 +136,8 @@ const AdminRoutes = () => (
       <Route path="/settings" element={<Settings />} />
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
-      <Route path="/listings" element={<Listings />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/my-listings" element={<Listings />} />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
   </AdminLayout>
 );
@@ -212,6 +217,9 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      <Route path="/" element={<PublicHome />} />
+      <Route path="/listings" element={<PublicListings />} />
+      <Route path="/listings/:id" element={<PublicListingDetail />} />
       <Route path="/login" element={<Login />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/test-profile/*" element={<TestProfileRoutes />} />
@@ -219,7 +227,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/" : isGuest ? "/guest" : "/portal"} replace />} />
+        <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/dashboard" : isGuest ? "/guest" : "/portal"} replace />} />
         <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : isGuest ? <GuestRoutes /> : <TenantRoutes />} />
       </Route>
     </Routes>

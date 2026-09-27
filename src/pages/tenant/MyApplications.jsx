@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useTenantData } from "@/lib/useTenantData";
 import { base44 } from "@/api/base44Client";
 import { KES, logAudit, todayISO } from "@/lib/finance";
@@ -16,14 +17,14 @@ export default function MyApplications() {
   const [actionApp, setActionApp] = useState(null);
   const [actionType, setActionType] = useState("");
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ info: "", site_visit_date: "", site_visit_time: "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "" });
+  const [form, setForm] = useState({ info: "", site_visit_date: "", site_visit_time: "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "", documents: [] });
 
   const list = useMemo(() => [...t.applications].sort((a, b) => new Date(b.submitted_date || b.created_date) - new Date(a.submitted_date || a.created_date)), [t.applications]);
 
   const openAction = (app, type) => {
     setActionApp(app);
     setActionType(type);
-    setForm({ info: "", site_visit_date: app.site_visit_date || "", site_visit_time: app.site_visit_time || "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "" });
+    setForm({ info: "", site_visit_date: app.site_visit_date || "", site_visit_time: app.site_visit_time || "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "", documents: app.documents || [] });
   };
 
   const submitAction = async () => {
@@ -34,11 +35,14 @@ export default function MyApplications() {
       let updates = {};
       let label = "";
       if (actionType === "info") {
-        updates = { status: "Information Provided", landlord_response: form.info };
+        updates = { status: "Information Provided", landlord_response: form.info, documents: form.documents };
         label = "Information Provided";
       } else if (actionType === "sitevisit") {
         updates = { site_visit_date: form.site_visit_date, site_visit_time: form.site_visit_time, site_visit_status: "Proposed", status: "Site Visit Scheduled" };
         label = "Site Visit Proposed";
+      } else if (actionType === "reschedule") {
+        updates = { site_visit_date: form.site_visit_date, site_visit_time: form.site_visit_time, site_visit_status: "Rescheduled", status: "Site Visit Scheduled" };
+        label = "Site Visit Reschedule Requested";
       } else if (actionType === "agreement") {
         if (!form.agreement_executed_url) { toast({ title: "Validation error", description: "Please upload the executed agreement.", variant: "destructive" }); setBusy(false); return; }
         updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Agreement Executed" };
@@ -118,12 +122,21 @@ export default function MyApplications() {
 
               {a.landlord_response && <div className="mt-2 rounded-lg bg-slate-50 p-2 text-sm text-slate-700"><span className="text-xs font-medium text-slate-500">Provider response: </span>{a.landlord_response}</div>}
 
+              {a.status === "Rejected" && a.landlord_response && (
+                <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-sm text-rose-800">
+                  <p className="font-medium">Application not accepted</p>
+                  <p className="text-rose-700">{a.landlord_response}</p>
+                </div>
+              )}
+
               {/* Client actions based on status */}
               <div className="mt-3 flex flex-wrap gap-2">
                 {a.status === "More Information Required" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "info")}>Provide Information</Button>}
                 {a.status === "Site Visit Requested" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "sitevisit")}>Propose Visit Date</Button>}
+                {a.status === "Site Visit Scheduled" && <Button size="sm" variant="outline" className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50" onClick={() => openAction(a, "reschedule")}>Request Reschedule</Button>}
                 {a.status === "Agreement Issued" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "agreement")}>Upload Executed Agreement</Button>}
                 {a.status === "Payment Requested" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "payment")}>Submit Payment Proof</Button>}
+                {a.status === "Completed" && <Link to="/portal/tenancy"><Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700">View Tenancy</Button></Link>}
               </div>
             </div>
           ))}
@@ -135,10 +148,18 @@ export default function MyApplications() {
           {actionApp && (
             <>
               <DialogHeader><DialogTitle>
-                {actionType === "info" ? "Provide Information" : actionType === "sitevisit" ? "Propose Site Visit" : actionType === "agreement" ? "Upload Executed Agreement" : "Submit Payment Proof"}
+                {actionType === "info" ? "Provide Information" : actionType === "sitevisit" ? "Propose Site Visit" : actionType === "reschedule" ? "Request Reschedule" : actionType === "agreement" ? "Upload Executed Agreement" : "Submit Payment Proof"}
               </DialogTitle></DialogHeader>
               <div className="space-y-3 py-2">
-                {actionType === "info" && <Field label="Your response"><Textarea value={form.info} onChange={(e) => setForm({ ...form, info: e.target.value })} rows={4} placeholder="Provide the requested information..." /></Field>}
+                {actionType === "info" && (
+                  <>
+                    <Field label="Your response"><Textarea value={form.info} onChange={(e) => setForm({ ...form, info: e.target.value })} rows={4} placeholder="Provide the requested information..." /></Field>
+                    <Field label="Supporting documents (optional)">
+                      <FileUploadButton onUploaded={(file) => setForm({ ...form, documents: [...form.documents, file.file_url] })} label="Upload document" />
+                      {form.documents.length > 0 && <p className="text-xs text-emerald-700">{form.documents.length} document(s) attached</p>}
+                    </Field>
+                  </>
+                )}
                 {actionType === "sitevisit" && (
                   <>
                     <div className="grid grid-cols-2 gap-2">
@@ -146,6 +167,16 @@ export default function MyApplications() {
                       <Field label="Preferred time"><Input type="time" value={form.site_visit_time} onChange={(e) => setForm({ ...form, site_visit_time: e.target.value })} /></Field>
                     </div>
                     <p className="text-xs text-slate-500">The provider will confirm or propose an alternative time.</p>
+                  </>
+                )}
+                {actionType === "reschedule" && (
+                  <>
+                    <p className="text-sm text-slate-600">Current: <span className="font-medium">{actionApp.site_visit_date} {actionApp.site_visit_time && `at ${actionApp.site_visit_time}`}</span></p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="New preferred date"><Input type="date" value={form.site_visit_date} onChange={(e) => setForm({ ...form, site_visit_date: e.target.value })} /></Field>
+                      <Field label="New preferred time"><Input type="time" value={form.site_visit_time} onChange={(e) => setForm({ ...form, site_visit_time: e.target.value })} /></Field>
+                    </div>
+                    <p className="text-xs text-slate-500">The provider will confirm the rescheduled time.</p>
                   </>
                 )}
                 {actionType === "agreement" && (

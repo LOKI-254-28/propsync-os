@@ -8,7 +8,6 @@ import { isTestMode } from "@/lib/testProfile";
 
 const MOCK_LISTINGS = [
   { id: 'mock1', property_name: 'Riverside Apartments', unit_number: 'A101', listing_type: 'Rent', price: 85000, images: [] },
-  { id: 'mock2', property_name: 'Hillside Villas', unit_number: 'V1', listing_type: 'Sale', price: 12500000, images: [] },
   { id: 'mock3', property_name: 'Garden Court', unit_number: 'B12', listing_type: 'Rent', price: 65000, images: [] },
 ];
 const MOCK_PROPERTIES = [

@@ -17,7 +17,6 @@
         "Inspection Report",
         "Insurance/Compliance Certificate",
         "Title Deed",
-        "Sale Agreement",
         "Other"
       ],
       "default": "Other"

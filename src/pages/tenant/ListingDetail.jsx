@@ -40,8 +40,8 @@ export default function ListingDetail() {
     })();
   }, [id]);
 
-  const applyLabel = listing?.listing_type === "Sale" ? "Apply to Purchase" : listing?.listing_type === "Lease" ? "Apply to Lease" : "Apply to Rent";
-  const appType = listing?.listing_type === "Sale" ? "purchase" : listing?.listing_type === "Lease" ? "lease" : "rental";
+  const applyLabel = "Apply to Rent";
+  const appType = "rental";
 
   const submit = async () => {
     setSubmitting(true);

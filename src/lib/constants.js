@@ -15,8 +15,6 @@ export const LANDLORD_NAV = [
   { label: "Reports", path: "/reports", icon: "BarChart3" },
   { label: "Property Comparison", path: "/comparison", icon: "Columns3" },
   { label: "Listings", path: "/listings", icon: "Tag" },
-  { label: "Leases", path: "/leases", icon: "FileSignature" },
-  { label: "Sales", path: "/sales", icon: "Banknote" },
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Staff & Permissions", path: "/staff", icon: "ShieldCheck" },
   { label: "Settings", path: "/settings", icon: "Settings" },
@@ -39,8 +37,6 @@ export const ADMIN_NAV = [
   { label: "Expenses", path: "/expenses", icon: "Receipt" },
   { label: "Reports", path: "/reports", icon: "BarChart3" },
   { label: "Listings", path: "/listings", icon: "Tag" },
-  { label: "Leases", path: "/leases", icon: "FileSignature" },
-  { label: "Sales", path: "/sales", icon: "Banknote" },
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Settings", path: "/settings", icon: "Settings" },
 ];
@@ -134,7 +130,7 @@ export const STATUS_COLORS = {
   // Listing types
   Rent: "blue",
   Sale: "emerald",
-  Lease: "amber",
+
   // Application types
   rental: "blue",
   purchase: "emerald",

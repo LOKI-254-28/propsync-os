@@ -93,9 +93,7 @@
     "application_type": {
       "type": "string",
       "enum": [
-        "rental",
-        "purchase",
-        "lease"
+        "rental"
       ],
       "default": "rental"
     },

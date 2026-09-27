@@ -3,13 +3,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
 // Entities that require an approved landowner (or admin) to create,
 // and that carry owner_user_id for ownership isolation.
 const PROVIDER_ENTITIES = [
-  'Property', 'Unit', 'Listing', 'Tenancy', 'Lease', 'SaleTransaction',
+  'Property', 'Unit', 'Listing', 'Tenancy',
   'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection', 'Tenant',
 ];
 
 // Entities that have an owner_user_id field (Tenant does not).
 const ENTITIES_WITH_OWNER = [
-  'Property', 'Unit', 'Listing', 'Tenancy', 'Lease', 'SaleTransaction',
+  'Property', 'Unit', 'Listing', 'Tenancy',
   'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection',
 ];
 
@@ -19,13 +19,13 @@ async function validateParentOwnership(base44, user, entity, data) {
   const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
   if (isAdmin) return null;
 
-  // property_id — used by Unit, Listing, Tenancy, Lease, SaleTransaction, Expense, Notice, Inspection, Document
+  // property_id — used by Unit, Listing, Tenancy, Expense, Notice, Inspection, Document
   if (data.property_id && entity !== 'Property' && entity !== 'Tenant') {
     const prop = await base44.asServiceRole.entities.Property.get(data.property_id).catch(() => null);
     if (!prop || prop.owner_user_id !== user.id) return 'Property does not belong to your account';
   }
 
-  // unit_id — used by Listing, Tenancy, Lease, SaleTransaction, Inspection, Document
+  // unit_id — used by Listing, Tenancy, Inspection, Document
   if (data.unit_id && entity !== 'Unit') {
     const unit = await base44.asServiceRole.entities.Unit.get(data.unit_id).catch(() => null);
     if (!unit || unit.owner_user_id !== user.id) return 'Unit does not belong to your account';

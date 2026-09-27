@@ -5,7 +5,7 @@ import { SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ShieldCheck, UserCheck, UserX, Clock, Building2, DoorOpen, Users, FileText, ScrollText, Banknote, Loader2 } from "lucide-react";
+import { UserCheck, UserX, Clock, Building2, DoorOpen, Users, FileText, ScrollText, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 export default function AdminApprovalSection() {
@@ -19,15 +19,13 @@ export default function AdminApprovalSection() {
   const load = async () => {
     setLoading(true);
     try {
-      const [allUsers, properties, units, tenancies, listings, applications, leases, sales] = await Promise.all([
+      const [allUsers, properties, units, tenancies, listings, applications] = await Promise.all([
         base44.entities.User.list("-created_date", 500),
         base44.entities.Property.list("-created_date", 500),
         base44.entities.Unit.list("-created_date", 500),
         base44.entities.Tenancy.list("-created_date", 500),
         base44.entities.Listing.list("-created_date", 500),
         base44.entities.Application.list("-created_date", 500),
-        base44.entities.Lease.list("-created_date", 500),
-        base44.entities.SaleTransaction.list("-created_date", 500),
       ]);
       setUsers(allUsers);
       setStats({
@@ -38,8 +36,6 @@ export default function AdminApprovalSection() {
         listings: listings.length,
         applications: applications.length,
         activeTenancies: tenancies.filter((t) => ["Active", "Expiring Soon", "Notice Given"].includes(t.status)).length,
-        leases: leases.length,
-        sales: sales.length,
       });
     } catch (e) {
       console.error("[Admin load error]", e);
@@ -89,15 +85,13 @@ export default function AdminApprovalSection() {
     <div className="space-y-6">
       {/* Platform Overview */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
           <OverviewStat icon={Users} label="Users" value={stats.totalUsers} />
           <OverviewStat icon={Clock} label="Pending" value={stats.pendingUsers} accent="amber" />
           <OverviewStat icon={Building2} label="Properties" value={stats.properties} />
           <OverviewStat icon={DoorOpen} label="Units" value={stats.units} />
           <OverviewStat icon={FileText} label="Listings" value={stats.listings} />
           <OverviewStat icon={ScrollText} label="Tenancies" value={stats.activeTenancies} />
-          <OverviewStat icon={ShieldCheck} label="Leases" value={stats.leases} />
-          <OverviewStat icon={Banknote} label="Sales" value={stats.sales} />
         </div>
       )}
 

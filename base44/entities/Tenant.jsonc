@@ -57,12 +57,10 @@
     "profile_type": {
       "type": "string",
       "enum": [
-        "tenant",
-        "purchaser",
-        "lessee"
+        "tenant"
       ],
       "default": "tenant",
-      "description": "Client operational profile: tenant (renting), purchaser (buying), or lessee (leasing)"
+      "description": "Client operational profile (rentals-only)"
     }
   },
   "required": [

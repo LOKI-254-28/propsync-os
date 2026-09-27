@@ -39,7 +39,7 @@ export default function BrowseListings() {
 
   return (
     <div>
-      <PageHeader title="Browse Listings" description="Find your next home, property to buy, or commercial space to lease." />
+      <PageHeader title="Browse Listings" description="Find your next rental home." />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">
@@ -49,8 +49,6 @@ export default function BrowseListings() {
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
           <option value="">All types</option>
           <option value="Rent">For Rent</option>
-          <option value="Sale">For Sale</option>
-          <option value="Lease">For Lease</option>
         </select>
         <Input type="number" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} placeholder="Min price" className="w-28" />
         <Input type="number" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} placeholder="Max price" className="w-28" />

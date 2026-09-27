@@ -42,8 +42,6 @@ import Settings from '@/pages/landlord/Settings';
 import Feedback from '@/pages/landlord/Feedback';
 import VacationRequests from '@/pages/landlord/VacationRequests';
 import Listings from '@/pages/landlord/Listings';
-import Sales from '@/pages/landlord/Sales';
-import Leases from '@/pages/landlord/Leases';
 
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
@@ -102,8 +100,6 @@ const LandlordRoutes = () => (
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
       <Route path="/listings" element={<Listings />} />
-      <Route path="/sales" element={<Sales />} />
-      <Route path="/leases" element={<Leases />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </Layout>
@@ -136,8 +132,6 @@ const AdminRoutes = () => (
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
       <Route path="/listings" element={<Listings />} />
-      <Route path="/sales" element={<Sales />} />
-      <Route path="/leases" element={<Leases />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </AdminLayout>

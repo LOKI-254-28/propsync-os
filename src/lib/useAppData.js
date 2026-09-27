@@ -11,7 +11,7 @@ export function usePortfolioData() {
     payments: [], applications: [], maintenance: [], inspections: [],
     notices: [], expenses: [], contractors: [], feedback: [],
     vacationRequests: [], notifications: [], documents: [],
-    listings: [], saleTransactions: [], leases: [],
+    listings: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +29,7 @@ export function usePortfolioData() {
       const [
         properties, units, tenants, tenancies, charges, payments,
         applications, maintenance, inspections, notices, expenses,
-        contractors, feedback, vacationRequests, documents, listings, saleTransactions, leases,
+        contractors, feedback, vacationRequests, documents, listings,
       ] = await Promise.all([
         owned('Property', '-created_date', 200),
         owned('Unit', '-created_date', 500),
@@ -47,10 +47,8 @@ export function usePortfolioData() {
         owned('VacationRequest', '-created_date', 100),
         owned('Document', '-created_date', 200),
         owned('Listing', '-created_date', 200),
-        owned('SaleTransaction', '-created_date', 200),
-        owned('Lease', '-created_date', 200),
       ]);
-      setData({ properties, units, tenants, tenancies, charges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings, saleTransactions, leases });
+      setData({ properties, units, tenants, tenancies, charges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings });
     } finally {
       setLoading(false);
     }

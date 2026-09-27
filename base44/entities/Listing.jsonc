@@ -20,9 +20,7 @@
     "listing_type": {
       "type": "string",
       "enum": [
-        "Rent",
-        "Sale",
-        "Lease"
+        "Rent"
       ],
       "default": "Rent"
     },
@@ -47,8 +45,6 @@
         "Reserved",
         "Under Application",
         "Rented",
-        "Leased",
-        "Sold",
         "Withdrawn",
         "Expired",
         "Archived",

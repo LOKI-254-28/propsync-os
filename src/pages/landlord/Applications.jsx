@@ -84,7 +84,7 @@ export default function Applications() {
       const unit = data.units.find((u) => u.id === review.unit_id);
       let tenantRec = data.tenants.find((t) => t.id === review.tenant_id) || data.tenants.find((t) => t.email === review.applicant_email);
       if (!tenantRec) {
-        tenantRec = await secureCreate("Tenant", { full_name: review.applicant_name, email: review.applicant_email, phone: review.applicant_phone, id_number: review.id_number, occupation: review.occupation, monthly_income: review.monthly_income, user_id: review.tenant_user_id, status: "Active", profile_type: review.application_type === "purchase" ? "purchaser" : review.application_type === "lease" ? "lessee" : "tenant" });
+        tenantRec = await secureCreate("Tenant", { full_name: review.applicant_name, email: review.applicant_email, phone: review.applicant_phone, id_number: review.id_number, occupation: review.occupation, monthly_income: review.monthly_income, user_id: review.tenant_user_id, status: "Active", profile_type: "tenant" });
       }
       const tUserId = tenantRec.user_id || review.tenant_user_id;
 
@@ -102,32 +102,6 @@ export default function Applications() {
         if (review.listing_id) await base44.entities.Listing.update(review.listing_id, { status: "Rented", date_closed: todayISO() });
         await logAudit({ user: me, action: "Application Approved → Tenancy Created", entity: "Tenancy", entity_id: tenancy.id, entity_name: ref });
         if (tUserId) await notify({ recipient_user_id: tUserId, type: "Tenancy", title: "Application Approved!", message: `Your tenancy for ${unit.unit_number} has been created.`, related_entity: "Tenancy", related_id: tenancy.id, action_link: "/portal/tenancy" });
-      } else if (review.application_type === "purchase") {
-        const ref = genRef("SAL");
-        const sale = await secureCreate("SaleTransaction", {
-          transaction_reference: ref, property_id: review.property_id, property_name: review.property_name,
-          unit_id: review.unit_id, unit_number: review.unit_number, listing_id: review.listing_id, application_id: review.id,
-          seller_user_id: review.owner_user_id, buyer_user_id: tUserId, buyer_tenant_id: tenantRec.id, buyer_name: tenantRec.full_name,
-          sale_price: review.monthly_rent || 0, deposit_paid: review.payment_amount || 0, balance: (review.monthly_rent || 0) - (review.payment_amount || 0),
-          status: "Completed", completion_date: todayISO(),
-        });
-        if (unit) await base44.entities.Unit.update(unit.id, { status: "Vacant" });
-        if (review.listing_id) await base44.entities.Listing.update(review.listing_id, { status: "Sold", date_closed: todayISO() });
-        await logAudit({ user: me, action: "Application Approved → Sale Completed", entity: "SaleTransaction", entity_id: sale.id, entity_name: ref });
-        if (tUserId) await notify({ recipient_user_id: tUserId, type: "Sale", title: "Purchase Completed!", message: `Your purchase of ${review.property_name} has been completed.`, related_entity: "SaleTransaction", related_id: sale.id, action_link: "/portal/my-properties" });
-      } else if (review.application_type === "lease") {
-        const ref = genRef("LSR");
-        const lease = await secureCreate("Lease", {
-          lease_reference: ref, property_id: review.property_id, property_name: review.property_name,
-          unit_id: review.unit_id, unit_number: review.unit_number, listing_id: review.listing_id, application_id: review.id,
-          lessor_user_id: review.owner_user_id, lessee_user_id: tUserId, lessee_tenant_id: tenantRec.id, lessee_name: tenantRec.full_name,
-          start_date: review.proposed_start_date || todayISO(), end_date: "", monthly_fee: review.monthly_rent || 0,
-          security_deposit: 0, payment_due_day: 1, status: "Active",
-        });
-        if (unit) await base44.entities.Unit.update(unit.id, { status: "Occupied" });
-        if (review.listing_id) await base44.entities.Listing.update(review.listing_id, { status: "Leased", date_closed: todayISO() });
-        await logAudit({ user: me, action: "Application Approved → Lease Created", entity: "Lease", entity_id: lease.id, entity_name: ref });
-        if (tUserId) await notify({ recipient_user_id: tUserId, type: "Lease", title: "Lease Approved!", message: `Your lease for ${review.property_name} has been created.`, related_entity: "Lease", related_id: lease.id, action_link: "/portal/my-properties" });
       }
 
       await base44.entities.Application.update(review.id, { status: "Completed", landlord_response: response || "Application approved and completed." });
@@ -144,7 +118,7 @@ export default function Applications() {
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
   const s = review?.status || "";
-  const appTypeLabel = review?.application_type === "purchase" ? "Purchase" : review?.application_type === "lease" ? "Lease" : "Rental";
+  const appTypeLabel = "Rental";
 
   return (
     <div>

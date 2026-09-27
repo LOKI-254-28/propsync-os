@@ -72,7 +72,7 @@ export default function Listings() {
 
   return (
     <div>
-      <PageHeader title="Listings" description="Manage property listings for rent, sale, or lease."
+      <PageHeader title="Listings" description="Manage property listings for rent."
         actions={<Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Add Listing</Button>} />
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">
@@ -81,10 +81,10 @@ export default function Listings() {
         </div>
         <select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
           <option value="">All types</option>
-          {["Rent", "Sale", "Lease"].map((t) => <option key={t}>{t}</option>)}
+          <option key="Rent">Rent</option>
         </select>
       </div>
-      {list.length === 0 ? <EmptyState icon={Tag} title="No listings yet" description="Create a listing to offer a property for rent, sale, or lease." /> : (
+      {list.length === 0 ?         <EmptyState icon={Tag} title="No listings yet" description="Create a listing to offer a property for rent." /> : (
         <SectionCard>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -106,7 +106,7 @@ export default function Listings() {
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(l)} title="Edit"><Edit className="h-3.5 w-3.5" /></Button>
                         {l.status === "Draft" && <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50" disabled={submitting} onClick={() => changeStatus(l, "Published", "Published")}>Publish</Button>}
                         {l.status === "Published" && <Button size="sm" variant="outline" className="h-7 text-xs" disabled={submitting} onClick={() => changeStatus(l, "Draft", "Unpublished")}>Unpublish</Button>}
-                        {!["Withdrawn", "Sold", "Rented", "Leased", "Archived"].includes(l.status) && <Button size="sm" variant="outline" className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-50" disabled={submitting} onClick={() => changeStatus(l, "Withdrawn", "Withdrawn")}>Withdraw</Button>}
+                        {!["Withdrawn", "Rented", "Archived"].includes(l.status) && <Button size="sm" variant="outline" className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-50" disabled={submitting} onClick={() => changeStatus(l, "Withdrawn", "Withdrawn")}>Withdraw</Button>}
                       </div>
                     </td>
                   </tr>
@@ -136,7 +136,7 @@ export default function Listings() {
             </Field>
             <Field label="Listing type">
               <select value={form.listing_type} onChange={(e) => setForm({ ...form, listing_type: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                {["Rent", "Sale", "Lease"].map((t) => <option key={t}>{t}</option>)}
+                <option key="Rent">Rent</option>
               </select>
             </Field>
             <Field label="Price (KES)"><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>

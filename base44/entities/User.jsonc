@@ -24,14 +24,10 @@
         "type": "string",
         "enum": [
           "landlord",
-          "vendor",
-          "lessor",
-          "tenant",
-          "purchaser",
-          "lessee"
+          "tenant"
         ]
       },
-      "description": "Operational roles this user can act as. Landowners: landlord/vendor/lessor. Clients: tenant/purchaser/lessee."
+      "description": "Operational roles this user can act as. Landowners: landlord. Clients: tenant. (Rentals-only platform.)"
     },
     "approval_status": {
       "type": "string",

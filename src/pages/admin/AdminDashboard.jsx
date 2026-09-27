@@ -6,7 +6,7 @@ import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/co
 import AdminApprovalSection from "@/components/AdminApprovalSection";
 import {
   Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, TrendingUp,
-  Receipt, ArrowRight, FileText, ScrollText, ShieldCheck, Banknote, Clock,
+  Receipt, ArrowRight, FileText, ScrollText, Clock,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -18,13 +18,11 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState([]);
   const [maintenance, setMaintenance] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [leases, setLeases] = useState([]);
-  const [sales, setSales] = useState([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const [u, p, un, t, pay, m, a, l, s] = await Promise.all([
+        const [u, p, un, t, pay, m, a] = await Promise.all([
           base44.entities.User.list("-created_date", 500),
           base44.entities.Property.list("-created_date", 500),
           base44.entities.Unit.list("-created_date", 500),
@@ -32,11 +30,9 @@ export default function AdminDashboard() {
           base44.entities.Payment.list("-created_date", 500),
           base44.entities.Maintenance.list("-created_date", 500),
           base44.entities.Application.list("-created_date", 500),
-          base44.entities.Lease.list("-created_date", 500),
-          base44.entities.SaleTransaction.list("-created_date", 500),
         ]);
         setUsers(u); setProperties(p); setUnits(un); setTenancies(t);
-        setPayments(pay); setMaintenance(m); setApplications(a); setLeases(l); setSales(s);
+        setPayments(pay); setMaintenance(m); setApplications(a);
       } catch (e) {
         console.error("[AdminDashboard load error]", e);
       } finally {
@@ -63,9 +59,9 @@ export default function AdminDashboard() {
         properties: properties.length, units: units.length, occupiedCount, availableCount, vacantCount,
         activeTenancies: activeTenancies.length, openMaintenance,
         expectedThisMonth, collectedThisMonth,
-        applications: applications.length, leases: leases.length, sales: sales.length,
+        applications: applications.length,
       };
-    }, [users, properties, units, tenancies, payments, maintenance, applications, leases, sales]);
+    }, [users, properties, units, tenancies, payments, maintenance, applications]);
 
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
@@ -95,11 +91,8 @@ export default function AdminDashboard() {
         <StatCard label="Open Maintenance" value={stats.openMaintenance} icon={Wrench} accent="gold" />
       </div>
 
-      {/* Transaction Overview */}
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Applications" value={stats.applications} icon={FileText} accent="blue" />
-        <StatCard label="Leases" value={stats.leases} icon={ShieldCheck} accent="emerald" />
-        <StatCard label="Sales" value={stats.sales} icon={Banknote} accent="gold" />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">

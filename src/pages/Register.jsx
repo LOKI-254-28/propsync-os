@@ -16,13 +16,9 @@ import { cn } from "@/lib/utils";
 
 const LANDOWNER_PROFILES = [
   { value: "landlord", label: "Landlord", desc: "Manage rental properties" },
-  { value: "vendor", label: "Vendor", desc: "Sell properties" },
-  { value: "lessor", label: "Lessor", desc: "Lease properties" },
 ];
 const CLIENT_PROFILES = [
   { value: "tenant", label: "Tenant", desc: "Rent a property" },
-  { value: "purchaser", label: "Purchaser", desc: "Buy a property" },
-  { value: "lessee", label: "Lessee", desc: "Lease a property" },
 ];
 
 export default function Register() {
@@ -91,7 +87,7 @@ export default function Register() {
           if (!unit) { setError("Invalid invite code. Please check and try again."); setLoading(false); return; }
         }
         const prop = unit ? null : properties.find((p) => p.id === propertyId);
-        const appType = profiles.includes("tenant") ? "rental" : profiles.includes("purchaser") ? "purchase" : "lease";
+        const appType = "rental";
         await base44.entities.Application.create({
           application_reference: genRef("APP"),
           tenant_user_id: me.id,
@@ -174,7 +170,7 @@ export default function Register() {
                 accountType === "client" ? "border-amber-500 bg-amber-50/50" : "border-border hover:border-amber-300")}>
               <Home className={cn("h-7 w-7", accountType === "client" ? "text-amber-600" : "text-slate-400")} />
               <span className="text-sm font-semibold text-foreground">Client</span>
-              <span className="text-[10px] text-muted-foreground text-center">Tenant / Buyer</span>
+              <span className="text-[10px] text-muted-foreground text-center">Tenant</span>
             </button>
           </div>
 

@@ -39,6 +39,19 @@ export default function Register() {
       setInviteCode(invite.toUpperCase());
       setAccountType("client");
       setStep("form");
+      // Existing logged-in users: accept the invite directly without re-registering
+      base44.auth.isAuthenticated().then(async (authed) => {
+        if (!authed) return;
+        try {
+          setLoading(true);
+          await base44.functions.invoke("unitInvite", { action: "accept", invite_code: invite.toUpperCase() });
+          await base44.auth.updateMe({ account_type: "client", approval_status: "approved" });
+          window.location.href = "/portal";
+        } catch (e) {
+          setError(e.data?.error || e.message || "Could not accept this invite.");
+          setLoading(false);
+        }
+      });
     }
   }, []);
 
@@ -101,27 +114,35 @@ export default function Register() {
           });
           window.location.href = returnTo || "/portal";
         } else {
-          let unit = null;
           if (inviteCode.trim()) {
-            const units = await base44.entities.Unit.filter({ invite_code: inviteCode.trim().toUpperCase() });
-            unit = units[0];
-            if (!unit) { setError("Invalid invite code. Please check and try again."); setLoading(false); return; }
+            // Invite path: auto-create tenancy and bypass admin approval
+            try {
+              await base44.functions.invoke("unitInvite", { action: "accept", invite_code: inviteCode.trim().toUpperCase() });
+              await base44.auth.updateMe({ account_type: "client", approval_status: "approved" });
+            } catch (e) {
+              setError(e.data?.error || e.message || "Could not accept this invite. Please check your invite code.");
+              setLoading(false);
+              return;
+            }
+            window.location.href = "/portal";
+            return;
           }
-          const prop = unit ? null : properties.find((p) => p.id === propertyId);
+          // No invite: request to join a property (landowner reviews the application)
+          const prop = properties.find((p) => p.id === propertyId);
           await base44.entities.Application.create({
             application_reference: genRef("APP"),
             tenant_user_id: me.id,
             applicant_name: fullName,
             applicant_email: email,
-            property_id: unit?.property_id || propertyId,
-            property_name: unit?.property_name || prop?.name || "",
-            unit_id: unit?.id || "",
-            unit_number: unit?.unit_number || "",
-            monthly_rent: unit?.monthly_rent || 0,
+            property_id: propertyId,
+            property_name: prop?.name || "",
+            unit_id: "",
+            unit_number: "",
+            monthly_rent: 0,
             status: "Pending",
             submitted_date: todayISO(),
             application_type: "rental",
-            owner_user_id: unit?.owner_user_id || prop?.owner_user_id || "",
+            owner_user_id: prop?.owner_user_id || "",
           });
           window.location.href = "/portal";
         }

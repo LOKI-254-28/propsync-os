@@ -73,6 +73,21 @@
         "type": "string"
       }
     },
+    "room_photos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "room": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "description": "Per-room public photo URLs (Living room, Kitchen, etc.)"
+      }
+    },
     "description": {
       "type": "string"
     },

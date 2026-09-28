@@ -117,6 +117,25 @@ export default function PublicListingDetail() {
                     <div className="flex flex-wrap gap-1.5">{unit.amenities.map((a) => <span key={a} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">{a}</span>)}</div>
                   </div>
                 )}
+                {unit.room_photos?.length > 0 && (
+                  <div className="mt-4">
+                    <p className="mb-1.5 text-xs font-medium uppercase text-slate-500">Room photos</p>
+                    <div className="space-y-3">
+                      {Object.entries(groupByRoom(unit.room_photos)).map(([room, photos]) => (
+                        <div key={room}>
+                          <p className="mb-1 text-xs font-medium text-slate-600">{room}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {photos.map((p, i) => (
+                              <div key={i} className="h-20 w-28 overflow-hidden rounded-lg border border-slate-200">
+                                <img src={p} alt={`${room} ${i + 1}`} className="h-full w-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -171,4 +190,12 @@ export default function PublicListingDetail() {
 
 function Detail({ icon: Icon, label, value }) {
   return <div className="flex items-center gap-2"><Icon className="h-4 w-4 text-slate-400" /><div><p className="text-xs text-slate-500">{label}</p><p className="font-medium text-slate-800">{value}</p></div></div>;
+}
+
+function groupByRoom(photos) {
+  return (photos || []).reduce((acc, p) => {
+    const room = p.room || "Other";
+    (acc[room] ||= []).push(p.url);
+    return acc;
+  }, {});
 }

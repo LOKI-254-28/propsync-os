@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DoorOpen, Plus, Search, Loader2, Copy, Check, Layers } from "lucide-react";
+import { DoorOpen, Plus, Search, Loader2, Copy, Check, Layers, Pencil, Send } from "lucide-react";
 import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
 import BulkUnitWizard from "@/components/BulkUnitWizard";
+import UnitEditor from "@/components/UnitEditor";
 
 const AMENITIES = ["Parking", "Balcony", "Lift", "Gym", "Pool", "Security", "Borehole", "Backup Generator", "Internet", "Garden"];
 
@@ -26,12 +27,25 @@ export default function Units() {
   const [filterStatus, setFilterStatus] = useState("");
   const [form, setForm] = useState({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [editUnit, setEditUnit] = useState(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [sending, setSending] = useState(false);
 
   const filtered = useMemo(() => data.units.filter((u) =>
     (!filterProp || u.property_id === filterProp) &&
     (!filterStatus || u.status === filterStatus) &&
     (u.unit_number?.toLowerCase().includes(search.toLowerCase()) || u.current_tenant_name?.toLowerCase().includes(search.toLowerCase()))
   ), [data.units, search, filterProp, filterStatus]);
+
+  const tenancyFor = (u) => (data.tenancies || []).find((t) => t.unit_id === u.id && ["Active", "Expiring Soon", "Notice Given"].includes(t.status));
+  const remainingLabel = (t) => {
+    if (!t) return "";
+    if (!t.expected_end_date) return "Active";
+    const days = Math.round((new Date(t.expected_end_date) - new Date()) / 86400000);
+    if (days <= 0) return "Ending";
+    if (days < 31) return `${days} day${days === 1 ? "" : "s"} left`;
+    return `${Math.round(days / 30)} mo left`;
+  };
 
   const create = async () => {
     if (!form.unit_number) { toast({ title: "Validation error", description: "Unit number is required.", variant: "destructive" }); return; }
@@ -45,6 +59,20 @@ export default function Units() {
       setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
       data.reload();
     }, { success: "Unit created successfully.", error: "Could not create unit. Your account may still be awaiting approval." });
+  };
+
+  const sendInvite = async () => {
+    if (!inviteEmail.trim()) { toast({ title: "Validation error", description: "Enter an email address.", variant: "destructive" }); return; }
+    setSending(true);
+    try {
+      await base44.functions.invoke("unitInvite", { action: "send", unit_id: inviteUnit.id, email: inviteEmail.trim() });
+      toast({ title: "Invite sent", description: `Invitation emailed to ${inviteEmail.trim()}.` });
+      setInviteEmail("");
+    } catch (e) {
+      toast({ title: "Could not send invite", description: e.data?.error || e.message || "Email may be undeliverable.", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
 
   const duplicate = async (u) => {
@@ -121,9 +149,17 @@ export default function Units() {
                     <td className="py-2.5 text-slate-600">{u.unit_type} · {u.bedrooms}BR</td>
                     <td className="py-2.5 text-slate-600">{u.current_tenant_name || "—"}</td>
                     <td className="py-2.5 text-right font-medium text-slate-900">{KES(u.monthly_rent)}</td>
-                    <td className="py-2.5 text-right"><StatusBadge status={u.status} /></td>
                     <td className="py-2.5 text-right">
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-slate-500 hover:text-emerald-700" onClick={() => duplicate(u)} title="Duplicate unit" disabled={submitting}><Copy className="h-3.5 w-3.5" /></Button>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <StatusBadge status={u.status} />
+                        {(() => { const t = tenancyFor(u); return t ? <span className="text-[10px] text-slate-400">{remainingLabel(t)}</span> : null; })()}
+                      </div>
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-slate-500 hover:text-emerald-700" onClick={() => setEditUnit(u)} title="Edit unit"><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-slate-500 hover:text-emerald-700" onClick={() => duplicate(u)} title="Duplicate unit" disabled={submitting}><Copy className="h-3.5 w-3.5" /></Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -174,7 +210,7 @@ export default function Units() {
       </Dialog>
 
       {inviteUnit && (
-        <Dialog open={!!inviteUnit} onOpenChange={(o) => !o && setInviteUnit(null)}>
+        <Dialog open={!!inviteUnit} onOpenChange={(o) => { if (!o) { setInviteUnit(null); setInviteEmail(""); } }}>
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Invite a Tenant</DialogTitle></DialogHeader>
             <div className="space-y-4 py-2">
@@ -192,6 +228,15 @@ export default function Units() {
                   </Button>
                 </div>
               </div>
+              <div className="border-t border-slate-100 pt-3">
+                <p className="mb-1 text-xs font-medium text-slate-500">Or send by email</p>
+                <div className="flex items-center gap-2">
+                  <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="tenant@example.com" />
+                  <Button onClick={sendInvite} disabled={sending || !inviteEmail.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
             </div>
             <DialogFooter><Button variant="outline" onClick={() => setInviteUnit(null)}>Close</Button></DialogFooter>
           </DialogContent>
@@ -199,6 +244,7 @@ export default function Units() {
       )}
 
       <BulkUnitWizard open={bulkOpen} onClose={() => setBulkOpen(false)} onCreated={() => data.reload()} properties={data.properties} />
+      <UnitEditor open={!!editUnit} unit={editUnit} onClose={() => setEditUnit(null)} onSaved={() => data.reload()} />
     </div>
   );
 }

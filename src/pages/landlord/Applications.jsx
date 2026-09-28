@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { FileText, Check, X, MessageSquare, Search, Calendar, FileSignature, Wallet, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from "@/components/FileUploadButton";
+import { downloadFile } from "@/lib/files";
 
 const STATUSES = ["Submitted", "Under Review", "More Information Required", "Information Provided", "Site Visit Requested", "Site Visit Scheduled", "Site Visit Completed", "Agreement Issued", "Agreement Executed", "Payment Requested", "Payment Proof Submitted", "Payment Verified", "Approved", "Completed", "Rejected", "Withdrawn", "Cancelled", "Expired"];
 
@@ -196,8 +197,8 @@ export default function Applications() {
               {review.agreement_status && review.agreement_status !== "" && (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
                   <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-amber-800"><FileSignature className="h-3.5 w-3.5" />Agreement — {review.agreement_status}</p>
-                  {review.agreement_url && <a href={review.agreement_url} target="_blank" rel="noopener" className="text-sm text-amber-700 underline">View agreement</a>}
-                  {review.agreement_executed_url && <span className="ml-3 text-sm text-emerald-700 underline">Executed copy available</span>}
+                  {review.agreement_url && <button type="button" onClick={() => downloadFile(review.agreement_url)} className="text-sm text-amber-700 underline">View agreement</button>}
+                  {review.agreement_executed_url && <button type="button" onClick={() => downloadFile(review.agreement_executed_url)} className="ml-3 text-sm text-emerald-700 underline">View executed copy</button>}
                 </div>
               )}
 
@@ -206,7 +207,7 @@ export default function Applications() {
                 <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                   <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-emerald-800"><Wallet className="h-3.5 w-3.5" />Payment — {review.payment_status}</p>
                   <p className="text-sm text-emerald-700">{KES(review.payment_amount)} · Due {review.payment_due_date || "—"}</p>
-                  {review.payment_proof_url && <a href={review.payment_proof_url} target="_blank" rel="noopener" className="mt-1 inline-block text-xs text-emerald-600 underline">View payment proof</a>}
+                  {review.payment_proof_url && <button type="button" onClick={() => downloadFile(review.payment_proof_url)} className="mt-1 inline-block text-xs text-emerald-600 underline">View payment proof</button>}
                 </div>
               )}
 
@@ -236,7 +237,7 @@ export default function Applications() {
                     {s === "Site Visit Completed" && (
                       <div className="rounded-lg border border-slate-200 p-3">
                         <p className="mb-2 text-xs font-medium uppercase text-slate-500">Upload Agreement</p>
-                        <FileUploadButton onUploaded={(file) => setWorkflow({ ...workflow, agreement_url: file.file_url })} label="Upload agreement document" />
+                        <FileUploadButton onUploaded={(file) => setWorkflow({ ...workflow, agreement_url: file.file_uri })} label="Upload agreement document" />
                         {workflow.agreement_url && <p className="mt-1 text-xs text-emerald-600">Agreement ready to issue</p>}
                         <Button onClick={() => patch({ status: "Agreement Issued", agreement_url: workflow.agreement_url, agreement_status: "Issued" }, "Agreement Issued")} disabled={busy || !workflow.agreement_url} className="mt-2 bg-emerald-600 hover:bg-emerald-700"><FileSignature className="mr-1.5 h-4 w-4" />Issue Agreement</Button>
                       </div>

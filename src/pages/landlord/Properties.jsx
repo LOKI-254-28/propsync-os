@@ -1,37 +1,19 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { usePortfolioData } from "@/lib/useAppData";
-import { propertyStats, KES, genRef } from "@/lib/finance";
-import { base44 } from "@/api/base44Client";
-import { secureCreate } from "@/lib/secureCreate";
-import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
+import { propertyStats, KES } from "@/lib/finance";
+import { PageHeader, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Building2, Plus, Search, MapPin, Loader2 } from "lucide-react";
-import { useCrud } from "@/lib/useCrud";
-import { toast } from "@/components/ui/use-toast";
+import { Building2, Plus, Search, MapPin } from "lucide-react";
+import PropertyWizard from "@/components/PropertyWizard";
 
 export default function Properties() {
   const data = usePortfolioData();
-  const { submitting, run } = useCrud();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "" });
 
   const filtered = data.properties.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()) || p.code?.toLowerCase().includes(search.toLowerCase()));
-
-  const create = async () => {
-    if (!form.name) { toast({ title: "Validation error", description: "Property name is required.", variant: "destructive" }); return; }
-    await run(async () => {
-      await secureCreate("Property", { ...form, code: form.code || genRef("PRP"), status: "Active", currency: "KES" });
-      setOpen(false);
-      setForm({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "" });
-      data.reload();
-    }, { success: "Property created successfully.", error: "Could not create property. Your account may still be awaiting approval." });
-  };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
@@ -72,26 +54,7 @@ export default function Properties() {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Add Property</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-2">
-            <Field label="Property name"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Garden Heights" /></Field>
-            <Field label="Code / reference"><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Auto-generated" /></Field>
-            <div className="col-span-2"><Field label="Address"><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field></div>
-            <Field label="Property type">
-              <select value={form.property_type} onChange={(e) => setForm({ ...form, property_type: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                {["Apartment Complex", "Building", "Mixed Use", "Commercial", "Townhouse", "Villa"].map((t) => <option key={t}>{t}</option>)}
-              </select>
-            </Field>
-            <Field label="Monthly operating expenses"><Input type="number" value={form.monthly_operating_expenses} onChange={(e) => setForm({ ...form, monthly_operating_expenses: Number(e.target.value) })} /></Field>
-            <Field label="Contact phone"><Input value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} /></Field>
-            <Field label="Contact email"><Input value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} /></Field>
-            <div className="col-span-2"><Field label="Description"><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
-          </div>
-          <DialogFooter><Button onClick={create} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Creating...</> : "Create Property"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PropertyWizard open={open} onClose={() => setOpen(false)} onCreated={() => data.reload()} />
     </div>
   );
 }

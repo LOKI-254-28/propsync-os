@@ -61,6 +61,14 @@
       "type": "string",
       "default": "KES"
     },
+    "latitude": {
+      "type": "number",
+      "description": "Map latitude for the property location"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Map longitude for the property location"
+    },
     "owner_user_id": {
       "type": "string",
       "description": "The landowner who owns this property"

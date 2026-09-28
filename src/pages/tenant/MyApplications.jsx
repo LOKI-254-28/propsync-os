@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { FileText, Calendar, FileSignature, Wallet, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from "@/components/FileUploadButton";
+import { downloadFile } from "@/lib/files";
 
 export default function MyApplications() {
   const t = useTenantData();
@@ -105,7 +106,7 @@ export default function MyApplications() {
               {a.agreement_url && (
                 <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-sm">
                   <p className="flex items-center gap-1.5 font-medium text-amber-800"><FileSignature className="h-3.5 w-3.5" />Agreement — {a.agreement_status || "Issued"}</p>
-                  <a href={a.agreement_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-amber-700 underline">View agreement <ExternalLink className="h-3 w-3" /></a>
+                  <button type="button" onClick={() => downloadFile(a.agreement_url)} className="inline-flex items-center gap-1 text-amber-700 underline">View agreement <ExternalLink className="h-3 w-3" /></button>
                   {a.agreement_executed_url && <span className="ml-3 text-emerald-700">✓ Executed copy uploaded</span>}
                 </div>
               )}
@@ -155,7 +156,7 @@ export default function MyApplications() {
                   <>
                     <Field label="Your response"><Textarea value={form.info} onChange={(e) => setForm({ ...form, info: e.target.value })} rows={4} placeholder="Provide the requested information..." /></Field>
                     <Field label="Supporting documents (optional)">
-                      <FileUploadButton onUploaded={(file) => setForm({ ...form, documents: [...form.documents, file.file_url] })} label="Upload document" />
+                      <FileUploadButton onUploaded={(file) => setForm({ ...form, documents: [...form.documents, file.file_uri] })} label="Upload document" />
                       {form.documents.length > 0 && <p className="text-xs text-emerald-700">{form.documents.length} document(s) attached</p>}
                     </Field>
                   </>
@@ -181,8 +182,8 @@ export default function MyApplications() {
                 )}
                 {actionType === "agreement" && (
                   <>
-                    {actionApp.agreement_url && <a href={actionApp.agreement_url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-amber-700 underline">View original agreement <ExternalLink className="h-3 w-3" /></a>}
-                    <Field label="Upload executed (signed) agreement"><FileUploadButton onUploaded={(file) => setForm({ ...form, agreement_executed_url: file.file_url })} label="Upload signed agreement" /></Field>
+                    {actionApp.agreement_url && <button type="button" onClick={() => downloadFile(actionApp.agreement_url)} className="inline-flex items-center gap-1 text-sm text-amber-700 underline">View original agreement <ExternalLink className="h-3 w-3" /></button>}
+                    <Field label="Upload executed (signed) agreement"><FileUploadButton onUploaded={(file) => setForm({ ...form, agreement_executed_url: file.file_uri })} label="Upload signed agreement" /></Field>
                   </>
                 )}
                 {actionType === "payment" && (
@@ -194,7 +195,7 @@ export default function MyApplications() {
                       {actionApp.payment_instructions && <p className="mt-1 text-xs text-emerald-600">{actionApp.payment_instructions}</p>}
                     </div>
                     <Field label="Payment reference (optional)"><Input value={form.payment_reference} onChange={(e) => setForm({ ...form, payment_reference: e.target.value })} placeholder="M-Pesa code, bank ref, etc." /></Field>
-                    <Field label="Upload payment proof"><FileUploadButton onUploaded={(file) => setForm({ ...form, payment_proof_url: file.file_url })} label="Upload payment receipt/screenshot" /></Field>
+                    <Field label="Upload payment proof"><FileUploadButton onUploaded={(file) => setForm({ ...form, payment_proof_url: file.file_uri })} label="Upload payment receipt/screenshot" /></Field>
                   </>
                 )}
               </div>

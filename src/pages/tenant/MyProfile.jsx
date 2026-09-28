@@ -4,12 +4,19 @@ import { PageHeader, SectionCard, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Save } from "lucide-react";
+import { User, Save, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 export default function MyProfile() {
   const [tenant, setTenant] = useState(null);
   const [busy, setBusy] = useState(false);
   const [user, setUser] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const load = async () => {
     const me = await base44.auth.me();
@@ -24,6 +31,21 @@ export default function MyProfile() {
     else await base44.entities.Tenant.create({ ...tenant, user_id: user.id, status: "Active" });
     setBusy(false);
     load();
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await base44.functions.invoke("deleteMyAccount", {});
+      await base44.auth.logout();
+      window.location.href = "/";
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.message || "Something went wrong";
+      setDeleteError(msg);
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
   };
 
   if (!tenant) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -56,6 +78,47 @@ export default function MyProfile() {
             </div>
           </SectionCard>
         </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="mt-6">
+        <SectionCard title="Danger Zone">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-800">Delete my account</p>
+              <p className="text-sm text-slate-500">Permanently remove your account. Blocked if you own property or hold an active tenancy.</p>
+            </div>
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={deleting}>
+                  <Trash2 className="mr-1.5 h-4 w-4" />
+                  {deleting ? "Deleting..." : "Delete my account"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently removes your account and signs you out. You will be blocked if you own property or have an active tenancy. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                {deleteError && (
+                  <p className="text-sm text-rose-600">{deleteError}</p>
+                )}
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleting ? "Deleting..." : "Yes, delete my account"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </SectionCard>
       </div>
     </div>
   );

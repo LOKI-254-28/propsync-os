@@ -33,7 +33,7 @@ export default async function(req: Request): Promise<Response> {
       }
 
       const origin = new URL(req.url).origin;
-      const link = `${origin}/register?invite=${unit.invite_code}`;
+      const link = `${origin}/accept-invite?code=${unit.invite_code}`;
       const subject = `You're invited to rent ${unit.property_name} — ${unit.unit_number}`;
       const text = `You've been invited to rent ${unit.property_name}, unit ${unit.unit_number}.\n\nAccept your invitation and create your account here:\n${link}`;
       const html = `
@@ -91,7 +91,8 @@ export default async function(req: Request): Promise<Response> {
         });
       }
 
-      const today = new Date().toISOString().slice(0, 10);
+      const startDate = body.start_date || new Date().toISOString().slice(0, 10);
+      const termMonths = Number(body.term_months) || 12;
       const tenancy = await base44.asServiceRole.entities.Tenancy.create({
         tenancy_reference: genRef('TEN'),
         tenant_id: tenant.id,
@@ -101,8 +102,8 @@ export default async function(req: Request): Promise<Response> {
         property_name: unit.property_name,
         unit_id: unit.id,
         unit_number: unit.unit_number,
-        start_date: today,
-        expected_end_date: addMonths(today, 12),
+        start_date: startDate,
+        expected_end_date: addMonths(startDate, termMonths),
         monthly_rent: unit.monthly_rent || 0,
         security_deposit: unit.security_deposit || 0,
         service_charge: unit.service_charge || 0,

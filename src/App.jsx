@@ -67,6 +67,7 @@ import MyProfile from '@/pages/tenant/MyProfile';
 import PublicHome from '@/pages/public/PublicHome';
 import PublicListings from '@/pages/public/PublicListings';
 import PublicListingDetail from '@/pages/public/PublicListingDetail';
+import AcceptInvite from '@/pages/AcceptInvite';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -189,6 +190,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/accept-invite" element={<AcceptInvite />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/dashboard" : "/portal"} replace />} />
         <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />

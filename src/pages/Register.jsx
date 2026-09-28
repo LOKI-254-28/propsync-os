@@ -39,18 +39,9 @@ export default function Register() {
       setInviteCode(invite.toUpperCase());
       setAccountType("client");
       setStep("form");
-      // Existing logged-in users: accept the invite directly without re-registering
-      base44.auth.isAuthenticated().then(async (authed) => {
-        if (!authed) return;
-        try {
-          setLoading(true);
-          await base44.functions.invoke("unitInvite", { action: "accept", invite_code: invite.toUpperCase() });
-          await base44.auth.updateMe({ account_type: "client", approval_status: "approved" });
-          window.location.href = "/portal";
-        } catch (e) {
-          setError(e.data?.error || e.message || "Could not accept this invite.");
-          setLoading(false);
-        }
+      // Existing logged-in users: redirect to the dedicated accept page
+      base44.auth.isAuthenticated().then((authed) => {
+        if (authed) window.location.href = `/accept-invite?code=${encodeURIComponent(invite.toUpperCase())}`;
       });
     }
   }, []);

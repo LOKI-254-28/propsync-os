@@ -157,7 +157,7 @@ const TenantRoutes = () => (
 );
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, user, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, user, isAuthenticated, navigateToLogin } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -178,10 +178,11 @@ const AuthenticatedApp = () => {
 
   const isAdmin = user?.account_type === 'admin' || (!user?.account_type && user?.role === 'admin');
   const isLandlord = user?.account_type === 'landowner';
+  const roleHome = isAdmin ? "/admin" : isLandlord ? "/dashboard" : "/portal";
 
   return (
     <Routes>
-      <Route path="/" element={<PublicHome />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to={roleHome} replace /> : <PublicHome />} />
       <Route path="/listings" element={<PublicListings />} />
       <Route path="/listings/:id" element={<PublicListingDetail />} />
       <Route path="/login" element={<Login />} />

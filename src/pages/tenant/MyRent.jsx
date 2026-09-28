@@ -107,7 +107,7 @@ export default function MyRent() {
             <>
               <DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5 text-emerald-600" />Receipt</DialogTitle></DialogHeader>
               <div className="rounded-xl border border-slate-200 p-5">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-3"><div><p className="font-heading font-semibold text-slate-900">Verdant Estates</p><p className="text-xs text-slate-500">Property Management</p></div><div className="text-right"><p className="text-xs text-slate-500">Receipt No.</p><p className="font-mono text-sm font-medium">{receipt.receipt_number}</p></div></div>
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3"><div><p className="font-heading font-semibold text-slate-900">PropWiz</p><p className="text-xs text-slate-500">Property Management</p></div><div className="text-right"><p className="text-xs text-slate-500">Receipt No.</p><p className="font-mono text-sm font-medium">{receipt.receipt_number}</p></div></div>
                 <div className="grid grid-cols-2 gap-2 py-3 text-sm">
                   <div><p className="text-xs text-slate-500">Tenant</p><p className="font-medium">{receipt.tenant_name}</p></div>
                   <div><p className="text-xs text-slate-500">Unit</p><p className="font-medium">{receipt.unit_number}</p></div>

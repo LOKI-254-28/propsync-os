@@ -105,7 +105,7 @@ export default function AdminApprovalSection() {
               <div key={u.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 px-4 py-3">
                 <div>
                   <p className="font-medium text-slate-900">{u.full_name || u.email}</p>
-                  <p className="text-xs text-slate-500">{u.email} · {(u.operational_profiles || []).join(", ") || "No profiles"}</p>
+                  <p className="text-xs text-slate-500">{u.email}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" className="h-8 border-rose-200 text-rose-700 hover:bg-rose-50" onClick={() => { setReviewUser(u); setRejectReason(""); }}>Review</Button>
@@ -127,7 +127,7 @@ export default function AdminApprovalSection() {
               <div key={u.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 px-4 py-3">
                 <div>
                   <p className="font-medium text-slate-900">{u.full_name || u.email}</p>
-                  <p className="text-xs text-slate-500">{u.email} · {(u.operational_profiles || []).join(", ") || "No profiles"}</p>
+                  <p className="text-xs text-slate-500">{u.email}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" className="h-8 border-rose-200 text-rose-700 hover:bg-rose-50" onClick={() => { setReviewUser(u); setRejectReason(""); }}>Review</Button>
@@ -149,7 +149,6 @@ export default function AdminApprovalSection() {
                 <div className="rounded-lg bg-slate-50 p-3 text-sm">
                   <p className="font-medium text-slate-800">{reviewUser.email}</p>
                   <p className="text-xs text-slate-500">Account type: {reviewUser.account_type}</p>
-                  <p className="text-xs text-slate-500">Profiles: {(reviewUser.operational_profiles || []).join(", ") || "None"}</p>
                   <p className="text-xs text-slate-500">Status: {reviewUser.approval_status}</p>
                 </div>
                 <div>

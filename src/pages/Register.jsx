@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { UserPlus, Mail, Loader2, Building2, Home, KeyRound, User, ArrowLeft, Check } from "lucide-react";
+import { UserPlus, Mail, Loader2, Building2, Home, KeyRound, User, ArrowLeft } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
@@ -14,17 +14,9 @@ import { safeReturnTo } from "@/lib/authReturnTo";
 import { genRef, todayISO } from "@/lib/finance";
 import { cn } from "@/lib/utils";
 
-const LANDOWNER_PROFILES = [
-  { value: "landlord", label: "Landlord", desc: "Manage rental properties" },
-];
-const CLIENT_PROFILES = [
-  { value: "tenant", label: "Tenant", desc: "Rent a property" },
-];
-
 export default function Register() {
   const [step, setStep] = useState("role"); // 'role' | 'form' | 'otp'
   const [accountType, setAccountType] = useState(""); // 'landowner' | 'client'
-  const [profiles, setProfiles] = useState([]);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +38,6 @@ export default function Register() {
     if (invite) {
       setInviteCode(invite.toUpperCase());
       setAccountType("client");
-      setProfiles(["tenant"]);
       setStep("form");
     }
   }, []);
@@ -57,14 +48,10 @@ export default function Register() {
     }
   }, [accountType]);
 
-  const toggleProfile = (p) => setProfiles((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
-  const profileOptions = accountType === "landowner" ? LANDOWNER_PROFILES : CLIENT_PROFILES;
-
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     if (!fullName.trim()) { setError("Please enter your full name."); return; }
-    if (profiles.length === 0) { setError("Select at least one operational profile."); return; }
     if (password !== confirmPassword) { setError("Passwords do not match"); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (accountType === "client" && !inviteCode.trim() && !propertyId) {
@@ -91,7 +78,6 @@ export default function Register() {
       await base44.auth.updateMe({
         full_name: fullName,
         account_type: accountType,
-        operational_profiles: profiles,
         approval_status: "pending",
       });
       if (accountType === "client") {
@@ -185,54 +171,26 @@ export default function Register() {
     );
   }
 
-  // Step 1: Account type + profiles
+  // Step 1: Account type
   if (step === "role") {
     return (
-      <AuthLayout icon={UserPlus} title="Create your account" subtitle="Choose your account type and operational profile(s)"
+      <AuthLayout icon={UserPlus} title="Create your account" subtitle="Are you a landlord or a tenant?"
         footer={<>Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Log in</Link></>}>
         <div className="space-y-4">
-          {/* Account type selector */}
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => { setAccountType("landowner"); setProfiles([]); }}
-              className={cn("flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
-                accountType === "landowner" ? "border-emerald-500 bg-emerald-50/50" : "border-border hover:border-emerald-300")}>
-              <Building2 className={cn("h-7 w-7", accountType === "landowner" ? "text-emerald-600" : "text-slate-400")} />
-              <span className="text-sm font-semibold text-foreground">Landowner</span>
-              <span className="text-[10px] text-muted-foreground text-center">Property Provider</span>
+            <button onClick={() => { setAccountType("landowner"); setStep("form"); }}
+              className="flex flex-col items-center gap-2 rounded-xl border-2 border-border p-6 transition-colors hover:border-emerald-300 hover:bg-emerald-50/30">
+              <Building2 className="h-8 w-8 text-emerald-600" />
+              <span className="text-sm font-semibold text-foreground">Landlord</span>
+              <span className="text-[10px] text-muted-foreground text-center">Manage rental properties</span>
             </button>
-            <button onClick={() => { setAccountType("client"); setProfiles([]); }}
-              className={cn("flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
-                accountType === "client" ? "border-amber-500 bg-amber-50/50" : "border-border hover:border-amber-300")}>
-              <Home className={cn("h-7 w-7", accountType === "client" ? "text-amber-600" : "text-slate-400")} />
-              <span className="text-sm font-semibold text-foreground">Client</span>
-              <span className="text-[10px] text-muted-foreground text-center">Tenant</span>
+            <button onClick={() => { setAccountType("client"); setStep("form"); }}
+              className="flex flex-col items-center gap-2 rounded-xl border-2 border-border p-6 transition-colors hover:border-amber-300 hover:bg-amber-50/30">
+              <Home className="h-8 w-8 text-amber-600" />
+              <span className="text-sm font-semibold text-foreground">Tenant</span>
+              <span className="text-[10px] text-muted-foreground text-center">Rent a property</span>
             </button>
           </div>
-
-          {/* Profile selection */}
-          {accountType && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Select your operational profile(s)</p>
-              <p className="text-xs text-muted-foreground">You can select more than one — a single account supports multiple profiles.</p>
-              <div className="space-y-2">
-                {profileOptions.map((p) => (
-                  <button key={p.value} onClick={() => toggleProfile(p.value)} type="button"
-                    className={cn("flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                      profiles.includes(p.value) ? "border-emerald-500 bg-emerald-50/50" : "border-border hover:bg-slate-50")}>
-                    <div className={cn("flex h-5 w-5 items-center justify-center rounded border-2",
-                      profiles.includes(p.value) ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300")}>
-                      {profiles.includes(p.value) && <Check className="h-3 w-3" />}
-                    </div>
-                    <div><p className="text-sm font-medium text-foreground">{p.label}</p><p className="text-xs text-muted-foreground">{p.desc}</p></div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {accountType && profiles.length > 0 && (
-            <Button onClick={() => setStep("form")} className="w-full h-12 font-medium">Continue</Button>
-          )}
         </div>
       </AuthLayout>
     );
@@ -284,7 +242,7 @@ export default function Register() {
               <Label htmlFor="invite">Invite code (optional)</Label>
               <div className="relative">
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                <Input id="invite" placeholder="e.g. VE-A1B2C3" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} className="pl-10 h-12 font-mono uppercase" />
+                <Input id="invite" placeholder="e.g. PW-A1B2C3" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} className="pl-10 h-12 font-mono uppercase" />
               </div>
               <p className="text-xs text-muted-foreground">Enter the code your landowner gave you to apply for a specific unit.</p>
             </div>
@@ -304,7 +262,7 @@ export default function Register() {
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating account...</> : "Create account"}
         </Button>
-        <button type="button" onClick={() => { setStep("role"); setAccountType(""); setProfiles([]); setError(""); }} className="flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <button type="button" onClick={() => { setStep("role"); setAccountType(""); setError(""); }} className="flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-3.5 w-3.5" />Back to account type
         </button>
       </form>

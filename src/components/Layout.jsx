@@ -43,7 +43,7 @@ export default function Layout({ children }) {
     base44.entities.Notification.filter({ recipient_user_id: user.id }).then((n) => setUnread(n.filter((x) => !x.read).length)).catch(() => {});
   }, [user, location.pathname]);
 
-  const orgName = settings?.organization_name || "Verdant Estates";
+  const orgName = settings?.organization_name || "PropWiz";
 
   const handleLogout = async () => {
     await base44.auth.logout();

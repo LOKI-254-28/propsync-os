@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { LogIn, Mail, Loader2, FlaskConical } from "lucide-react";
+import { LogIn, Mail, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
-import { startTestProfile, clearTestProfile } from "@/lib/testProfile";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -25,7 +24,6 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      clearTestProfile();
       await base44.auth.loginViaEmailPassword(email, password);
       window.location.href = returnTo;
     } catch (err) {
@@ -36,7 +34,6 @@ export default function Login() {
   };
 
   const handleGoogle = () => {
-    clearTestProfile();
     base44.auth.loginWithProvider("google", returnTo);
   };
 
@@ -127,27 +124,6 @@ export default function Login() {
         </Button>
       </form>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">Just looking?</span>
-        </div>
-      </div>
-
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium border-emerald-300 bg-emerald-50/50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900"
-        onClick={() => startTestProfile()}
-      >
-        <FlaskConical className="w-4 h-4 mr-2" />
-        Try a Test Profile
-      </Button>
-
-      <Link to="/how-it-works" className="mt-4 block text-center text-sm text-primary hover:underline">
-        How it works →
-      </Link>
     </AuthLayout>
   );
 }

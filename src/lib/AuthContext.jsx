@@ -90,7 +90,6 @@ export const AuthProvider = ({ children }) => {
             ...rawUser,
             account_type: rawUser.account_type || rawUser.data?.account_type,
             approval_status: rawUser.approval_status || rawUser.data?.approval_status,
-            operational_profiles: rawUser.operational_profiles || rawUser.data?.operational_profiles,
           }
         : rawUser;
       setUser(currentUser);

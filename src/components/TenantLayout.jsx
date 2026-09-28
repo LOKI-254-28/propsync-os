@@ -73,7 +73,7 @@ export default function TenantLayout({ children }) {
         <div className="mb-6 flex items-center gap-2.5 px-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-emerald-900"><Leaf className="h-5 w-5" /></div>
           <div>
-            <p className="font-heading text-sm font-semibold text-white">Verdant Estates</p>
+            <p className="font-heading text-sm font-semibold text-white">PropWiz</p>
             <p className="text-[10px] uppercase tracking-wider text-emerald-200/70">Client Portal</p>
           </div>
         </div>

@@ -213,7 +213,7 @@ function ReceiptView({ payment }) {
       <DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5 text-emerald-600" />Payment Receipt</DialogTitle></DialogHeader>
       <div className="rounded-xl border border-slate-200 p-5">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-          <div className="flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-bold">V</div><div><p className="font-heading font-semibold text-slate-900">Verdant Estates</p><p className="text-xs text-slate-500">Property Management</p></div></div>
+          <div className="flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-bold">P</div><div><p className="font-heading font-semibold text-slate-900">PropWiz</p><p className="text-xs text-slate-500">Property Management</p></div></div>
           <div className="text-right"><p className="text-xs text-slate-500">Receipt No.</p><p className="font-mono text-sm font-medium text-slate-800">{payment.receipt_number}</p></div>
         </div>
         <div className="grid grid-cols-2 gap-2 py-3 text-sm">

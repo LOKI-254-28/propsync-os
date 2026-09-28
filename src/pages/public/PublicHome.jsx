@@ -24,7 +24,6 @@ export default function PublicHome() {
   if (isAuthenticated && user) {
     const home = user.account_type === "admin" ? "/admin"
       : user.account_type === "landowner" ? "/dashboard"
-      : user.account_type === "guest" ? "/guest"
       : "/portal";
     return <Navigate to={home} replace />;
   }

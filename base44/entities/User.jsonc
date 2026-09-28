@@ -13,21 +13,9 @@
       "enum": [
         "admin",
         "landowner",
-        "client",
-        "guest"
+        "client"
       ],
-      "description": "Top-level account type: admin (platform), landowner (property provider), client (end user), or guest (basic browsing account)"
-    },
-    "operational_profiles": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "landlord",
-          "tenant"
-        ]
-      },
-      "description": "Operational roles this user can act as. Landowners: landlord. Clients: tenant. (Rentals-only platform.)"
+      "description": "Top-level account type: admin (platform), landowner (property provider), or client (tenant)"
     },
     "approval_status": {
       "type": "string",
@@ -36,7 +24,7 @@
         "approved",
         "rejected"
       ],
-      "description": "Clients start pending until a landowner approves their application; landowners and admins are approved immediately; guests are approved immediately"
+      "description": "Clients start pending until a landowner approves their application; landowners and admins are approved immediately"
     },
     "phone": {
       "type": "string",

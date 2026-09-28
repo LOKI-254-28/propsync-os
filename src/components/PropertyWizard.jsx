@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui-bits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, Check, MapPin } from "lucide-react";
+import { Loader2, Plus, Trash2, Check, MapPin, Image as ImageIcon, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import MapPicker from "@/components/MapPicker";
+import { Image } from "@/components/ui/image";
 
 const PROPERTY_TYPES = ["Apartment Complex", "Building", "Mixed Use", "Commercial", "Townhouse", "Villa"];
 const UNIT_TYPES = ["Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "Penthouse", "Commercial", "Other"];
@@ -24,17 +25,39 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
   const [form, setForm] = useState({
     name: "", code: "", address: "", property_type: "Apartment Complex",
     contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "",
-    latitude: null, longitude: null,
+    latitude: null, longitude: null, images: [],
   });
   const [units, setUnits] = useState([emptyUnit()]);
 
   const reset = () => {
     setStep(0);
-    setForm({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "", latitude: null, longitude: null });
+    setForm({ name: "", code: "", address: "", property_type: "Apartment Complex", contact_phone: "", contact_email: "", monthly_operating_expenses: 0, description: "", latitude: null, longitude: null, images: [] });
     setUnits([emptyUnit()]);
   };
 
   const close = () => { reset(); onClose(); };
+
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (files) => {
+    const valid = Array.from(files).filter((f) => ["image/jpeg", "image/png", "image/webp"].includes(f.type) && f.size <= 10 * 1024 * 1024);
+    if (!valid.length) { toast({ title: "Upload error", description: "Only JPG, PNG, or WebP images up to 10MB.", variant: "destructive" }); return; }
+    setUploading(true);
+    try {
+      const uris = [];
+      for (const f of valid) {
+        const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file: f });
+        uris.push(file_uri);
+      }
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...uris] }));
+    } catch (err) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (idx) => setForm((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }));
 
   const canNext = () => {
     if (step === 0) return !!form.name;
@@ -53,7 +76,7 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
         property_type: form.property_type, contact_phone: form.contact_phone, contact_email: form.contact_email,
         monthly_operating_expenses: Number(form.monthly_operating_expenses) || 0,
         description: form.description, status: "Active", currency: "KES",
-        latitude: form.latitude, longitude: form.longitude,
+        latitude: form.latitude, longitude: form.longitude, images: form.images,
       });
 
       // Bulk create units
@@ -64,7 +87,7 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
         monthly_rent: Number(u.monthly_rent) || 0, security_deposit: Number(u.security_deposit) || 0,
         service_charge: Number(u.service_charge) || 0, furnished: !!u.furnished,
         status: "Available", description: "", owner_user_id: me.id,
-        invite_code: `VE-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+        invite_code: `PW-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
       }));
       const createdUnits = await base44.entities.Unit.bulkCreate(unitRecords);
 
@@ -126,6 +149,23 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
             <Field label="Contact phone"><Input value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} /></Field>
             <Field label="Contact email"><Input value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} /></Field>
             <div className="col-span-2"><Field label="Description"><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
+            <div className="col-span-2">
+              <Field label="Property photos">
+                <div className="flex flex-wrap gap-2">
+                  {form.images.map((uri, i) => (
+                    <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200">
+                      <Image src={uri} alt={`Photo ${i + 1}`} fittingType="fill" className="h-full w-full" />
+                      <button type="button" onClick={() => removeImage(i)} className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"><X className="h-3 w-3" /></button>
+                    </div>
+                  ))}
+                  <label className={`flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-emerald-400 hover:text-emerald-600 ${uploading ? "pointer-events-none opacity-50" : ""}`}>
+                    {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => { handleUpload(e.target.files); e.target.value = ""; }} />
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-slate-400">JPG, PNG, or WebP — up to 10MB each.</p>
+              </Field>
+            </div>
           </div>
         )}
 
@@ -177,6 +217,7 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
               <p className="font-medium text-slate-800">{form.name}</p>
               <p className="text-xs text-slate-500">{form.property_type} · {form.address || "No address"}</p>
               {form.latitude != null && <p className="text-xs text-slate-500">Location: {form.latitude.toFixed(4)}, {form.longitude.toFixed(4)}</p>}
+              {form.images.length > 0 && <p className="text-xs text-slate-500">{form.images.length} photo(s)</p>}
             </div>
             <div className="rounded-lg border border-slate-200 p-3">
               <p className="mb-2 text-xs font-medium uppercase text-slate-500">{units.length} Unit(s)</p>

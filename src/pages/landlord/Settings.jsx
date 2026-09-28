@@ -22,7 +22,7 @@ export default function Settings() {
   const load = async () => {
     const list = await base44.entities.Settings.list();
     if (list[0]) setSettings(list[0]);
-    else setSettings({ organization_name: "Verdant Estates", currency: "KES", default_rent_due_day: 1, default_grace_period_days: 7, default_notice_period_days: 30, reminder_schedule: DEFAULT_REMINDERS, payment_methods: ["M-Pesa", "Bank Transfer", "Card", "Cash"], contact_phone: "", contact_email: "", address: "", late_payment_rules: "", notification_preferences: {} });
+    else setSettings({ organization_name: "PropWiz", currency: "KES", default_rent_due_day: 1, default_grace_period_days: 7, default_notice_period_days: 30, reminder_schedule: DEFAULT_REMINDERS, payment_methods: ["M-Pesa", "Bank Transfer", "Card", "Cash"], contact_phone: "", contact_email: "", address: "", late_payment_rules: "", notification_preferences: {} });
   };
   useEffect(() => { load(); }, []);
 

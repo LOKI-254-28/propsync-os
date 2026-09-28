@@ -38,11 +38,37 @@ export default function Units() {
       const prop = data.properties.find((p) => p.id === form.property_id);
       if (!prop) throw new Error("Selected property not found.");
       const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      await secureCreate("Unit", { ...form, property_name: prop?.name, invite_code: `VE-${inviteCode}`, status: "Available" });
+      await secureCreate("Unit", { ...form, property_name: prop?.name, invite_code: `PW-${inviteCode}`, status: "Available" });
       setOpen(false);
       setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
       data.reload();
     }, { success: "Unit created successfully.", error: "Could not create unit. Your account may still be awaiting approval." });
+  };
+
+  const duplicate = async (u) => {
+    await run(async () => {
+      const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      await secureCreate("Unit", {
+        unit_number: `${u.unit_number} (copy)`,
+        property_id: u.property_id,
+        property_name: u.property_name,
+        building: u.building || "",
+        floor: u.floor || "",
+        unit_type: u.unit_type,
+        bedrooms: u.bedrooms,
+        bathrooms: u.bathrooms,
+        size_sqm: u.size_sqm || 0,
+        monthly_rent: u.monthly_rent || 0,
+        security_deposit: u.security_deposit || 0,
+        service_charge: u.service_charge || 0,
+        furnished: u.furnished || false,
+        amenities: u.amenities || [],
+        description: u.description || "",
+        invite_code: `PW-${newCode}`,
+        status: "Available",
+      });
+      data.reload();
+    }, { success: "Unit duplicated.", error: "Could not duplicate unit." });
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -73,7 +99,7 @@ export default function Units() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500">
-                <th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Property</th><th className="pb-2 font-medium">Invite Code</th><th className="pb-2 font-medium">Type</th><th className="pb-2 font-medium">Tenant</th><th className="pb-2 text-right font-medium">Rent</th><th className="pb-2 text-right font-medium">Status</th>
+                <th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Property</th><th className="pb-2 font-medium">Invite Code</th><th className="pb-2 font-medium">Type</th><th className="pb-2 font-medium">Tenant</th><th className="pb-2 text-right font-medium">Rent</th><th className="pb-2 text-right font-medium">Status</th><th className="pb-2 text-right font-medium">Actions</th>
               </tr></thead>
               <tbody>
                 {filtered.map((u) => (
@@ -89,6 +115,9 @@ export default function Units() {
                     <td className="py-2.5 text-slate-600">{u.current_tenant_name || "—"}</td>
                     <td className="py-2.5 text-right font-medium text-slate-900">{KES(u.monthly_rent)}</td>
                     <td className="py-2.5 text-right"><StatusBadge status={u.status} /></td>
+                    <td className="py-2.5 text-right">
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-slate-500 hover:text-emerald-700" onClick={() => duplicate(u)} title="Duplicate unit" disabled={submitting}><Copy className="h-3.5 w-3.5" /></Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

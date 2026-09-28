@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "rent_due_notices",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_notices": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendRentDueNotices",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send rent-due notices",
+            "description": "Generate charges + email + in-app notice"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 0 27 * *",
+      "one_time_date": null,
+      "timezone": "Africa/Nairobi",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Rent Due Notices",
+  "description": "On the 27th of each month, generate the upcoming month's rent charges and send a rent-due email + in-app notice to every active tenant."
+}

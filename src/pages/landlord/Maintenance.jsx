@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Wrench, Search, Eye } from "lucide-react";
+import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 import { toast } from "@/components/ui/use-toast";
 
 const STATUSES = ["Submitted", "Acknowledged", "Assigned", "Scheduled", "In Progress", "Awaiting Parts", "Completed", "Closed", "Rejected"];
@@ -94,7 +95,7 @@ export default function Maintenance() {
                     <td className="py-2.5 text-slate-600">{m.category}</td>
                     <td className="py-2.5"><StatusBadge status={m.priority} /></td>
                     <td className="py-2.5 text-right text-slate-900">{m.actual_cost ? KES(m.actual_cost) : "—"}</td>
-                    <td className="py-2.5 text-right"><StatusBadge status={m.status} /></td>
+                    <td className="py-2.5 text-right"><MaintenanceStatusTracker status={m.status} updates={m.public_updates} /></td>
                     <td className="py-2.5 text-right"><button onClick={() => openView(m)} className="text-emerald-700 hover:text-emerald-800"><Eye className="h-4 w-4" /></button></td>
                   </tr>
                 ))}

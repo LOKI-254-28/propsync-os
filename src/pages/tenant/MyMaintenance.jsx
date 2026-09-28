@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Wrench, Plus, Eye } from "lucide-react";
+import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 import { toast } from "@/components/ui/use-toast";
 
 const CATEGORIES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "Other"];
@@ -60,7 +61,7 @@ export default function MyMaintenance() {
           {list.map((m) => (
             <div key={m.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div><div className="flex items-center gap-2"><span className="font-mono text-xs text-slate-500">{m.ticket_number}</span><StatusBadge status={m.priority} /><StatusBadge status={m.status} /></div><p className="mt-1 font-medium text-slate-900">{m.title}</p><p className="text-xs text-slate-500">{m.category} · Reported {m.date_reported}</p></div>
+                <div><div className="flex items-center gap-2"><span className="font-mono text-xs text-slate-500">{m.ticket_number}</span><StatusBadge status={m.priority} /><MaintenanceStatusTracker status={m.status} updates={m.public_updates} /></div><p className="mt-1 font-medium text-slate-900">{m.title}</p><p className="text-xs text-slate-500">{m.category} · Reported {m.date_reported}</p></div>
                 <Button size="sm" variant="outline" onClick={() => setView(m)}><Eye className="mr-1.5 h-3.5 w-3.5" />Track</Button>
               </div>
               <p className="mt-2 text-sm text-slate-700">{m.description}</p>

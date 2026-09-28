@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Home, LogIn, UserPlus, AlertCircle, KeyRound } from "lucide-react";
+import { Loader2, Home, LogIn, UserPlus, AlertCircle, KeyRound, RefreshCw } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function AcceptInvite() {
@@ -25,10 +25,29 @@ export default function AcceptInvite() {
         window.location.href = "/portal";
       } catch (e) {
         setStatus("error");
-        setError(e.data?.error || e.message || "Could not accept this invite.");
+        const msg = e.data?.error || e.message || "";
+        const isDispatcher = /unauthorized|dispatcher secret/i.test(msg);
+        setError(isDispatcher ? "Something went wrong on our end — please try again." : (msg || "Could not accept this invite."));
       }
     })();
   }, []);
+
+  const retry = () => {
+    setStatus("accepting");
+    setError("");
+    (async () => {
+      try {
+        await base44.functions.invoke("unitInvite", { action: "accept", invite_code: code });
+        try { await base44.auth.updateMe({ account_type: "client", approval_status: "approved" }); } catch (e) {}
+        window.location.href = "/portal";
+      } catch (e) {
+        setStatus("error");
+        const msg = e.data?.error || e.message || "";
+        const isDispatcher = /unauthorized|dispatcher secret/i.test(msg);
+        setError(isDispatcher ? "Something went wrong on our end — please try again." : (msg || "Could not accept this invite."));
+      }
+    })();
+  };
 
   if (status === "checking" || status === "accepting") {
     return (
@@ -63,7 +82,10 @@ export default function AcceptInvite() {
   return (
     <AuthLayout icon={AlertCircle} title="Couldn't accept invite" subtitle={error}>
       <div className="space-y-3">
-        <Button className="w-full h-12 font-medium" asChild>
+        <Button className="w-full h-12 font-medium" onClick={retry}>
+          <RefreshCw className="w-4 h-4 mr-2" />Try again
+        </Button>
+        <Button variant="outline" className="w-full h-12 font-medium" asChild>
           <Link to="/portal"><Home className="w-4 h-4 mr-2" />Go to portal</Link>
         </Button>
         <Button variant="outline" className="w-full h-12 font-medium" asChild>

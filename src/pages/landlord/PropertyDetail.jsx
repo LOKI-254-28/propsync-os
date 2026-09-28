@@ -12,6 +12,7 @@ import { Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, Receipt, Arr
 import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
 import MapPicker from "@/components/MapPicker";
+import { PROPERTY_TYPES, PropertyPhotos, PropertyAmenities, PropertyLocation } from "@/components/PropertyFields";
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -32,15 +33,37 @@ export default function PropertyDetail() {
   const maint = data.maintenance.filter((m) => m.property_id === property.id);
 
   const openEdit = () => {
-    setForm({ name: property.name, code: property.code, address: property.address, property_type: property.property_type, contact_phone: property.contact_phone, contact_email: property.contact_email, monthly_operating_expenses: property.monthly_operating_expenses, description: property.description, status: property.status });
+    setForm({
+      name: property.name, code: property.code, address: property.address,
+      property_type: property.property_type, contact_phone: property.contact_phone,
+      contact_email: property.contact_email, monthly_operating_expenses: property.monthly_operating_expenses,
+      description: property.description, status: property.status,
+      expected_unit_count: property.expected_unit_count || 0,
+      images: property.images || [], amenities: property.amenities || [],
+      latitude: property.latitude ?? null, longitude: property.longitude ?? null,
+    });
     setEditOpen(true);
   };
+
+  const toggleAmenity = (a) =>
+    setForm((prev) => ({
+      ...prev,
+      amenities: prev.amenities.includes(a) ? prev.amenities.filter((x) => x !== a) : [...prev.amenities, a],
+    }));
 
   const save = async () => {
     if (!form.name) { toast({ title: "Validation error", description: "Property name is required.", variant: "destructive" }); return; }
     await run(async () => {
       const me = await base44.auth.me();
-      await base44.entities.Property.update(property.id, { ...form, monthly_operating_expenses: Number(form.monthly_operating_expenses) });
+      await base44.entities.Property.update(property.id, {
+        name: form.name, code: form.code, address: form.address,
+        property_type: form.property_type, contact_phone: form.contact_phone,
+        contact_email: form.contact_email, description: form.description, status: form.status,
+        monthly_operating_expenses: Number(form.monthly_operating_expenses) || 0,
+        expected_unit_count: Number(form.expected_unit_count) || 0,
+        images: form.images, amenities: form.amenities,
+        latitude: form.latitude, longitude: form.longitude,
+      });
       await logAudit({ user: me, action: "Property Updated", entity: "Property", entity_id: property.id, entity_name: property.name });
       setEditOpen(false); data.reload();
     }, { success: "Property updated successfully.", error: "Could not update property." });
@@ -113,7 +136,7 @@ export default function PropertyDetail() {
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Property</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <Field label="Property name"><Input value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
@@ -121,13 +144,19 @@ export default function PropertyDetail() {
             <div className="col-span-2"><Field label="Address"><Input value={form.address || ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field></div>
             <Field label="Property type">
               <select value={form.property_type || "Apartment Complex"} onChange={(e) => setForm({ ...form, property_type: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                {["Apartment Complex", "Building", "Mixed Use", "Commercial", "Townhouse", "Villa"].map((t) => <option key={t}>{t}</option>)}
+                {PROPERTY_TYPES.map((t) => <option key={t}>{t}</option>)}
               </select>
+            </Field>
+            <Field label="Expected unit count" hint="Informational — units are managed separately.">
+              <Input type="number" value={form.expected_unit_count || 0} onChange={(e) => setForm({ ...form, expected_unit_count: Number(e.target.value) })} />
             </Field>
             <Field label="Monthly operating expenses"><Input type="number" value={form.monthly_operating_expenses || 0} onChange={(e) => setForm({ ...form, monthly_operating_expenses: Number(e.target.value) })} /></Field>
             <Field label="Contact phone"><Input value={form.contact_phone || ""} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} /></Field>
             <Field label="Contact email"><Input value={form.contact_email || ""} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} /></Field>
             <div className="col-span-2"><Field label="Description"><Textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
+            <div className="col-span-2"><PropertyPhotos images={form.images} onChange={(imgs) => setForm({ ...form, images: imgs })} /></div>
+            <div className="col-span-2"><PropertyAmenities selected={form.amenities} onToggle={toggleAmenity} /></div>
+            <div className="col-span-2"><PropertyLocation latitude={form.latitude} longitude={form.longitude} onChange={(p) => setForm({ ...form, latitude: p.lat, longitude: p.lng })} /></div>
           </div>
           <DialogFooter><Button onClick={save} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}</Button></DialogFooter>
         </DialogContent>

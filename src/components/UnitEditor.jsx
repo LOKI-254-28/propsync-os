@@ -9,7 +9,6 @@ import { Loader2, X, Image as ImageIcon, Save, Send, Copy } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 const UNIT_TYPES = ["Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "Penthouse", "Commercial", "Other"];
-const AMENITIES = ["Parking", "Balcony", "Lift", "Gym", "Pool", "Security", "Borehole", "Backup Generator", "Internet", "Garden"];
 const ROOMS = ["Living room", "Kitchen", "Bedroom", "Bathroom", "Balcony", "Exterior"];
 
 export default function UnitEditor({ open, unit, onClose, onSaved }) {
@@ -35,7 +34,6 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
         security_deposit: unit.security_deposit ?? 0,
         service_charge: unit.service_charge ?? 0,
         furnished: !!unit.furnished,
-        amenities: unit.amenities || [],
         description: unit.description || "",
         room_photos: unit.room_photos || [],
       });
@@ -43,12 +41,6 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
   }, [unit]);
 
   if (!form || !unit) return null;
-
-  const toggleAmenity = (a) =>
-    setForm({
-      ...form,
-      amenities: form.amenities.includes(a) ? form.amenities.filter((x) => x !== a) : [...form.amenities, a],
-    });
 
   const uploadRoom = async (room, files) => {
     const valid = Array.from(files).filter(
@@ -88,7 +80,6 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
         security_deposit: Number(form.security_deposit) || 0,
         service_charge: Number(form.service_charge) || 0,
         furnished: form.furnished,
-        amenities: form.amenities,
         description: form.description,
         room_photos: form.room_photos,
       });
@@ -171,25 +162,6 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.furnished} onChange={(e) => setForm({ ...form, furnished: e.target.checked })} className="rounded" /> Furnished
             </label>
-          </div>
-        </div>
-
-        <div className="mt-2">
-          <p className="mb-1.5 text-sm font-medium text-slate-700">Amenities</p>
-          <div className="flex flex-wrap gap-1.5">
-            {AMENITIES.map((a) => {
-              const sel = form.amenities.includes(a);
-              return (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => toggleAmenity(a)}
-                  className={`rounded-full border px-2.5 py-1 text-xs ${sel ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-600"}`}
-                >
-                  {a}
-                </button>
-              );
-            })}
           </div>
         </div>
 

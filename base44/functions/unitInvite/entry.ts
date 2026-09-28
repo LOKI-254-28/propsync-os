@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 
+// Unit rental invitations: send invite email, or accept an invite and create a tenancy.
+
 function addMonths(dateStr, n) {
   const d = new Date(dateStr);
   d.setMonth(d.getMonth() + n);

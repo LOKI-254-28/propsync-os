@@ -34,10 +34,28 @@ export default async function(req: Request): Promise<Response> {
 
       const origin = new URL(req.url).origin;
       const link = `${origin}/register?invite=${unit.invite_code}`;
+      const subject = `You're invited to rent ${unit.property_name} — ${unit.unit_number}`;
+      const text = `You've been invited to rent ${unit.property_name}, unit ${unit.unit_number}.\n\nAccept your invitation and create your account here:\n${link}`;
+      const html = `
+        <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#0f172a;">
+          <div style="background:#065f46;padding:20px 24px;border-radius:10px 10px 0 0;">
+            <span style="font-size:20px;font-weight:700;color:#fff;">PropWiz</span>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 10px 10px;padding:24px;">
+            <h1 style="font-size:18px;margin:0 0 8px;">You're invited to rent</h1>
+            <p style="font-size:15px;margin:0 0 4px;"><strong>${unit.property_name}</strong> — Unit ${unit.unit_number}</p>
+            <p style="font-size:14px;color:#475569;margin:8px 0 16px;">Your landlord has invited you to tenancy on PropWiz. Accept the invitation to create your account and move in.</p>
+            <a href="${link}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:14px;">Accept invitation</a>
+            <p style="font-size:12px;color:#94a3b8;margin:16px 0 0;">If the button doesn't work, copy this link: ${link}</p>
+          </div>
+          <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:12px;">© ${new Date().getFullYear()} PropWiz. Rentals made simple.</p>
+        </div>`;
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: email,
-        subject: `You're invited to rent ${unit.property_name} — ${unit.unit_number}`,
-        body: `You've been invited to rent ${unit.property_name}, unit ${unit.unit_number}.\n\nAccept your invitation and create your account here:\n${link}`,
+        from_name: 'PropWiz',
+        subject,
+        text,
+        html,
       });
 
       return Response.json({ ok: true });

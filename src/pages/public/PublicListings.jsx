@@ -131,7 +131,11 @@ function ListingCard({ listing, property, unit }) {
         )}
         {listing.description && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{listing.description}</p>}
         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-          <span className="text-lg font-bold text-emerald-700">{KES(listing.price)}<span className="text-xs font-normal text-slate-500">/mo</span></span>
+          {listing.unit_id ? (
+            <span className="text-lg font-bold text-emerald-700">{KES(listing.price)}<span className="text-xs font-normal text-slate-500">/mo</span></span>
+          ) : (
+            <span className="text-sm font-semibold text-emerald-700">Units available</span>
+          )}
           <span className="text-sm font-medium text-emerald-600 group-hover:underline">View →</span>
         </div>
       </div>

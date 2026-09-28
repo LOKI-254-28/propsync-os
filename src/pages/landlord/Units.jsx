@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DoorOpen, Plus, Search, Loader2, Copy, Check } from "lucide-react";
+import { DoorOpen, Plus, Search, Loader2, Copy, Check, Layers } from "lucide-react";
 import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
+import BulkUnitWizard from "@/components/BulkUnitWizard";
 
 const AMENITIES = ["Parking", "Balcony", "Lift", "Gym", "Pool", "Security", "Borehole", "Backup Generator", "Internet", "Garden"];
 
@@ -24,6 +25,7 @@ export default function Units() {
   const [filterProp, setFilterProp] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [form, setForm] = useState({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const filtered = useMemo(() => data.units.filter((u) =>
     (!filterProp || u.property_id === filterProp) &&
@@ -75,7 +77,12 @@ export default function Units() {
 
   return (
     <div>
-      <PageHeader title="Units" description="All units across your portfolio." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Add Unit</Button>} />
+      <PageHeader title="Units" description="All units across your portfolio." actions={
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setBulkOpen(true)}><Layers className="mr-1.5 h-4 w-4" />Register Units</Button>
+          <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Add Unit</Button>
+        </div>
+      } />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">
@@ -190,6 +197,8 @@ export default function Units() {
           </DialogContent>
         </Dialog>
       )}
+
+      <BulkUnitWizard open={bulkOpen} onClose={() => setBulkOpen(false)} onCreated={() => data.reload()} properties={data.properties} />
     </div>
   );
 }

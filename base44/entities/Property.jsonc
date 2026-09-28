@@ -50,6 +50,18 @@
         "type": "string"
       }
     },
+    "amenities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Property-level amenities from the fixed catalog"
+    },
+    "expected_unit_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Informational expected number of units"
+    },
     "notes": {
       "type": "string"
     },

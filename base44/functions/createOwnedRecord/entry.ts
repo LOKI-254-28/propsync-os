@@ -19,25 +19,26 @@ async function validateParentOwnership(base44, user, entity, data) {
   const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
   if (isAdmin) return null;
 
-  // property_id — used by Unit, Listing, Tenancy, Expense, Notice, Inspection, Document
   if (data.property_id && entity !== 'Property' && entity !== 'Tenant') {
     const prop = await base44.asServiceRole.entities.Property.get(data.property_id).catch(() => null);
     if (!prop || prop.owner_user_id !== user.id) return 'Property does not belong to your account';
   }
 
-  // unit_id — used by Listing, Tenancy, Inspection, Document
   if (data.unit_id && entity !== 'Unit') {
     const unit = await base44.asServiceRole.entities.Unit.get(data.unit_id).catch(() => null);
     if (!unit || unit.owner_user_id !== user.id) return 'Unit does not belong to your account';
   }
 
-  // tenancy_id — used by RentCharge, Notice, Document, Inspection
   if (data.tenancy_id && entity !== 'Tenancy') {
     const tenancy = await base44.asServiceRole.entities.Tenancy.get(data.tenancy_id).catch(() => null);
     if (!tenancy || tenancy.owner_user_id !== user.id) return 'Tenancy does not belong to your account';
   }
 
   return null;
+}
+
+function genInviteCode() {
+  return `PW-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 }
 
 export default async function(req: Request): Promise<Response> {
@@ -47,9 +48,9 @@ export default async function(req: Request): Promise<Response> {
     if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
     const body = await req.json();
-    const { entity, data } = body;
+    const { entity, data, bulk, records } = body;
 
-    if (!entity || !data) return Response.json({ error: 'Entity and data are required' }, { status: 400 });
+    if (!entity) return Response.json({ error: 'Entity is required' }, { status: 400 });
     if (!PROVIDER_ENTITIES.includes(entity)) return Response.json({ error: 'Entity type not supported by this function' }, { status: 400 });
 
     const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
@@ -63,20 +64,62 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ error: reason, code: 'FORBIDDEN' }, { status: 403 });
     }
 
-    // Validate parent ownership for child entities
+    // ---- Bulk unit creation (bulk unit-registration wizard) ----
+    if (bulk && entity === 'Unit' && Array.isArray(records) && records.length > 0) {
+      // Validate ownership of every distinct property referenced
+      const propIds = [...new Set(records.map((r) => r.property_id).filter(Boolean))];
+      for (const pid of propIds) {
+        const prop = await base44.asServiceRole.entities.Property.get(pid).catch(() => null);
+        if (!prop) return Response.json({ error: 'Property not found', code: 'NOT_FOUND' }, { status: 404 });
+        if (!isAdmin && prop.owner_user_id !== user.id) {
+          return Response.json({ error: 'Property does not belong to your account', code: 'OWNERSHIP' }, { status: 403 });
+        }
+      }
+
+      // Stamp owner + invite code server-side (never trust client values)
+      const cleaned = records.map((r) => ({
+        ...r,
+        owner_user_id: user.id,
+        invite_code: r.invite_code || genInviteCode(),
+        status: r.status || 'Available',
+      }));
+
+      const created = await base44.asServiceRole.entities.Unit.bulkCreate(cleaned);
+
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          user_id: user.id,
+          user_email: user.email,
+          user_role: user.role,
+          action: 'Units Bulk Created',
+          entity: 'Unit',
+          entity_id: created[0]?.id || '',
+          entity_name: `${created.length} units`,
+          new_value: JSON.stringify({ property_id: propIds[0] || '', count: created.length }).slice(0, 2000),
+          timestamp: new Date().toISOString(),
+        });
+      } catch (e) {}
+
+      return Response.json({ ok: true, records: created });
+    }
+
+    // ---- Single record creation ----
+    if (!data) return Response.json({ error: 'Data is required' }, { status: 400 });
+
     const ownershipError = await validateParentOwnership(base44, user, entity, data);
     if (ownershipError) return Response.json({ error: ownershipError, code: 'OWNERSHIP' }, { status: 403 });
 
-    // Stamp ownership from the authenticated user — never trust the client value
     const record = { ...data };
     if (ENTITIES_WITH_OWNER.includes(entity)) {
       record.owner_user_id = user.id;
     }
+    // Units always get a server-generated invite code
+    if (entity === 'Unit' && !record.invite_code) {
+      record.invite_code = genInviteCode();
+    }
 
-    // Create via service role (bypasses RLS, which blocks direct non-admin creates)
     const created = await base44.asServiceRole.entities[entity].create(record);
 
-    // Audit log
     try {
       await base44.asServiceRole.entities.AuditLog.create({
         user_id: user.id,

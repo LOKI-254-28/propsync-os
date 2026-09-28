@@ -123,7 +123,11 @@ export default function PublicListingDetail() {
 
           <div>
             <div className="sticky top-20 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-3xl font-bold text-emerald-700">{KES(listing.price)}<span className="text-sm font-normal text-slate-500">/month</span></p>
+              {listing.unit_id ? (
+                <p className="text-3xl font-bold text-emerald-700">{KES(listing.price)}<span className="text-sm font-normal text-slate-500">/month</span></p>
+              ) : (
+                <p className="text-2xl font-bold text-emerald-700">Units available</p>
+              )}
               {unit?.security_deposit > 0 && <p className="mt-1 text-sm text-slate-600">Deposit: {KES(unit.security_deposit)}</p>}
               {unit?.service_charge > 0 && <p className="text-sm text-slate-600">Service charge: {KES(unit.service_charge)}</p>}
               {listing.date_listed && <p className="mt-2 text-xs text-slate-400">Listed {listing.date_listed}</p>}

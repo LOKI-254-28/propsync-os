@@ -124,6 +124,12 @@ export default function Login() {
         </Button>
       </form>
 
+      <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <Link to="/listings" className="hover:text-primary hover:underline">Browse listings</Link>
+        <span className="text-border">·</span>
+        <Link to="/" className="hover:text-primary hover:underline">Back to home</Link>
+      </div>
+
     </AuthLayout>
   );
 }

@@ -15,3 +15,15 @@ export async function secureCreate(entity, data) {
     throw new Error(msg);
   }
 }
+
+// Bulk-create units with server-stamped owner_user_id + invite codes.
+// Fixes the units-not-viewable bug (owner stamping) and auto-numbers server-side trust.
+export async function secureBulkCreateUnits(records) {
+  try {
+    const response = await base44.functions.invoke("createOwnedRecord", { entity: "Unit", bulk: true, records });
+    return response.data.records;
+  } catch (e) {
+    const msg = e.data?.error || e.response?.data?.error || e.message || "Could not create units. Please try again.";
+    throw new Error(msg);
+  }
+}

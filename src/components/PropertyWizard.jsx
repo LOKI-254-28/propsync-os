@@ -63,7 +63,8 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
         size_sqm: u.size_sqm ? Number(u.size_sqm) : undefined,
         monthly_rent: Number(u.monthly_rent) || 0, security_deposit: Number(u.security_deposit) || 0,
         service_charge: Number(u.service_charge) || 0, furnished: !!u.furnished,
-        status: "Available", description: "",
+        status: "Available", description: "", owner_user_id: me.id,
+        invite_code: `VE-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
       }));
       const createdUnits = await base44.entities.Unit.bulkCreate(unitRecords);
 

@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, Receipt, ArrowLeft, Edit, Archive, Loader2 } from "lucide-react";
+import { Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, Receipt, ArrowLeft, Edit, Archive, Loader2, MapPin } from "lucide-react";
 import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
+import MapPicker from "@/components/MapPicker";
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -79,6 +80,13 @@ export default function PropertyDetail() {
       </div>
 
       {property.description && <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">{property.description}</div>}
+
+      {(property.latitude != null && property.longitude != null) && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+          <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700"><MapPin className="h-4 w-4 text-emerald-600" />Location</p>
+          <MapPicker latitude={property.latitude} longitude={property.longitude} height={240} />
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SectionCard title="Units" actions={<Link to="/units" className="text-sm text-emerald-700 hover:underline">Manage →</Link>}>

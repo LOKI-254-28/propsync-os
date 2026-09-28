@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DoorOpen, Plus, Search, Loader2 } from "lucide-react";
+import { DoorOpen, Plus, Search, Loader2, Copy, Check } from "lucide-react";
 import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
 
@@ -18,6 +18,8 @@ export default function Units() {
   const data = usePortfolioData();
   const { submitting, run } = useCrud();
   const [open, setOpen] = useState(false);
+  const [inviteUnit, setInviteUnit] = useState(null);
+  const [copied, setCopied] = useState(false);
   const [search, setSearch] = useState("");
   const [filterProp, setFilterProp] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -80,7 +82,7 @@ export default function Units() {
                     <td className="py-2.5 text-slate-600">{u.property_name}</td>
                     <td className="py-2.5">
                       {u.invite_code ? (
-                        <button onClick={() => { navigator.clipboard?.writeText(u.invite_code); }} title="Click to copy" className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-600 hover:bg-slate-100">{u.invite_code}</button>
+                        <button onClick={() => { setInviteUnit(u); setCopied(false); }} title="Invite a tenant" className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-xs text-emerald-700 hover:bg-emerald-100">{u.invite_code}</button>
                       ) : <span className="text-xs text-slate-400">—</span>}
                     </td>
                     <td className="py-2.5 text-slate-600">{u.unit_type} · {u.bedrooms}BR</td>
@@ -134,6 +136,31 @@ export default function Units() {
           <DialogFooter><Button onClick={create} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Creating...</> : "Create Unit"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {inviteUnit && (
+        <Dialog open={!!inviteUnit} onOpenChange={(o) => !o && setInviteUnit(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Invite a Tenant</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-slate-600">Share this invite code or link with your tenant. They'll register as a client and be pre-linked to <span className="font-medium text-slate-800">{inviteUnit.property_name} — {inviteUnit.unit_number}</span>.</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
+                <p className="text-xs uppercase text-slate-500">Invite Code</p>
+                <p className="font-mono text-lg font-semibold text-emerald-700">{inviteUnit.invite_code}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-medium text-slate-500">Registration link</p>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={`${window.location.origin}/register?invite=${inviteUnit.invite_code}`} className="font-mono text-xs" />
+                  <Button size="icon" variant="outline" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/register?invite=${inviteUnit.invite_code}`); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+                    {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <DialogFooter><Button variant="outline" onClick={() => setInviteUnit(null)}>Close</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

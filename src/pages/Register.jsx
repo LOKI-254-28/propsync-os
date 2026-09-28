@@ -42,6 +42,13 @@ export default function Register() {
     const params = new URLSearchParams(window.location.search);
     setListingId(params.get("listing") || "");
     setReturnTo(params.get("returnTo") || "");
+    const invite = params.get("invite") || "";
+    if (invite) {
+      setInviteCode(invite.toUpperCase());
+      setAccountType("client");
+      setProfiles(["tenant"]);
+      setStep("form");
+    }
   }, []);
 
   useEffect(() => {

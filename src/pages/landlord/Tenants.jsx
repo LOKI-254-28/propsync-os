@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Users, Plus, Search, Phone, Mail } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { secureCreate } from "@/lib/secureCreate";
+import TenantStats from "@/components/tenants/TenantStats";
 
 export default function Tenants() {
   const data = usePortfolioData();
@@ -39,6 +40,8 @@ export default function Tenants() {
   return (
     <div>
       <PageHeader title="Tenants" description="Tenant directory with current balances and tenancy history." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Add Tenant</Button>} />
+
+      <TenantStats tenants={data.tenants} tenancies={data.tenancies} charges={data.charges} />
 
       <div className="mb-4 relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

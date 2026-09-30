@@ -85,7 +85,12 @@
           "data.owner_user_id": "{{user.id}}"
         },
         {
-          "data.status": "Published"
+          "data.status": {
+            "$in": [
+              "Published",
+              "Active"
+            ]
+          }
         }
       ]
     },

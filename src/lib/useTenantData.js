@@ -24,8 +24,6 @@ export function useTenantData() {
           const res = await base44.functions.invoke("linkTenant", {});
           if (res.data?.notFound) {
             setNotLinked(true);
-            setLoading(false);
-            return;
           }
         } catch (e) {}
       }
@@ -43,7 +41,7 @@ export function useTenantData() {
         base44.entities.Feedback.filter({ tenant_user_id: me.id }),
         base44.entities.VacationRequest.filter({ tenant_user_id: me.id }),
         base44.entities.Unit.list("-created_date", 500),
-        base44.entities.Listing.filter({ status: "Published" }),
+        base44.entities.Listing.filter({ status: { $in: ["Published", "Active"] } }, "-created_date", 500),
       ]);
       setData({ tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units, listings });
     } finally {

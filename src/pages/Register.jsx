@@ -59,7 +59,7 @@ export default function Register() {
       await base44.auth.updateMe({
         full_name: fullName,
         account_type: accountType,
-        approval_status: "pending",
+        approval_status: accountType === "client" ? "approved" : "pending",
       });
       if (accountType === "client") {
         if (listingId) {

@@ -22,7 +22,6 @@ export default function TenantLayout({ children }) {
   const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
   const [notLinked, setNotLinked] = useState(false);
-  const [pendingApproval, setPendingApproval] = useState(false);
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -31,7 +30,6 @@ export default function TenantLayout({ children }) {
       const u = normalizeUser(raw);
       setUser(u);
       if (!u) return;
-      setPendingApproval(u.account_type === "client" && u.approval_status === "pending");
       if (u.account_type === "client" || (!u.account_type && u.role !== "admin")) {
         try {
           const res = await base44.functions.invoke("linkTenant", {});
@@ -99,11 +97,6 @@ export default function TenantLayout({ children }) {
           <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Client</span>
         </header>
         <main className="px-4 py-6 lg:px-8">
-          {pendingApproval && (
-            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              <strong>Account pending approval.</strong> You can browse listings and submit applications while your account is reviewed.
-            </div>
-          )}
           {notLinked && (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               <strong>No tenancy linked yet.</strong> Browse available listings and apply to join a property to get started.

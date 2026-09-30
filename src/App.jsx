@@ -71,6 +71,8 @@ import PublicHome from '@/pages/public/PublicHome';
 import PublicListings from '@/pages/public/PublicListings';
 import PublicListingDetail from '@/pages/public/PublicListingDetail';
 import AcceptInvite from '@/pages/AcceptInvite';
+import Contact from '@/pages/public/Contact';
+import HowItWorks from '@/pages/public/HowItWorks';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -193,6 +195,8 @@ const AuthenticatedApp = () => {
       <Route path="/listings" element={<PublicListings />} />
       <Route path="/listings/:id" element={<PublicListingDetail />} />
       <Route path="/browse/:id" element={<PublicPropertyView />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

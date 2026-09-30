@@ -22,6 +22,8 @@ export default function PublicLayout({ children }) {
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/listings" className="text-slate-600 hover:text-emerald-700">Browse</Link>
+            <Link to="/how-it-works" className="hidden text-slate-600 hover:text-emerald-700 sm:inline">How it works</Link>
+            <Link to="/contact" className="text-slate-600 hover:text-emerald-700">Contact</Link>
             {isAuthenticated ? (
               <Link to={roleHome} className="rounded-md bg-emerald-600 px-3 py-1.5 font-medium text-white hover:bg-emerald-700">
                 Go to dashboard

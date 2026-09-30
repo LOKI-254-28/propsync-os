@@ -6,6 +6,7 @@ import { Building2, MapPin, Bed, Bath } from "lucide-react";
 import ImageCarousel from "@/components/booking/ImageCarousel";
 import PropertyMap from "@/components/booking/PropertyMap";
 import ReviewsSection from "@/components/booking/ReviewsSection";
+import ReviewForm from "@/components/booking/ReviewForm";
 import UnitDialog from "@/components/booking/UnitDialog";
 import UnitStatus from "@/components/booking/UnitStatus";
 
@@ -16,15 +17,15 @@ export default function PropertyBrowseView({ propertyId, mode }) {
   const [error, setError] = useState("");
   const [unit, setUnit] = useState(null);
 
-  useEffect(() => {
-    base44.functions.invoke("getPropertyBrowse", { property_id: propertyId })
-      .then((r) => {
-        setData(r.data);
-        const pre = r.data.units.find((u) => u.id === params.get("unit"));
-        if (pre) setUnit(pre);
-      })
-      .catch(() => setError("Could not load this property."));
-  }, [propertyId]);
+  const load = (first) => base44.functions.invoke("getPropertyBrowse", { property_id: propertyId })
+    .then((r) => {
+      setData(r.data);
+      const pre = first === true && r.data.units.find((u) => u.id === params.get("unit"));
+      if (pre) setUnit(pre);
+    })
+    .catch(() => setError("Could not load this property."));
+
+  useEffect(() => { load(true); }, [propertyId]);
 
   if (error) return <p className="py-16 text-center text-slate-500">{error}</p>;
   if (!data) return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -41,6 +42,7 @@ export default function PropertyBrowseView({ propertyId, mode }) {
         {p.description && <p className="mt-3 text-sm text-slate-700">{p.description}</p>}
         {p.amenities.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{p.amenities.map((a) => <span key={a} className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800">{a}</span>)}</div>}
         <div className="mt-4"><ReviewsSection rating={rating} reviews={reviews} /></div>
+        {mode === "tenant" && <ReviewForm propertyId={p.id} onSaved={load} />}
       </div>
       <PropertyMap latitude={p.latitude} longitude={p.longitude} name={p.name} />
       <div>

@@ -21,7 +21,7 @@ export default function TenantStats({ tenants, tenancies, charges }) {
     <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
       <StatCard label="Total tenants" value={tenants.length} icon={Users} accent="blue" />
       <StatCard label="Currently housed" value={housed} sub={`${tenants.length - housed} without active tenancy`} icon={Home} />
-      <StatCard label="In arrears" value={inArrears} sub={KES(outstanding)} icon={AlertTriangle} accent="rose" />
+      <StatCard label="In arrears" value={inArrears} sub={`of ${housed} housed tenants`} icon={AlertTriangle} accent="rose" />
       <StatCard label="Charges paid" value={`${paidRate}%`} sub={`${due.length} charges due`} icon={CheckCircle2} />
       <StatCard label="Avg. rent" value={KES(avgRent)} icon={TrendingUp} accent="gold" />
       <StatCard label="Outstanding" value={KES(outstanding)} icon={Wallet} accent="slate" />

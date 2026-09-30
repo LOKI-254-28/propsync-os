@@ -13,6 +13,7 @@ import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
 import BulkUnitWizard from "@/components/BulkUnitWizard";
 import UnitEditor from "@/components/UnitEditor";
+import UnitStats from "@/components/units/UnitStats";
 
 const AMENITIES = ["Parking", "Balcony", "Lift", "Gym", "Pool", "Security", "Borehole", "Backup Generator", "Internet", "Garden"];
 
@@ -111,6 +112,8 @@ export default function Units() {
           <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Add Unit</Button>
         </div>
       } />
+
+      <UnitStats units={data.units} tenancies={data.tenancies || []} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">

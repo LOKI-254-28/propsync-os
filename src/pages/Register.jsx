@@ -12,7 +12,6 @@ import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import { genRef, todayISO } from "@/lib/finance";
-import { cn } from "@/lib/utils";
 
 export default function Register() {
   const [step, setStep] = useState("role"); // 'role' | 'form' | 'otp'
@@ -21,8 +20,6 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [propertyId, setPropertyId] = useState("");
-  const [properties, setProperties] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -35,21 +32,12 @@ export default function Register() {
     setReturnTo(params.get("returnTo") || "");
   }, []);
 
-  useEffect(() => {
-    if (accountType === "client") {
-      base44.entities.Property.filter({ status: "Active" }).then(setProperties).catch(() => {});
-    }
-  }, [accountType]);
-
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     if (!fullName.trim()) { setError("Please enter your full name."); return; }
     if (password !== confirmPassword) { setError("Passwords do not match"); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    if (accountType === "client" && !listingId && !propertyId) {
-      setError("Select a property to request joining."); return;
-    }
     setLoading(true);
     try {
       await base44.auth.register({ email, password });
@@ -94,23 +82,6 @@ export default function Register() {
           });
           window.location.href = returnTo || "/portal";
         } else {
-          // Request to join a property (landowner reviews the application)
-          const prop = properties.find((p) => p.id === propertyId);
-          await base44.entities.Application.create({
-            application_reference: genRef("APP"),
-            tenant_user_id: me.id,
-            applicant_name: fullName,
-            applicant_email: email,
-            property_id: propertyId,
-            property_name: prop?.name || "",
-            unit_id: "",
-            unit_number: "",
-            monthly_rent: 0,
-            status: "Pending",
-            submitted_date: todayISO(),
-            application_type: "rental",
-            owner_user_id: prop?.owner_user_id || "",
-          });
           window.location.href = "/portal";
         }
       } else {
@@ -223,19 +194,6 @@ export default function Register() {
             <PasswordInput id="confirm" autoComplete="new-password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
           </div>
         </div>
-
-        {accountType === "client" && (
-          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
-            <div className="space-y-2">
-              <Label htmlFor="property">Select a property</Label>
-              <select id="property" value={propertyId} onChange={(e) => setPropertyId(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm h-12">
-                <option value="">Select a property...</option>
-                {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <p className="text-xs text-muted-foreground">Request to join a property — the landowner will review your application.</p>
-            </div>
-          </div>
-        )}
 
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating account...</> : "Create account"}

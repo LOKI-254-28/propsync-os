@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui-bits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, X, Image as ImageIcon, Save, Send, Copy } from "lucide-react";
+import { Loader2, X, Image as ImageIcon, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 const UNIT_TYPES = ["Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "Penthouse", "Commercial", "Other"];
@@ -15,15 +15,9 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
   const [form, setForm] = useState(null);
   const [busy, setBusy] = useState(false);
   const [uploadingRoom, setUploadingRoom] = useState(null);
-  const [tenants, setTenants] = useState([]);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (unit) {
-      base44.entities.Tenant.list("-created_date", 200).then(setTenants).catch(() => {});
-      setInviteEmail("");
       setForm({
         unit_number: unit.unit_number || "",
         unit_type: unit.unit_type || "1 Bedroom",
@@ -71,7 +65,14 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
   const save = async () => {
     setBusy(true);
     try {
+      const number = form.unit_number.trim();
+      if (canRename && number !== unit.unit_number) {
+        if (!number) throw new Error("Unit number cannot be empty.");
+        const siblings = await base44.entities.Unit.filter({ property_id: unit.property_id });
+        if (siblings.some((s) => s.id !== unit.id && s.unit_number === number)) throw new Error(`Unit number ${number} is already used in this property.`);
+      }
       await base44.entities.Unit.update(unit.id, {
+        ...(canRename && number ? { unit_number: number } : {}),
         unit_type: form.unit_type,
         bedrooms: Number(form.bedrooms) || 1,
         bathrooms: Number(form.bathrooms) || 1,
@@ -93,30 +94,7 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
     }
   };
 
-  const inviteLink = unit?.invite_code ? `${window.location.origin}/accept-invite?code=${unit.invite_code}` : "";
-
-  const sendInvite = async () => {
-    if (!inviteEmail) { toast({ title: "Email required", description: "Enter a tenant email to send the invite.", variant: "destructive" }); return; }
-    setSending(true);
-    try {
-      await base44.functions.invoke("unitInvite", { action: "send", unit_id: unit.id, email: inviteEmail });
-      toast({ title: "Invite sent", description: `Invitation emailed to ${inviteEmail}.` });
-    } catch (e) {
-      toast({ title: "Error", description: e.data?.error || e.message || "Could not send invite.", variant: "destructive" });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      toast({ title: "Copy failed", variant: "destructive" });
-    }
-  };
+  const canRename = !unit.current_tenancy_id && !["Occupied", "Notice Given"].includes(unit.status);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -126,8 +104,8 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 py-2 sm:grid-cols-3">
-          <Field label="Unit number">
-            <Input value={form.unit_number} disabled className="bg-slate-50" />
+          <Field label="Unit number" hint={canRename ? "" : "Locked while the unit has a tenancy."}>
+            <Input value={form.unit_number} disabled={!canRename} onChange={(e) => setForm({ ...form, unit_number: e.target.value })} className={canRename ? "" : "bg-slate-50"} />
           </Field>
           <Field label="Type">
             <select
@@ -219,36 +197,6 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
               );
             })}
           </div>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50/40 p-4">
-          <p className="mb-1 text-sm font-medium text-slate-700">Invite tenant</p>
-          <p className="mb-2 text-xs text-slate-500">Send this unit's invite link to an existing tenant — they'll be onboarded to this unit when they accept.</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <select
-              value={tenants.find((t) => t.email === inviteEmail)?.id || ""}
-              onChange={(e) => {
-                const t = tenants.find((x) => x.id === e.target.value);
-                setInviteEmail(t ? t.email : "");
-              }}
-              className="rounded-md border border-input bg-background px-2 py-2 text-sm"
-            >
-              <option value="">Pick an existing tenant…</option>
-              {tenants.map((t) => (
-                <option key={t.id} value={t.id}>{t.full_name} · {t.email}</option>
-              ))}
-            </select>
-            <Input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="or enter email" />
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Button size="sm" onClick={sendInvite} disabled={sending} className="bg-emerald-600 hover:bg-emerald-700">
-              {sending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Sending…</> : <><Send className="mr-1.5 h-3.5 w-3.5" />Send invite</>}
-            </Button>
-            <Button size="sm" variant="outline" onClick={copyLink}>
-              <Copy className="mr-1.5 h-3.5 w-3.5" />{copied ? "Copied!" : "Copy link"}
-            </Button>
-          </div>
-          {inviteLink && <p className="mt-2 break-all text-xs text-slate-400">{inviteLink}</p>}
         </div>
 
         <DialogFooter>

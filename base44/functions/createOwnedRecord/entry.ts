@@ -4,13 +4,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
 // and that carry owner_user_id for ownership isolation.
 const PROVIDER_ENTITIES = [
   'Property', 'Unit', 'Listing', 'Tenancy',
-  'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection', 'Tenant',
+  'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection', 'Tenant', 'Contractor',
 ];
 
 // Entities that have an owner_user_id field (Tenant does not).
 const ENTITIES_WITH_OWNER = [
   'Property', 'Unit', 'Listing', 'Tenancy',
-  'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection',
+  'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection', 'Contractor',
 ];
 
 // Validate that child-entity references belong to the authenticated landowner.
@@ -35,10 +35,6 @@ async function validateParentOwnership(base44, user, entity, data) {
   }
 
   return null;
-}
-
-function genInviteCode() {
-  return `PW-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 }
 
 export default async function(req: Request): Promise<Response> {
@@ -76,11 +72,10 @@ export default async function(req: Request): Promise<Response> {
         }
       }
 
-      // Stamp owner + invite code server-side (never trust client values)
+      // Stamp owner server-side (never trust client values)
       const cleaned = records.map((r) => ({
         ...r,
         owner_user_id: user.id,
-        invite_code: r.invite_code || genInviteCode(),
         status: r.status || 'Available',
       }));
 
@@ -112,10 +107,6 @@ export default async function(req: Request): Promise<Response> {
     const record = { ...data };
     if (ENTITIES_WITH_OWNER.includes(entity)) {
       record.owner_user_id = user.id;
-    }
-    // Units always get a server-generated invite code
-    if (entity === 'Unit' && !record.invite_code) {
-      record.invite_code = genInviteCode();
     }
 
     const created = await base44.asServiceRole.entities[entity].create(record);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { UserPlus, Mail, Loader2, Building2, Home, KeyRound, User, ArrowLeft } from "lucide-react";
+import { UserPlus, Mail, Loader2, Building2, Home, User, ArrowLeft } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
@@ -21,7 +21,6 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
   const [propertyId, setPropertyId] = useState("");
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState("");
@@ -34,16 +33,6 @@ export default function Register() {
     const params = new URLSearchParams(window.location.search);
     setListingId(params.get("listing") || "");
     setReturnTo(params.get("returnTo") || "");
-    const invite = params.get("invite") || "";
-    if (invite) {
-      setInviteCode(invite.toUpperCase());
-      setAccountType("client");
-      setStep("form");
-      // Existing logged-in users: redirect to the dedicated accept page
-      base44.auth.isAuthenticated().then((authed) => {
-        if (authed) window.location.href = `/accept-invite?code=${encodeURIComponent(invite.toUpperCase())}`;
-      });
-    }
   }, []);
 
   useEffect(() => {
@@ -58,8 +47,8 @@ export default function Register() {
     if (!fullName.trim()) { setError("Please enter your full name."); return; }
     if (password !== confirmPassword) { setError("Passwords do not match"); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    if (accountType === "client" && !inviteCode.trim() && !propertyId) {
-      setError("Enter an invite code or select a property to request joining."); return;
+    if (accountType === "client" && !listingId && !propertyId) {
+      setError("Select a property to request joining."); return;
     }
     setLoading(true);
     try {
@@ -105,20 +94,7 @@ export default function Register() {
           });
           window.location.href = returnTo || "/portal";
         } else {
-          if (inviteCode.trim()) {
-            // Invite path: auto-create tenancy and bypass admin approval
-            try {
-              await base44.functions.invoke("unitInvite", { action: "accept", invite_code: inviteCode.trim().toUpperCase() });
-              await base44.auth.updateMe({ account_type: "client", approval_status: "approved" });
-            } catch (e) {
-              setError(e.data?.error || e.message || "Could not accept this invite. Please check your invite code.");
-              setLoading(false);
-              return;
-            }
-            window.location.href = "/portal";
-            return;
-          }
-          // No invite: request to join a property (landowner reviews the application)
+          // Request to join a property (landowner reviews the application)
           const prop = properties.find((p) => p.id === propertyId);
           await base44.entities.Application.create({
             application_reference: genRef("APP"),
@@ -251,23 +227,13 @@ export default function Register() {
         {accountType === "client" && (
           <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
             <div className="space-y-2">
-              <Label htmlFor="invite">Invite code (optional)</Label>
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                <Input id="invite" placeholder="e.g. PW-A1B2C3" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} className="pl-10 h-12 font-mono uppercase" />
-              </div>
-              <p className="text-xs text-muted-foreground">Enter the code your landowner gave you to apply for a specific unit.</p>
+              <Label htmlFor="property">Select a property</Label>
+              <select id="property" value={propertyId} onChange={(e) => setPropertyId(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm h-12">
+                <option value="">Select a property...</option>
+                {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <p className="text-xs text-muted-foreground">Request to join a property — the landowner will review your application.</p>
             </div>
-            {!inviteCode.trim() && (
-              <div className="space-y-2">
-                <Label htmlFor="property">Or select a property</Label>
-                <select id="property" value={propertyId} onChange={(e) => setPropertyId(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm h-12">
-                  <option value="">Select a property...</option>
-                  {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-                <p className="text-xs text-muted-foreground">Request to join a property — the landowner will review your application.</p>
-              </div>
-            )}
           </div>
         )}
 

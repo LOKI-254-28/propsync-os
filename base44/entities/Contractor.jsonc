@@ -41,6 +41,10 @@
     "total_cost": {
       "type": "number",
       "default": 0
+    },
+    "owner_user_id": {
+      "type": "string",
+      "description": "The landowner who added this contractor"
     }
   },
   "required": [
@@ -48,24 +52,54 @@
   ],
   "rls": {
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        }
+      ]
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "account_type": "landowner"
+          }
+        }
+      ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        }
+      ]
     }
   }
 }

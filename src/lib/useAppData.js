@@ -42,7 +42,7 @@ export function usePortfolioData() {
         owned('Inspection', '-created_date', 200),
         owned('Notice', '-created_date', 200),
         owned('Expense', '-created_date', 500),
-        base44.entities.Contractor.list('-created_date', 100),
+        owned('Contractor', '-created_date', 100),
         owned('Feedback', '-created_date', 200),
         owned('VacationRequest', '-created_date', 100),
         owned('Document', '-created_date', 200),

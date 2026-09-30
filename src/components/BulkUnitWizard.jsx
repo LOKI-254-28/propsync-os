@@ -6,6 +6,9 @@ import { Field } from "@/components/ui-bits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Loader2, Plus, Trash2, Building2, Layers, Check, AlertCircle } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import NumberingScheme from "@/components/units/NumberingScheme";
+
+const DEFAULT_SCHEME = { mode: "auto", prefix: "", start: 1, pad: 2 };
 
 const UNIT_TYPES = ["Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "Penthouse", "Commercial", "Other"];
 const BEDROOMS = { Studio: 0, "1 Bedroom": 1, "2 Bedroom": 2, "3 Bedroom": 3, Penthouse: 3, Commercial: 0, Other: 1 };
@@ -91,10 +94,12 @@ function featuresFor(g) {
   return a;
 }
 
-export default function BulkUnitWizard({ open, onClose, onCreated, properties, defaultPropertyId = "" }) {
+export default function BulkUnitWizard({ open, onClose, onCreated, properties, defaultPropertyId = "", existingUnits = [] }) {
   const [busy, setBusy] = useState(false);
   const [propertyId, setPropertyId] = useState(defaultPropertyId);
   const [groups, setGroups] = useState([emptyGroup()]);
+  const [scheme, setScheme] = useState(DEFAULT_SCHEME);
+  const [overrides, setOverrides] = useState({});
 
   const allBuildings = useMemo(
     () => [...new Set(groups.flatMap((g) => g.distribution.map((d) => d.building.trim()).filter(Boolean)))],
@@ -141,8 +146,18 @@ export default function BulkUnitWizard({ open, onClose, onCreated, properties, d
       }
     }
     assignNumbers(all);
+    all.forEach((u, i) => {
+      if (scheme.mode === "custom") u.unit_number = `${scheme.prefix}${String((Number(scheme.start) || 0) + i).padStart(Number(scheme.pad) || 1, "0")}`;
+      if (overrides[i]) u.unit_number = overrides[i];
+    });
     return all;
-  }, [groups]);
+  }, [groups, scheme, overrides]);
+
+  const taken = new Set(existingUnits.filter((x) => x.property_id === propertyId).map((x) => x.unit_number));
+  const counts = {};
+  preview.forEach((u) => { counts[u.unit_number] = (counts[u.unit_number] || 0) + 1; });
+  const isDupe = (n) => !n || counts[n] > 1 || taken.has(n);
+  const hasDupes = preview.some((u) => isDupe(u.unit_number));
 
   const submit = async () => {
     if (!propertyId) {
@@ -180,6 +195,8 @@ export default function BulkUnitWizard({ open, onClose, onCreated, properties, d
       const created = await secureBulkCreateUnits(records);
       toast({ title: "Success", description: `${created.length} unit(s) created.`, variant: "default" });
       setGroups([emptyGroup()]);
+      setScheme(DEFAULT_SCHEME);
+      setOverrides({});
       onClose?.();
       onCreated?.();
     } catch (err) {
@@ -191,6 +208,8 @@ export default function BulkUnitWizard({ open, onClose, onCreated, properties, d
 
   const close = () => {
     setGroups([emptyGroup()]);
+    setScheme(DEFAULT_SCHEME);
+    setOverrides({});
     onClose?.();
   };
 
@@ -369,6 +388,8 @@ export default function BulkUnitWizard({ open, onClose, onCreated, properties, d
           <Plus className="mr-1 h-4 w-4" />Add another group
         </Button>
 
+        <NumberingScheme scheme={scheme} onChange={(s) => { setScheme(s); setOverrides({}); }} />
+
         {/* Preview */}
         {preview.length > 0 && (
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -376,14 +397,17 @@ export default function BulkUnitWizard({ open, onClose, onCreated, properties, d
               <Layers className="h-3.5 w-3.5" />
               Preview · {preview.length} unit(s)
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {preview.slice(0, 40).map((u, i) => (
-                <span key={i} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700">
-                  {u.unit_number}
-                </span>
+            <div className="flex max-h-48 flex-wrap gap-1.5 overflow-y-auto">
+              {preview.map((u, i) => (
+                <input
+                  key={i}
+                  value={u.unit_number}
+                  onChange={(e) => setOverrides({ ...overrides, [i]: e.target.value.trim() })}
+                  className={`w-24 rounded-md border bg-white px-2 py-0.5 text-xs text-slate-700 ${isDupe(u.unit_number) ? "border-red-400 bg-red-50" : "border-slate-200"}`}
+                />
               ))}
-              {preview.length > 40 && <span className="text-xs text-slate-400">… +{preview.length - 40} more</span>}
             </div>
+            {hasDupes && <p className="mt-2 text-xs text-red-600">Unit numbers must be unique and not already used in this property.</p>}
           </div>
         )}
 
@@ -391,7 +415,7 @@ export default function BulkUnitWizard({ open, onClose, onCreated, properties, d
           <Button variant="ghost" onClick={close} disabled={busy}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={busy || !valid} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={submit} disabled={busy || !valid || hasDupes} className="bg-emerald-600 hover:bg-emerald-700">
             {busy ? (
               <>
                 <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />

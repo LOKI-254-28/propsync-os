@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DoorOpen, Plus, Search, Loader2, Copy, Check, Layers, Pencil, Send } from "lucide-react";
+import { DoorOpen, Plus, Search, Loader2, Copy, Layers, Pencil } from "lucide-react";
 import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
 import BulkUnitWizard from "@/components/BulkUnitWizard";
@@ -21,16 +21,12 @@ export default function Units() {
   const data = usePortfolioData();
   const { submitting, run } = useCrud();
   const [open, setOpen] = useState(false);
-  const [inviteUnit, setInviteUnit] = useState(null);
-  const [copied, setCopied] = useState(false);
   const [search, setSearch] = useState("");
   const [filterProp, setFilterProp] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [form, setForm] = useState({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
   const [bulkOpen, setBulkOpen] = useState(false);
   const [editUnit, setEditUnit] = useState(null);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [sending, setSending] = useState(false);
 
   const filtered = useMemo(() => data.units.filter((u) =>
     (!filterProp || u.property_id === filterProp) &&
@@ -51,34 +47,20 @@ export default function Units() {
   const create = async () => {
     if (!form.unit_number) { toast({ title: "Validation error", description: "Unit number is required.", variant: "destructive" }); return; }
     if (!form.property_id) { toast({ title: "Validation error", description: "Please select a property for this unit.", variant: "destructive" }); return; }
+    const number = form.unit_number.trim();
+    if (data.units.some((u) => u.property_id === form.property_id && u.unit_number === number)) { toast({ title: "Validation error", description: `Unit number ${number} is already used in this property.`, variant: "destructive" }); return; }
     await run(async () => {
       const prop = data.properties.find((p) => p.id === form.property_id);
       if (!prop) throw new Error("Selected property not found.");
-      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      await secureCreate("Unit", { ...form, property_name: prop?.name, invite_code: `PW-${inviteCode}`, status: "Available" });
+      await secureCreate("Unit", { ...form, unit_number: number, property_name: prop?.name, status: "Available" });
       setOpen(false);
       setForm({ unit_number: "", property_id: "", building: "", floor: "", unit_type: "1 Bedroom", bedrooms: 1, bathrooms: 1, size_sqm: 0, monthly_rent: 0, security_deposit: 0, service_charge: 0, furnished: false, amenities: [], description: "" });
       data.reload();
     }, { success: "Unit created successfully.", error: "Could not create unit. Your account may still be awaiting approval." });
   };
 
-  const sendInvite = async () => {
-    if (!inviteEmail.trim()) { toast({ title: "Validation error", description: "Enter an email address.", variant: "destructive" }); return; }
-    setSending(true);
-    try {
-      await base44.functions.invoke("unitInvite", { action: "send", unit_id: inviteUnit.id, email: inviteEmail.trim() });
-      toast({ title: "Invite sent", description: `Invitation emailed to ${inviteEmail.trim()}.` });
-      setInviteEmail("");
-    } catch (e) {
-      toast({ title: "Could not send invite", description: e.data?.error || e.message || "Email may be undeliverable.", variant: "destructive" });
-    } finally {
-      setSending(false);
-    }
-  };
-
   const duplicate = async (u) => {
     await run(async () => {
-      const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       await secureCreate("Unit", {
         unit_number: `${u.unit_number} (copy)`,
         property_id: u.property_id,
@@ -95,7 +77,6 @@ export default function Units() {
         furnished: u.furnished || false,
         amenities: u.amenities || [],
         description: u.description || "",
-        invite_code: `PW-${newCode}`,
         status: "Available",
       });
       data.reload();
@@ -137,18 +118,13 @@ export default function Units() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500">
-                <th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Property</th><th className="pb-2 font-medium">Invite Code</th><th className="pb-2 font-medium">Type</th><th className="pb-2 font-medium">Tenant</th><th className="pb-2 text-right font-medium">Rent</th><th className="pb-2 text-right font-medium">Status</th><th className="pb-2 text-right font-medium">Actions</th>
+                <th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Property</th><th className="pb-2 font-medium">Type</th><th className="pb-2 font-medium">Tenant</th><th className="pb-2 text-right font-medium">Rent</th><th className="pb-2 text-right font-medium">Status</th><th className="pb-2 text-right font-medium">Actions</th>
               </tr></thead>
               <tbody>
                 {filtered.map((u) => (
                   <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                     <td className="py-2.5 font-medium text-slate-800">{u.unit_number}</td>
                     <td className="py-2.5 text-slate-600">{u.property_name}</td>
-                    <td className="py-2.5">
-                      {u.invite_code ? (
-                        <button onClick={() => { setInviteUnit(u); setCopied(false); }} title="Invite a tenant" className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-xs text-emerald-700 hover:bg-emerald-100">{u.invite_code}</button>
-                      ) : <span className="text-xs text-slate-400">—</span>}
-                    </td>
                     <td className="py-2.5 text-slate-600">{u.unit_type} · {u.bedrooms}BR</td>
                     <td className="py-2.5 text-slate-600">{u.current_tenant_name || "—"}</td>
                     <td className="py-2.5 text-right font-medium text-slate-900">{KES(u.monthly_rent)}</td>
@@ -212,41 +188,7 @@ export default function Units() {
         </DialogContent>
       </Dialog>
 
-      {inviteUnit && (
-        <Dialog open={!!inviteUnit} onOpenChange={(o) => { if (!o) { setInviteUnit(null); setInviteEmail(""); } }}>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Invite a Tenant</DialogTitle></DialogHeader>
-            <div className="space-y-4 py-2">
-              <p className="text-sm text-slate-600">Share this invite code or link with your tenant. They'll register as a client and be pre-linked to <span className="font-medium text-slate-800">{inviteUnit.property_name} — {inviteUnit.unit_number}</span>.</p>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
-                <p className="text-xs uppercase text-slate-500">Invite Code</p>
-                <p className="font-mono text-lg font-semibold text-emerald-700">{inviteUnit.invite_code}</p>
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-medium text-slate-500">Registration link</p>
-                <div className="flex items-center gap-2">
-                  <Input readOnly value={`${window.location.origin}/register?invite=${inviteUnit.invite_code}`} className="font-mono text-xs" />
-                  <Button size="icon" variant="outline" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/register?invite=${inviteUnit.invite_code}`); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
-                    {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-              <div className="border-t border-slate-100 pt-3">
-                <p className="mb-1 text-xs font-medium text-slate-500">Or send by email</p>
-                <div className="flex items-center gap-2">
-                  <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="tenant@example.com" />
-                  <Button onClick={sendInvite} disabled={sending || !inviteEmail.trim()} className="bg-emerald-600 hover:bg-emerald-700">
-                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <DialogFooter><Button variant="outline" onClick={() => setInviteUnit(null)}>Close</Button></DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      <BulkUnitWizard open={bulkOpen} onClose={() => setBulkOpen(false)} onCreated={() => data.reload()} properties={data.properties} />
+      <BulkUnitWizard open={bulkOpen} onClose={() => setBulkOpen(false)} onCreated={() => data.reload()} properties={data.properties} existingUnits={data.units} />
       <UnitEditor open={!!editUnit} unit={editUnit} onClose={() => setEditUnit(null)} onSaved={() => data.reload()} />
     </div>
   );

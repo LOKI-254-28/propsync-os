@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
-import { base44 } from "@/api/base44Client";
+import { secureCreate } from "@/lib/secureCreate";
+import { toast } from "@/components/ui/use-toast";
 import { KES } from "@/lib/finance";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,12 @@ export default function Contractors() {
 
   const create = async () => {
     if (!form.name) return;
-    await base44.entities.Contractor.create({ ...form, status: "Active", total_assigned: 0, total_cost: 0 });
+    try {
+      await secureCreate("Contractor", { ...form, status: "Active", total_assigned: 0, total_cost: 0 });
+    } catch (e) {
+      toast({ title: "Could not add contractor", description: e.message, variant: "destructive" });
+      return;
+    }
     setOpen(false);
     setForm({ name: "", company: "", contact_person: "", phone: "", email: "", services: [], notes: "" });
     data.reload();

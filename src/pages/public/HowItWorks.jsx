@@ -17,7 +17,7 @@ const TENANT_STEPS = [
 
 const LANDLORD_STEPS = [
   { icon: Building2, title: "Add your properties and units", text: "Create properties with photos, map location and amenities, then add units individually or in bulk." },
-  { icon: Users, title: "Receive bookings", text: "Tenants select your units online, or you invite a tenant to a unit directly. Vacant units and units with a confirmed exit are bookable." },
+  { icon: Users, title: "Receive bookings", text: "Tenants select your units online and book them. Vacant units and units with a confirmed exit are bookable." },
   { icon: CalendarClock, title: "Confirm visits and decide", text: "Accept or reschedule site visits, then Proceed with the tenant or Terminate the application." },
   { icon: FileSignature, title: "Issue the agreement", text: "Upload the tenancy agreement, receive the signed copy back, and request the deposit and first rent." },
   { icon: Wallet, title: "Verify payment and start the tenancy", text: "Confirm the M-Pesa or bank payment. The tenancy, rent charges and ledger are created for you." },

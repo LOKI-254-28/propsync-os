@@ -6,6 +6,7 @@ export const LANDLORD_NAV = [
   { label: "Applications", path: "/applications", icon: "FileText" },
   { label: "Site Visits", path: "/site-visits", icon: "CalendarClock" },
   { label: "Tenancies", path: "/tenancies", icon: "ScrollText" },
+  { label: "Messages", path: "/chat", icon: "MessageSquare" },
   { label: "Rent & Payments", path: "/rent", icon: "Wallet" },
   { label: "Arrears", path: "/arrears", icon: "AlertTriangle" },
   { label: "Maintenance", path: "/maintenance", icon: "Wrench" },
@@ -55,6 +56,7 @@ export const TENANT_NAV = [
   { label: "Notices", path: "/portal/notices", icon: "Bell" },
   { label: "Documents", path: "/portal/documents", icon: "FolderOpen" },
   { label: "Suggestions & Complaints", path: "/portal/feedback", icon: "MessageSquare" },
+  { label: "Messages", path: "/portal/chat", icon: "MessageSquare" },
   { label: "Vacation / Termination", path: "/portal/vacation", icon: "LogOut" },
   { label: "Profile", path: "/portal/profile", icon: "User" },
 ];

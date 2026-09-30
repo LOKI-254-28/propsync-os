@@ -72,12 +72,15 @@ import PublicListings from '@/pages/public/PublicListings';
 import PublicListingDetail from '@/pages/public/PublicListingDetail';
 import AcceptInvite from '@/pages/AcceptInvite';
 import Contact from '@/pages/public/Contact';
+import Chat from '@/pages/landlord/Chat';
+import MyChat from '@/pages/tenant/MyChat';
 import HowItWorks from '@/pages/public/HowItWorks';
 
 const LandlordRoutes = () => (
   <Layout>
     <Routes>
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/chat" element={<Chat />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/properties" element={<Properties />} />
       <Route path="/properties/:id" element={<PropertyDetail />} />
@@ -158,6 +161,7 @@ const TenantRoutes = () => (
       <Route path="/portal/notices" element={<MyNotices />} />
       <Route path="/portal/documents" element={<MyDocuments />} />
       <Route path="/portal/feedback" element={<MyFeedback />} />
+      <Route path="/portal/chat" element={<MyChat />} />
       <Route path="/portal/vacation" element={<MyVacation />} />
       <Route path="/portal/profile" element={<MyProfile />} />
       <Route path="*" element={<Navigate to="/portal" replace />} />

@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, FolderOpen, Receipt, BarChart3,
   Columns3, BellRing, ShieldCheck, Settings as SettingsIcon, Circle,
-  Tag, FileSignature, Banknote, CalendarClock,
+  Tag, FileSignature, Banknote, CalendarClock, MessageSquare,
 } from "lucide-react";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { signOut } from "@/lib/signOut";
@@ -17,7 +17,7 @@ import { signOut } from "@/lib/signOut";
 const ICONS = {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, Bell, FolderOpen, Receipt, BarChart3,
-  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote, CalendarClock,
+  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote, CalendarClock, MessageSquare,
 };
 
 export default function Layout({ children }) {

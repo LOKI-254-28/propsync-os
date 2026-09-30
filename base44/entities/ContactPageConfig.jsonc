@@ -1,0 +1,45 @@
+{
+  "name": "ContactPageConfig",
+  "type": "object",
+  "properties": {
+    "website_url": {
+      "type": "string",
+      "description": "Orca Fuso website link"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email that receives messages from the Contact page"
+    },
+    "whatsapp": {
+      "type": "string",
+      "description": "WhatsApp number in international format"
+    },
+    "address": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    }
+  },
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

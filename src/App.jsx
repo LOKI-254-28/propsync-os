@@ -48,6 +48,7 @@ import PublicPropertyView from '@/pages/public/PublicPropertyView';
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import UserManagement from '@/pages/admin/UserManagement';
+import ContactPageSettings from '@/pages/admin/ContactPageSettings';
 
 // Tenant pages
 import TenantDashboard from '@/pages/tenant/TenantDashboard';
@@ -116,6 +117,7 @@ const AdminRoutes = () => (
       <Route path="/" element={<AdminDashboard />} />
       <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
       <Route path="/admin/users" element={<UserManagement />} />
+      <Route path="/admin/contact-page" element={<ContactPageSettings />} />
       <Route path="/properties" element={<Properties />} />
       <Route path="/properties/:id" element={<PropertyDetail />} />
       <Route path="/units" element={<Units />} />

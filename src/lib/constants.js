@@ -41,6 +41,7 @@ export const ADMIN_NAV = [
   { label: "Reports", path: "/reports", icon: "BarChart3" },
   { label: "Listings", path: "/my-listings", icon: "Tag" },
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
+  { label: "Contact us page", path: "/admin/contact-page", icon: "MessageSquare" },
   { label: "Settings", path: "/settings", icon: "Settings" },
 ];
 

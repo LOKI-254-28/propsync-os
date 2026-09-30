@@ -9,14 +9,15 @@ import {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, FolderOpen, Receipt, BarChart3,
   Columns3, BellRing, ShieldCheck, Settings as SettingsIcon, Circle,
-  Tag, FileSignature, Banknote,
+  Tag, FileSignature, Banknote, CalendarClock,
 } from "lucide-react";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { signOut } from "@/lib/signOut";
 
 const ICONS = {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, Bell, FolderOpen, Receipt, BarChart3,
-  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote,
+  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote, CalendarClock,
 };
 
 export default function Layout({ children }) {
@@ -46,8 +47,7 @@ export default function Layout({ children }) {
   const orgName = settings?.organization_name || "PropWiz";
 
   const handleLogout = async () => {
-    await base44.auth.logout();
-    window.location.href = "/login";
+    await signOut();
   };
 
   const NavItem = ({ item }) => {

@@ -12,6 +12,8 @@ import { FileText, Check, X, MessageSquare, Search, Calendar, FileSignature, Wal
 import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from "@/components/FileUploadButton";
 import { downloadFile } from "@/lib/files";
+import VisitPanel from "@/components/applications/VisitPanel";
+import ProceedPanel from "@/components/applications/ProceedPanel";
 
 const STATUSES = ["Submitted", "Under Review", "More Information Required", "Information Provided", "Site Visit Requested", "Site Visit Scheduled", "Site Visit Completed", "Agreement Issued", "Agreement Executed", "Payment Requested", "Payment Proof Submitted", "Payment Verified", "Approved", "Completed", "Rejected", "Withdrawn", "Cancelled", "Expired"];
 
@@ -215,7 +217,10 @@ export default function Applications() {
 
               {/* Workflow actions based on status */}
               <div className="mt-2 space-y-3 border-t border-slate-100 pt-3">
-                {["Submitted", "Pending"].includes(s) && (
+                <VisitPanel app={review} role="landlord" onUpdated={() => { setReview(null); data.reload(); }} />
+                <ProceedPanel app={review} onUpdated={() => { setReview(null); data.reload(); }} />
+
+                {["Submitted", "Pending"].includes(s) && !review.visit_skipped && (
                   <div className="flex flex-wrap gap-2">
                     <Button onClick={() => patch({ status: "Under Review" }, "Marked Under Review")} disabled={busy} variant="outline"><MessageSquare className="mr-1.5 h-4 w-4" />Mark Under Review</Button>
                     <Button onClick={reject} disabled={busy} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-50"><X className="mr-1.5 h-4 w-4" />Reject</Button>
@@ -232,7 +237,7 @@ export default function Applications() {
                   </div>
                 )}
 
-                {["Information Provided", "Site Visit Completed"].includes(s) && (
+                {["Information Provided"].includes(s) && (
                   <div className="space-y-3">
                     {s === "Site Visit Completed" && (
                       <div className="rounded-lg border border-slate-200 p-3">
@@ -246,25 +251,6 @@ export default function Applications() {
                       <Button onClick={approveAndComplete} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Complete</Button>
                       <Button onClick={reject} disabled={busy} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-50"><X className="mr-1.5 h-4 w-4" />Reject</Button>
                     </div>
-                  </div>
-                )}
-
-                {s === "Site Visit Requested" && (
-                  <div className="rounded-lg border border-slate-200 p-3">
-                    <p className="mb-2 text-xs font-medium uppercase text-slate-500">Schedule Site Visit</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Field label="Date"><Input type="date" value={workflow.site_visit_date} onChange={(e) => setWorkflow({ ...workflow, site_visit_date: e.target.value })} /></Field>
-                      <Field label="Time"><Input type="time" value={workflow.site_visit_time} onChange={(e) => setWorkflow({ ...workflow, site_visit_time: e.target.value })} /></Field>
-                    </div>
-                    <Field label="Notes"><Input value={workflow.site_visit_notes} onChange={(e) => setWorkflow({ ...workflow, site_visit_notes: e.target.value })} placeholder="Directions, contact info..." /></Field>
-                    <Button onClick={() => patch({ status: "Site Visit Scheduled", site_visit_date: workflow.site_visit_date, site_visit_time: workflow.site_visit_time, site_visit_notes: workflow.site_visit_notes, site_visit_status: "Confirmed" }, "Site Visit Scheduled")} disabled={busy || !workflow.site_visit_date} className="mt-2 bg-emerald-600 hover:bg-emerald-700"><Calendar className="mr-1.5 h-4 w-4" />Confirm Site Visit</Button>
-                  </div>
-                )}
-
-                {s === "Site Visit Scheduled" && (
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => patch({ status: "Site Visit Completed", site_visit_status: "Completed" }, "Site Visit Completed")} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Mark Visit Completed</Button>
-                    <Button onClick={() => patch({ site_visit_status: "Cancelled" }, "Site Visit Cancelled")} disabled={busy} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-50"><X className="mr-1.5 h-4 w-4" />Cancel Visit</Button>
                   </div>
                 )}
 

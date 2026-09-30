@@ -18,6 +18,19 @@
     "address": {
       "type": "string"
     },
+    "mpesa_paybill": {
+      "type": "string",
+      "description": "M-Pesa paybill number shown to tenants for manual payment"
+    },
+    "bank_name": {
+      "type": "string"
+    },
+    "bank_account_name": {
+      "type": "string"
+    },
+    "bank_account_number": {
+      "type": "string"
+    },
     "currency": {
       "type": "string",
       "default": "KES"

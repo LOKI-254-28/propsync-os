@@ -41,6 +41,9 @@ import Settings from '@/pages/landlord/Settings';
 import Feedback from '@/pages/landlord/Feedback';
 import VacationRequests from '@/pages/landlord/VacationRequests';
 import Listings from '@/pages/landlord/Listings';
+import SiteVisits from '@/pages/landlord/SiteVisits';
+import PropertyView from '@/pages/tenant/PropertyView';
+import PublicPropertyView from '@/pages/public/PublicPropertyView';
 
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
@@ -79,6 +82,7 @@ const LandlordRoutes = () => (
       <Route path="/units" element={<Units />} />
       <Route path="/tenants" element={<Tenants />} />
       <Route path="/applications" element={<Applications />} />
+      <Route path="/site-visits" element={<SiteVisits />} />
       <Route path="/tenancies" element={<Tenancies />} />
       <Route path="/rent" element={<RentPayments />} />
       <Route path="/arrears" element={<Arrears />} />
@@ -112,6 +116,7 @@ const AdminRoutes = () => (
       <Route path="/units" element={<Units />} />
       <Route path="/tenants" element={<Tenants />} />
       <Route path="/applications" element={<Applications />} />
+      <Route path="/site-visits" element={<SiteVisits />} />
       <Route path="/tenancies" element={<Tenancies />} />
       <Route path="/rent" element={<RentPayments />} />
       <Route path="/arrears" element={<Arrears />} />
@@ -141,6 +146,7 @@ const TenantRoutes = () => (
       <Route path="/portal/units" element={<BrowseUnits />} />
       <Route path="/portal/listings" element={<BrowseListings />} />
       <Route path="/portal/listings/:id" element={<ListingDetail />} />
+      <Route path="/portal/property/:id" element={<PropertyView />} />
       <Route path="/portal/applications" element={<MyApplications />} />
       <Route path="/portal/my-properties" element={<MyProperties />} />
       <Route path="/portal/tenancy" element={<MyTenancy />} />
@@ -186,6 +192,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={isAuthenticated ? <Navigate to={roleHome} replace /> : <PublicHome />} />
       <Route path="/listings" element={<PublicListings />} />
       <Route path="/listings/:id" element={<PublicListingDetail />} />
+      <Route path="/browse/:id" element={<PublicPropertyView />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

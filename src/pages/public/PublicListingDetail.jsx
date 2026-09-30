@@ -152,8 +152,8 @@ export default function PublicListingDetail() {
               {listing.date_listed && <p className="mt-2 text-xs text-slate-400">Listed {listing.date_listed}</p>}
               <div className="mt-4">
                 {isAuthenticated ? (
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={() => setApplyOpen(true)}>
-                    <Check className="mr-1.5 h-4 w-4" />Apply to rent
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate(`/browse/${listing.property_id}?unit=${listing.unit_id || ""}`)}>
+                    <Check className="mr-1.5 h-4 w-4" />View property & select unit
                   </Button>
                 ) : (
                   <Link to={registerLink} className="flex w-full items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700">

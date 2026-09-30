@@ -118,8 +118,8 @@ export default function ListingDetail() {
               <p className="flex items-center gap-2 text-slate-600"><Tag className="h-4 w-4 text-slate-400" />{listing.listing_type}</p>
               {listing.date_listed && <p className="text-xs text-slate-400">Listed {listing.date_listed}</p>}
             </div>
-            <Button className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700" onClick={() => setApplyOpen(true)}>
-              <Check className="mr-1.5 h-4 w-4" />{applyLabel}
+            <Button className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700" onClick={() => navigate(`/portal/property/${listing.property_id}?unit=${listing.unit_id || ""}`)}>
+              <Check className="mr-1.5 h-4 w-4" />View property & select unit
             </Button>
           </div>
         </div>

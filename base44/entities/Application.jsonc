@@ -8,6 +8,9 @@
     "tenant_user_id": {
       "type": "string"
     },
+    "tenant_id": {
+      "type": "string"
+    },
     "applicant_name": {
       "type": "string"
     },
@@ -103,12 +106,30 @@
     "owner_user_id": {
       "type": "string"
     },
+    "booked_occupied": {
+      "type": "boolean",
+      "default": false,
+      "description": "Booked while the unit was still occupied (exit confirmed); half deposit reserves it"
+    },
+    "visit_skipped": {
+      "type": "boolean",
+      "default": false
+    },
     "site_visit_date": {
       "type": "string",
       "format": "date"
     },
     "site_visit_time": {
       "type": "string"
+    },
+    "site_visit_proposed_by": {
+      "type": "string",
+      "enum": [
+        "",
+        "tenant",
+        "landlord"
+      ],
+      "default": ""
     },
     "site_visit_status": {
       "type": "string",
@@ -143,6 +164,9 @@
       ],
       "default": ""
     },
+    "next_of_kin_id": {
+      "type": "string"
+    },
     "payment_amount": {
       "type": "number",
       "default": 0
@@ -161,6 +185,9 @@
       "type": "string"
     },
     "payment_reference": {
+      "type": "string"
+    },
+    "mpesa_checkout_id": {
       "type": "string"
     },
     "payment_status": {

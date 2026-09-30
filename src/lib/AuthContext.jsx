@@ -17,6 +17,26 @@ export const AuthProvider = ({ children }) => {
     checkAppState();
   }, []);
 
+  // After logout, Back/Forward may restore a cached signed-in page. Force it to re-check the session.
+  useEffect(() => {
+    const hasToken = () => !!(localStorage.getItem('base44_access_token') || localStorage.getItem('token'));
+    const guard = (e) => {
+      if (e?.persisted && !hasToken()) { window.location.replace('/login'); return; }
+      if (e?.persisted) { window.location.reload(); return; }
+      if (isAuthenticated && !hasToken()) window.location.replace('/login');
+    };
+    window.addEventListener('pageshow', guard);
+    window.addEventListener('popstate', guard);
+    window.addEventListener('focus', guard);
+    window.addEventListener('storage', guard);
+    return () => {
+      window.removeEventListener('pageshow', guard);
+      window.removeEventListener('popstate', guard);
+      window.removeEventListener('focus', guard);
+      window.removeEventListener('storage', guard);
+    };
+  }, [isAuthenticated]);
+
   const checkAppState = async () => {
     try {
       setIsLoadingPublicSettings(true);

@@ -12,11 +12,14 @@ import { FileText, Calendar, FileSignature, Wallet, Loader2, ExternalLink } from
 import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from "@/components/FileUploadButton";
 import { downloadFile } from "@/lib/files";
+import VisitPanel from "@/components/applications/VisitPanel";
+import ApplicationPayment from "@/components/payment/ApplicationPayment";
 
 export default function MyApplications() {
   const t = useTenantData();
   const [actionApp, setActionApp] = useState(null);
   const [actionType, setActionType] = useState("");
+  const [payApp, setPayApp] = useState(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ info: "", site_visit_date: "", site_visit_time: "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "", documents: [] });
 
@@ -46,7 +49,7 @@ export default function MyApplications() {
         label = "Site Visit Reschedule Requested";
       } else if (actionType === "agreement") {
         if (!form.agreement_executed_url) { toast({ title: "Validation error", description: "Please upload the executed agreement.", variant: "destructive" }); setBusy(false); return; }
-        updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Agreement Executed" };
+        updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Payment Requested", payment_status: "Requested", payment_due_date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) };
         label = "Agreement Executed";
       } else if (actionType === "payment") {
         if (!form.payment_proof_url) { toast({ title: "Validation error", description: "Please upload payment proof.", variant: "destructive" }); setBusy(false); return; }
@@ -133,16 +136,17 @@ export default function MyApplications() {
               {/* Client actions based on status */}
               <div className="mt-3 flex flex-wrap gap-2">
                 {a.status === "More Information Required" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "info")}>Provide Information</Button>}
-                {a.status === "Site Visit Requested" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "sitevisit")}>Propose Visit Date</Button>}
-                {a.status === "Site Visit Scheduled" && <Button size="sm" variant="outline" className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50" onClick={() => openAction(a, "reschedule")}>Request Reschedule</Button>}
+                <VisitPanel app={a} role="tenant" onUpdated={t.reload} />
                 {a.status === "Agreement Issued" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "agreement")}>Upload Executed Agreement</Button>}
-                {a.status === "Payment Requested" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => openAction(a, "payment")}>Submit Payment Proof</Button>}
+                {a.status === "Payment Requested" && <Button size="sm" variant="outline" className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => setPayApp(a)}>Pay deposit & rent</Button>}
                 {a.status === "Completed" && <Link to="/portal/tenancy"><Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700">View Tenancy</Button></Link>}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {payApp && <ApplicationPayment app={payApp} onClose={() => setPayApp(null)} onDone={t.reload} />}
 
       <Dialog open={!!actionApp} onOpenChange={() => setActionApp(null)}>
         <DialogContent className="max-w-md">

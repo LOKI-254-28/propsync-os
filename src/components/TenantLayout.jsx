@@ -10,6 +10,7 @@ import {
   ClipboardCheck, Bell, FolderOpen, MessageSquare, User, Circle, Tag, Building2,
 } from "lucide-react";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { signOut } from "@/lib/signOut";
 
 const ICONS = {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
@@ -48,8 +49,7 @@ export default function TenantLayout({ children }) {
   }, [user, location.pathname, notLinked]);
 
   const handleLogout = async () => {
-    await base44.auth.logout();
-    window.location.href = "/login";
+    await signOut();
   };
 
   const NavItem = ({ item }) => {

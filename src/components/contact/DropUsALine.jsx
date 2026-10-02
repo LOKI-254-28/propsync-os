@@ -19,15 +19,15 @@ export default function DropUsALine({ email, whatsapp }) {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Mail className="mr-1.5 h-4 w-4" />Drop us an email or WhatsApp</Button>
+      <Button onClick={() => setOpen(true)} className="h-auto whitespace-normal bg-contact-forest px-4 py-3 text-contact-cream hover:bg-contact-forest/90"><Mail className="mr-1.5 h-4 w-4" />Email or WhatsApp us</Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto">
           <DialogHeader><DialogTitle>Drop us a line</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <Field label="Your name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
             <Field label="Message"><Textarea rows={4} value={msg} onChange={(e) => setMsg(e.target.value)} /></Field>
             <div className="flex flex-wrap gap-2">
-              <Button disabled={!email || !msg.trim()} onClick={sendEmail} className="bg-emerald-600 hover:bg-emerald-700"><Mail className="mr-1.5 h-4 w-4" />Send by email</Button>
+              <Button disabled={!email || !msg.trim()} onClick={sendEmail} className="bg-contact-forest text-contact-cream hover:bg-contact-forest/90"><Mail className="mr-1.5 h-4 w-4" />Send by email</Button>
               <Button disabled={!digits || !msg.trim()} onClick={sendWhatsApp} variant="outline"><MessageCircle className="mr-1.5 h-4 w-4" />Send on WhatsApp</Button>
             </div>
             {(!email || !digits) && <p className="text-xs text-slate-400">{!email && "Email is not set up yet. "}{!digits && "WhatsApp is not set up yet."}</p>}

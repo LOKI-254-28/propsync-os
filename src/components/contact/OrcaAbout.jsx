@@ -1,33 +1,42 @@
 import React from "react";
-import { ClipboardCheck, Network, LineChart, Megaphone, Receipt, Lightbulb } from "lucide-react";
+import { ClipboardCheck, Network, LineChart, Megaphone, Receipt, Lightbulb, ArrowUpRight } from "lucide-react";
+import { Button } from '@/components/ui/button';
 
 const SERVICES = [
-  { icon: ClipboardCheck, title: "Systems and process audits", text: "We audit your systems and processes, and advise and structure systems for corporate or organizational restructure." },
-  { icon: Network, title: "New business formation", text: "We set up businesses with top notch structures, systems and policies for the long-term survival of your business." },
-  { icon: LineChart, title: "Market research and feasibility", text: "We research the market and advise on the feasibility of an intended business or business strategy." },
-  { icon: Megaphone, title: "Marketing and media", text: "Marketing, branding, sales and new media / social media consultancy and management." },
-  { icon: Receipt, title: "Tax advice", text: "Practical tax advice for your business." },
-  { icon: Lightbulb, title: "Ideas on a massive scale", text: "We also produce ideas on a massive scale. Invest in us." },
+  { icon: ClipboardCheck, title: 'Systems and process audits', text: 'Find what works, identify what needs to change, and build clearer systems and processes.' },
+  { icon: Network, title: 'New business formation', text: 'Start with the structures, systems and policies your business needs to grow.' },
+  { icon: LineChart, title: 'Market research and feasibility', text: 'Understand your market and assess an idea or strategy before taking the next step.' },
+  { icon: Megaphone, title: 'Marketing and media', text: 'Connect branding, sales and social media with your business goals.' },
+  { icon: Receipt, title: 'Tax advice', text: 'Get practical tax guidance for your business.' },
+  { icon: Lightbulb, title: 'Idea development', text: 'Give your ideas direction, structure and a practical path forward.' },
 ];
 
 export default function OrcaAbout() {
   return (
-    <div>
-      <p className="text-sm font-medium uppercase tracking-wider text-emerald-700">PropWiz is a product of Orca Fuso Consultancy</p>
-      <h1 className="mt-2 font-heading text-3xl font-semibold text-slate-900">Contact us</h1>
-      <p className="mt-4 text-slate-700">
-        Orca Fuso Consult is a business set up, strategic management and idea cultivation and nurturing centre that breathes super life to your ideas and business.
-        We basically provide all functions to nurture a business from its inception to its formation and lifetime as a juggernaut.
-      </p>
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {SERVICES.map((s) => (
-          <div key={s.title} className="rounded-xl border border-slate-200 bg-white p-4">
-            <s.icon className="h-5 w-5 text-emerald-600" />
-            <p className="mt-2 font-medium text-slate-900">{s.title}</p>
-            <p className="text-sm text-slate-600">{s.text}</p>
+    <>
+      <section className="bg-contact-forest text-contact-cream">
+        <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-contact-soft/25 pb-6">
+            <p className="font-heading text-xl font-semibold tracking-tight">Orca Fuso <span className="ml-2 text-sm font-normal text-contact-soft">Consultancy</span></p>
+            <p className="text-xs text-contact-soft">PropWiz is a product of Orca Fuso Consultancy</p>
           </div>
-        ))}
-      </div>
-    </div>
+          <p className="mt-10 text-xs font-semibold uppercase tracking-widest text-contact-gold">Contact us</p>
+          <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Turn your next big idea into a stronger business.</h1>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-contact-soft sm:text-lg">Orca Fuso helps you build the systems, strategy and structure to move forward—from business formation and market research to branding and practical tax advice.</p>
+          <p className="mt-4 max-w-2xl text-base text-contact-cream">Tell us what you’re building, and let’s discuss your next step.</p>
+          <Button asChild className="mt-8 h-auto whitespace-normal bg-contact-gold px-6 py-3 text-contact-forest hover:bg-contact-gold/90"><a href="#contact-options">Let’s talk about your business <ArrowUpRight className="h-4 w-4" /></a></Button>
+        </div>
+      </section>
+      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-14">
+        <h2 className="font-heading text-2xl font-semibold tracking-tight text-foreground">How we help your business grow</h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {SERVICES.map(s => <div key={s.title} className="rounded-xl border border-border bg-card p-6 text-card-foreground">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-contact-forest/5"><s.icon className="h-5 w-5 text-contact-forest" /></div>
+            <h3 className="mt-4 font-heading text-base font-semibold">{s.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+          </div>)}
+        </div>
+      </section>
+    </>
   );
 }

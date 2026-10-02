@@ -11,6 +11,12 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  		       contact: {
+  		           forest: 'hsl(var(--contact-forest))',
+  		           cream: 'hsl(var(--contact-cream))',
+  		           gold: 'hsl(var(--contact-gold))',
+  		           soft: 'hsl(var(--contact-soft))'
+  		       },
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

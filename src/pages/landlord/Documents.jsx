@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { FileUploadButton } from "@/components/FileUploadButton";
 import { FolderOpen, Plus, Trash2, CheckCircle2, XCircle, Search, Eye } from "lucide-react";
+import { openDocument } from '@/lib/openDocument';
 
 const CATEGORIES = ["Lease Agreement", "ID/Passport", "KRA PIN", "Proof of Income", "Employer Letter", "Receipt", "Inspection Report", "Insurance/Compliance Certificate", "Title Deed", "Other"];
 const STATUSES = ["pending", "verified", "rejected"];
@@ -20,6 +21,7 @@ export default function Documents() {
   const [form, setForm] = useState({ title: "", category: "Other", target_type: "tenancy", target_id: "", visibility: "staff_only", notes: "", expiry_date: "" });
   const [uploaded, setUploaded] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState("");
   const [search, setSearch] = useState("");
   const [fCat, setFCat] = useState("");
@@ -90,8 +92,7 @@ export default function Documents() {
 
   const viewDoc = async (d) => {
     try {
-      const res = await base44.functions.invoke("documentOps", { action: "signed_url", document_id: d.id });
-      window.open(res.data.signed_url, "_blank");
+      await openDocument(d.id);
     } catch (e) {
       alert("Could not open document: " + (e.message || "error"));
     }
@@ -101,11 +102,9 @@ export default function Documents() {
     if (!review) return;
     try {
       const me = await base44.auth.me();
-      await base44.entities.Document.update(review.id, { status, review_note: reviewNote });
+      await base44.functions.invoke('documentOps', { action: 'review', document_id: review.id, status, review_note: reviewNote });
       await logAudit({ user: me, action: status === "verified" ? "Document Verified" : "Document Rejected", entity: "Document", entity_id: review.id, entity_name: review.title });
-      if (review.tenant_user_id) {
-        await notify({ recipient_user_id: review.tenant_user_id, type: "document_review", title: status === "verified" ? "Document verified" : "Document rejected", message: `Your document "${review.title}" was ${status === "verified" ? "verified" : "rejected"}.${reviewNote ? " Note: " + reviewNote : ""}`, related_entity: "Document", related_id: review.id });
-      }
+
       setReview(null);
       setReviewNote("");
       data.reload();
@@ -118,7 +117,7 @@ export default function Documents() {
     if (!confirm(`Delete "${d.title}"? This cannot be undone.`)) return;
     try {
       const me = await base44.auth.me();
-      await base44.entities.Document.delete(d.id);
+      await base44.functions.invoke('documentOps', { action: 'staff_delete', document_id: d.id });
       await logAudit({ user: me, action: "Document Deleted", entity: "Document", entity_id: d.id, entity_name: d.title });
       data.reload();
     } catch (e) {
@@ -178,8 +177,8 @@ export default function Documents() {
         </SectionCard>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={open} onOpenChange={value => !busy && !uploading && setOpen(value)}>
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Upload Document</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <Field label="Title"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Lease Agreement — Unit 4A" /></Field>
@@ -206,16 +205,16 @@ export default function Documents() {
               </select>
             </Field>
             <Field label="Expiry date (optional)"><Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></Field>
-            <Field label="File (PDF, JPG, PNG — max 10 MB)"><FileUploadButton onUploaded={setUploaded} label="Choose file" /></Field>
+            <Field label="File (PDF, JPG, PNG — max 10 MB)"><FileUploadButton onUploaded={setUploaded} onBusyChange={setUploading} label="Choose file" /></Field>
             <Field label="Notes"><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
           </div>
-          <DialogFooter><Button onClick={create} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Saving..." : "Upload"}</Button></DialogFooter>
+          <DialogFooter><Button onClick={create} disabled={busy || uploading || !uploaded} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Saving..." : "Upload"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!review} onOpenChange={() => setReview(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           {review && (
             <>
               <DialogHeader><DialogTitle>Review: {review.title}</DialogTitle></DialogHeader>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { loadDocuments } from '@/lib/documentList';
 
 // Loads the current tenant's own records only (RLS enforces isolation server-side too).
 // On first login, calls the linkTenant backend function to auto-link by email.
@@ -37,7 +38,7 @@ export function useTenantData() {
         base44.entities.Maintenance.filter({ tenant_user_id: me.id }),
         base44.entities.Inspection.filter({ tenant_user_id: me.id }),
         base44.entities.Notice.filter({ tenant_user_id: me.id }),
-        base44.entities.Document.filter({ tenant_user_id: me.id }),
+        loadDocuments(),
         base44.entities.Feedback.filter({ tenant_user_id: me.id }),
         base44.entities.VacationRequest.filter({ tenant_user_id: me.id }),
         base44.entities.Unit.list("-created_date", 500),

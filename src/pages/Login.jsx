@@ -9,6 +9,7 @@ import { LogIn, Mail, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import LoginMessage from '@/components/auth/LoginMessage';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -25,6 +26,7 @@ export default function Login() {
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
+      sessionStorage.removeItem('propwiz.loginMessage');
       window.location.href = returnTo;
     } catch (err) {
       setError(err.message || "Invalid email or password");
@@ -34,6 +36,7 @@ export default function Login() {
   };
 
   const handleGoogle = () => {
+    sessionStorage.removeItem('propwiz.loginMessage');
     base44.auth.loginWithProvider("google", returnTo);
   };
 
@@ -54,6 +57,8 @@ export default function Login() {
         </>
       }
     >
+      <LoginMessage />
+      <Button asChild variant="secondary" className="mb-4 w-full h-12"><Link to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}>Create a new account</Link></Button>
       <Button
         variant="outline"
         className="w-full h-12 text-sm font-medium mb-6"

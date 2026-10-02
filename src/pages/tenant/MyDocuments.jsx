@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { FileUploadButton } from "@/components/FileUploadButton";
 import { FolderOpen, Trash2, Eye, Plus } from "lucide-react";
+import { openDocument } from '@/lib/openDocument';
 
 const TENANT_CATEGORIES = ["ID/Passport", "KRA PIN", "Proof of Income", "Employer Letter", "Other"];
 
@@ -16,6 +17,7 @@ export default function MyDocuments() {
   const [form, setForm] = useState({ title: "", category: "ID/Passport" });
   const [uploaded, setUploaded] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState("");
 
   const list = useMemo(() => [...t.documents].sort((a, b) => new Date(b.date_uploaded || b.created_date) - new Date(a.date_uploaded || a.created_date)), [t.documents]);
@@ -48,8 +50,7 @@ export default function MyDocuments() {
 
   const viewDoc = async (d) => {
     try {
-      const res = await base44.functions.invoke("documentOps", { action: "signed_url", document_id: d.id });
-      window.open(res.data.signed_url, "_blank");
+      await openDocument(d.id);
     } catch (e) {
       alert("Could not open document: " + (e.message || "error"));
     }
@@ -93,8 +94,8 @@ export default function MyDocuments() {
         </SectionCard>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={open} onOpenChange={value => !busy && !uploading && setOpen(value)}>
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Upload Document</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <p className="text-xs text-slate-500">Upload a document for your landlord to review. Allowed: PDF, JPG, PNG (max 10 MB).</p>
@@ -102,10 +103,10 @@ export default function MyDocuments() {
             <Field label="Category">
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{TENANT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
             </Field>
-            <Field label="File"><FileUploadButton onUploaded={setUploaded} label="Choose file" /></Field>
+            <Field label="File"><FileUploadButton onUploaded={setUploaded} onBusyChange={setUploading} label="Choose file" /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
           </div>
-          <DialogFooter><Button onClick={submit} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Uploading..." : "Submit for Review"}</Button></DialogFooter>
+          <DialogFooter><Button onClick={submit} disabled={busy || uploading || !uploaded} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Uploading..." : "Submit for Review"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

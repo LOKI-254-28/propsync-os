@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { normalizeUser } from "@/lib/normalizeUser";
+import { loadDocuments } from '@/lib/documentList';
 
 // Loads portfolio records for admin/landowner dashboards.
 // Landowners see only their own records (filtered by owner_user_id).
@@ -45,7 +46,7 @@ export function usePortfolioData() {
         owned('Contractor', '-created_date', 100),
         owned('Feedback', '-created_date', 200),
         owned('VacationRequest', '-created_date', 100),
-        owned('Document', '-created_date', 200),
+        loadDocuments(),
         owned('Listing', '-created_date', 200),
       ]);
       setData({ properties, units, tenants, tenancies, charges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings });

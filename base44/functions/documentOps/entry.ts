@@ -1,6 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
-
-const todayISO = () => new Date().toISOString().slice(0, 10);
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { waitUntil } from 'base44:runtime';
+import { documentAccess } from '../../shared/documentAccess.ts';
+import { nairobiToday } from '../../shared/nairobiDates.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -11,31 +12,42 @@ export default async function(req: Request): Promise<Response> {
     const body = await req.json();
     const { action } = body;
 
-    // --- Signed URL with access check ---
-    if (action === 'signed_url') {
-      const { document_id } = body;
-      if (!document_id) return Response.json({ error: 'document_id required' }, { status: 400 });
-      const doc = await base44.asServiceRole.entities.Document.get(document_id);
-      if (!doc) return Response.json({ error: 'Not found' }, { status: 404 });
-      if (user.role !== 'admin') {
-        if (doc.tenant_user_id !== user.id || doc.visibility !== 'tenant_visible') {
-          return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
+    const sr = base44.asServiceRole;
+    if (['list', 'get', 'review', 'staff_delete'].includes(action)) {
+      const access = await documentAccess(sr, user);
+      if (action === 'list') {
+        if (body.cursor && (typeof body.cursor !== 'string' || body.cursor.length > 4096)) return Response.json({ error: 'Invalid page.' }, { status: 400 });
+        const page = await sr.entities.Document.filter(access.query, { sort: '-created_date', limit: 100, cursor: body.cursor });
+        const documents = page.items.filter(access.canRead).map(doc => {
+          if (access.staff) return doc;
+          const { notes, ...visible } = doc;
+          return visible;
+        });
+        return Response.json({ documents, next_cursor: page.next_cursor, has_more: page.has_more });
       }
-      const { signed_url } = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({
-        file_uri: doc.file_uri,
-        expires_in: 300,
-      });
-      return Response.json({ signed_url });
+      if (!body.document_id || typeof body.document_id !== 'string') return Response.json({ error: 'Choose a document.' }, { status: 400 });
+      const doc = await sr.entities.Document.get(body.document_id);
+      if (!access.canRead(doc)) return Response.json({ error: 'You cannot access this document.' }, { status: 403 });
+      if (action === 'get') return Response.json({ file_uri: doc.file_uri });
+      if (!access.staff) return Response.json({ error: 'Only the property owner or admin can manage this document.' }, { status: 403 });
+      if (action === 'review') {
+        if (!['verified', 'rejected'].includes(body.status) || typeof (body.review_note || '') !== 'string' || (body.review_note || '').length > 2000) return Response.json({ error: 'Choose a valid review status.' }, { status: 400 });
+        await sr.entities.Document.update(doc.id, { status: body.status, review_note: body.review_note || '' });
+        if (doc.tenant_user_id) waitUntil(sr.entities.Notification.create({ recipient_user_id: doc.tenant_user_id, type: 'document_review', title: 'Document reviewed', message: `Your document "${doc.title}" was ${body.status}.`, related_entity: 'Document', related_id: doc.id, action_link: '/portal/documents', date: new Date().toISOString(), read: false }));
+      } else await sr.entities.Document.delete(doc.id);
+      return Response.json({ ok: true });
     }
 
     // --- Tenant upload (service role forces tenant_id, visibility, status) ---
     if (action === 'tenant_upload') {
-      if (user.role === 'admin') return Response.json({ error: 'Admins upload directly' }, { status: 400 });
+      if (user.role === 'admin' || ['admin', 'landowner'].includes(user.account_type || user.data?.account_type)) return Response.json({ error: 'Use the landlord document upload.' }, { status: 403 });
       const { file_uri, file_name, mime_type, size, title, category, tenancy_id } = body;
-      if (!file_uri || !title || !category) return Response.json({ error: 'Missing required fields' }, { status: 400 });
-      const tenant = await base44.asServiceRole.entities.Tenant.filter({ user_id: user.id }).then((r) => r[0]);
-      if (!tenant) return Response.json({ error: 'No tenant profile is linked to your account yet.' }, { status: 400 });
+      if (typeof file_uri !== 'string' || !file_uri || file_uri.length > 2048 || /^https?:/i.test(file_uri) || typeof title !== 'string' || !title.trim() || title.length > 200 || !['ID/Passport', 'KRA PIN', 'Proof of Income', 'Employer Letter', 'Other'].includes(category) || !['application/pdf', 'image/jpeg', 'image/png'].includes(mime_type) || !Number.isFinite(Number(size)) || Number(size) <= 0 || Number(size) > 10 * 1024 * 1024) return Response.json({ error: 'Choose a title, valid category and a PDF, JPG or PNG file up to 10 MB.' }, { status: 400 });
+      const tenancy = tenancy_id ? await base44.entities.Tenancy.get(tenancy_id) : null;
+      if (tenancy && tenancy.tenant_user_id !== user.id) return Response.json({ error: 'This tenancy is not yours.' }, { status: 403 });
+      let tenant = (await base44.entities.Tenant.filter({ user_id: user.id }, '-created_date', 1))[0];
+      if (!tenant) tenant = await sr.entities.Tenant.create({ user_id: user.id, full_name: user.full_name || user.email, email: user.email, status: 'Active', profile_type: 'tenant' });
+      const property = tenancy ? await sr.entities.Property.get(tenancy.property_id) : null;
       const doc = await base44.asServiceRole.entities.Document.create({
         title,
         category,
@@ -45,31 +57,16 @@ export default async function(req: Request): Promise<Response> {
         size: Number(size) || 0,
         tenant_id: tenant.id,
         tenant_user_id: user.id,
-        tenancy_id: tenancy_id || '',
+        tenancy_id: tenancy?.id || '',
+        property_id: tenancy?.property_id || '', unit_id: tenancy?.unit_id || '',
+        owner_user_id: property?.owner_user_id || tenancy?.owner_user_id || '',
         uploaded_by: user.email || user.id,
         uploaded_by_role: 'tenant',
         visibility: 'tenant_visible',
         status: 'pending',
-        date_uploaded: todayISO(),
+        date_uploaded: nairobiToday(),
       });
-      // Notify all admin/staff users
-      try {
-        const users = await base44.asServiceRole.entities.User.list('-created_date', 50);
-        for (const u of users) {
-          if (u.role === 'admin') {
-            await base44.asServiceRole.entities.Notification.create({
-              recipient_user_id: u.id,
-              type: 'document_upload',
-              title: 'New tenant document uploaded',
-              message: `${tenant.full_name} uploaded "${title}" (${category}). Review pending.`,
-              related_entity: 'Document',
-              related_id: doc.id,
-              date: new Date().toISOString(),
-              read: false,
-            });
-          }
-        }
-      } catch (e) {}
+      if (doc.owner_user_id) waitUntil(sr.entities.Notification.create({ recipient_user_id: doc.owner_user_id, type: 'document_upload', title: 'New tenant document uploaded', message: `${tenant.full_name} uploaded "${title}". Review pending.`, related_entity: 'Document', related_id: doc.id, action_link: '/documents', date: new Date().toISOString(), read: false }));
       return Response.json({ document: doc });
     }
 
@@ -80,7 +77,7 @@ export default async function(req: Request): Promise<Response> {
       const doc = await base44.asServiceRole.entities.Document.get(document_id);
       if (!doc) return Response.json({ error: 'Not found' }, { status: 404 });
       if (user.role !== 'admin') {
-        if (doc.tenant_user_id !== user.id || doc.status !== 'pending') {
+        if (doc.tenant_user_id !== user.id || doc.uploaded_by_role !== 'tenant' || doc.status !== 'pending') {
           return Response.json({ error: 'You can only delete your own pending uploads.' }, { status: 403 });
         }
       }

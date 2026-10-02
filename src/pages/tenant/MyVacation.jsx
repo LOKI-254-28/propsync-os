@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { LogOut, Plus, Eye } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { notify } from "@/lib/finance";
+import { nairobiToday, noticeExpiry } from '@/lib/nairobiDates';
 
 export default function MyVacation() {
   const t = useTenantData();
@@ -25,26 +26,14 @@ export default function MyVacation() {
     if (!activeTenancy) { toast({ title: "Error", description: "You need an active tenancy to submit a notice.", variant: "destructive" }); return; }
     setBusy(true);
     try {
-      const me = t.user;
-      const noticeExpiry = new Date(new Date().getTime() + (activeTenancy.notice_period_days || 30) * 86400000).toISOString().slice(0, 10);
-      const ref = genRef("VAC");
-      const rec = await base44.entities.VacationRequest.create({
-        request_reference: ref, type: form.type, tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name,
-        tenancy_id: activeTenancy.id, tenancy_reference: activeTenancy.tenancy_reference, property_id: activeTenancy.property_id, property_name: activeTenancy.property_name, unit_id: activeTenancy.unit_id, unit_number: activeTenancy.unit_number,
-        date_submitted: todayISO(), proposed_vacation_date: form.proposed_vacation_date, notice_period_days: activeTenancy.notice_period_days, calculated_notice_expiry: noticeExpiry, reason: form.reason, status: "Submitted",
-        owner_user_id: activeTenancy.owner_user_id || "",
-      });
-      await base44.entities.Tenancy.update(activeTenancy.id, { status: "Notice Given" });
-      await base44.entities.Unit.update(activeTenancy.unit_id, { status: "Notice Given" });
-      await logAudit({ user: me, action: "Vacation Notice Submitted", entity: "VacationRequest", entity_id: rec.id, entity_name: ref });
-      if (activeTenancy.owner_user_id) await notify({ recipient_user_id: activeTenancy.owner_user_id, type: "Vacation", title: "Vacation Notice Submitted", message: `${t.tenant?.full_name} submitted a ${form.type}.`, related_entity: "VacationRequest", related_id: rec.id, action_link: "/vacation-requests" });
+      await base44.functions.invoke('submitVacationNotice', { tenancy_id: activeTenancy.id, type: form.type, proposed_vacation_date: form.proposed_vacation_date, reason: form.reason });
       toast({ title: "Success", description: "Vacation notice submitted." });
       setOpen(false);
       setForm({ type: "Vacation Notice", proposed_vacation_date: "", reason: "" });
       t.reload();
     } catch (err) {
       console.error("[Vacation create error]", err);
-      toast({ title: "Error", description: "Could not submit vacation notice. Please try again.", variant: "destructive" });
+      toast({ title: "Error", description: err.response?.data?.error || err.message || "Could not submit vacation notice. Please try again.", variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -66,20 +55,20 @@ export default function MyVacation() {
           ))}
         </div>
       )}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={open} onOpenChange={value => !busy && setOpen(value)}>
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Submit Vacation Notice</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">Your tenancy notice period is {activeTenancy?.notice_period_days || 30} days. The calculated notice expiry will be {new Date(Date.now() + (activeTenancy?.notice_period_days || 30) * 86400000).toISOString().slice(0, 10)}.</div>
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">Your tenancy notice period is {activeTenancy?.notice_period_days || 30} days. The calculated notice expiry will be {noticeExpiry(activeTenancy?.notice_period_days ?? 30)}.</div>
             <Field label="Type"><select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{["Vacation Notice", "Termination Notice", "Early Termination Request"].map((x) => <option key={x}>{x}</option>)}</select></Field>
-            <Field label="Proposed vacation date"><Input type="date" value={form.proposed_vacation_date} onChange={(e) => setForm({ ...form, proposed_vacation_date: e.target.value })} /></Field>
+            <Field label="Proposed vacation date"><Input type="date" min={nairobiToday()} value={form.proposed_vacation_date} onChange={(e) => setForm({ ...form, proposed_vacation_date: e.target.value })} /></Field>
             <Field label="Reason"><Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} rows={3} /></Field>
           </div>
           <DialogFooter><Button onClick={create} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Submitting..." : "Submit Notice"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={!!view} onOpenChange={() => setView(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           {view && (
             <>
               <DialogHeader><DialogTitle>{view.type}</DialogTitle></DialogHeader>

@@ -23,6 +23,13 @@ export default function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
+  useEffect(() => {
+    if (!resendCooldown) return;
+    const timer = setTimeout(() => setResendCooldown(value => value - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
   const [listingId, setListingId] = useState("");
   const [returnTo, setReturnTo] = useState("");
 
@@ -42,6 +49,7 @@ export default function Register() {
     try {
       await base44.auth.register({ email, password });
       setStep("otp");
+      setResendCooldown(60);
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -95,13 +103,15 @@ export default function Register() {
   };
 
   const handleResend = async () => {
-    setError("");
+    if (resendCooldown || resending) return;
+    setError(""); setResending(true);
     try {
       await base44.auth.resendOtp(email);
+      setOtpCode(""); setResendCooldown(60);
       toast({ title: "Code sent", description: "Check your email for the new code." });
     } catch (err) {
       setError(err.message || "Failed to resend code");
-    }
+    } finally { setResending(false); }
   };
 
   const handleGoogle = () => base44.auth.loginWithProvider("google", safeReturnTo());
@@ -124,7 +134,7 @@ export default function Register() {
         </Button>
         <p className="text-center text-sm text-muted-foreground mt-4">
           Didn't receive the code?{" "}
-          <button onClick={handleResend} className="text-primary font-medium hover:underline">Resend</button>
+          <button onClick={handleResend} disabled={loading || resending || resendCooldown > 0} className="text-primary font-medium hover:underline disabled:opacity-50">{resending ? 'Sending…' : resendCooldown ? `Resend in ${resendCooldown}s` : 'Resend email code'}</button>
         </p>
       </AuthLayout>
     );
@@ -157,7 +167,7 @@ export default function Register() {
 
   // Step 2: Form
   return (
-    <AuthLayout icon={accountType === "landowner" ? Building2 : Home} title={accountType === "landowner" ? "Landowner Account" : "Client Account"} subtitle="Fill in your details to create your account"
+    <AuthLayout icon={accountType === "landowner" ? Building2 : Home} title={accountType === "landowner" ? "Landowner Account" : "Tenant Account"} subtitle="Fill in your details to create your account"
       footer={<>
         Already have an account?{" "}
         <Link to="/login" className="text-primary font-medium hover:underline">Log in</Link>

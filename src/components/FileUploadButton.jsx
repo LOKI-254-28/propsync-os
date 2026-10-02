@@ -7,7 +7,7 @@ const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 const ALLOWED_EXT = ".pdf,.jpg,.jpeg,.png";
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
-export function FileUploadButton({ onUploaded, label = "Choose File", variant = "outline", size = "sm", className = "" }) {
+export function FileUploadButton({ onUploaded, onBusyChange = () => {}, label = "Choose File", variant = "outline", size = "sm", className = "" }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -28,7 +28,7 @@ export function FileUploadButton({ onUploaded, label = "Choose File", variant = 
       e.target.value = "";
       return;
     }
-    setBusy(true);
+    setBusy(true); onBusyChange(true); onUploaded(null);
     setProgress(20);
     setFileName(file.name);
     try {
@@ -40,7 +40,7 @@ export function FileUploadButton({ onUploaded, label = "Choose File", variant = 
       setError(err.message || "Upload failed. Please try again.");
       setFileName("");
     } finally {
-      setBusy(false);
+      setBusy(false); onBusyChange(false);
       setTimeout(() => setProgress(0), 1200);
       e.target.value = "";
     }

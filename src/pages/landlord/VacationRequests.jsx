@@ -75,7 +75,7 @@ export default function VacationRequests() {
       )}
 
       <Dialog open={!!view} onOpenChange={() => setView(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
           {view && (
             <>
               <DialogHeader><DialogTitle>{view.type} — {view.tenant_name}</DialogTitle></DialogHeader>

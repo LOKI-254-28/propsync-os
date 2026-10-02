@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Wrench, Plus, Eye } from "lucide-react";
 import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 import { toast } from "@/components/ui/use-toast";
+import MaintenancePhotoUpload from '@/components/maintenance/MaintenancePhotoUpload';
+import MaintenancePhotos from '@/components/maintenance/MaintenancePhotos';
 
 const CATEGORIES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "Other"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
@@ -20,6 +22,8 @@ export default function MyMaintenance() {
   const [view, setView] = useState(null);
   const [form, setForm] = useState({ title: "", description: "", category: "Plumbing", priority: "Medium" });
   const [busy, setBusy] = useState(false);
+  const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const activeTenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
   const list = useMemo(() => [...t.maintenance].sort((a, b) => new Date(b.date_reported || b.created_date) - new Date(a.date_reported || a.created_date)), [t.maintenance]);
@@ -35,13 +39,14 @@ export default function MyMaintenance() {
         ticket_number: ref, title: form.title, description: form.description, category: form.category, priority: form.priority, date_reported: todayISO(),
         property_id: activeTenancy.property_id, property_name: activeTenancy.property_name, unit_id: activeTenancy.unit_id, unit_number: activeTenancy.unit_number,
         tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name, tenancy_id: activeTenancy.id, status: "Submitted", public_updates: [],
-        owner_user_id: activeTenancy.owner_user_id || "",
+        owner_user_id: activeTenancy.owner_user_id || "", images,
       });
       await logAudit({ user: me, action: "Maintenance Submitted", entity: "Maintenance", entity_id: rec.id, entity_name: ref });
       if (activeTenancy.owner_user_id) await notify({ recipient_user_id: activeTenancy.owner_user_id, type: "Maintenance", title: "New Maintenance Request", message: `${form.title} — ${activeTenancy.unit_number}`, related_entity: "Maintenance", related_id: rec.id, action_link: "/maintenance" });
       toast({ title: "Success", description: "Maintenance request submitted." });
       setOpen(false);
       setForm({ title: "", description: "", category: "Plumbing", priority: "Medium" });
+      setImages([]);
       t.reload();
     } catch (err) {
       console.error("[Maintenance create error]", err);
@@ -70,8 +75,8 @@ export default function MyMaintenance() {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={open} onOpenChange={value => !busy && !uploading && setOpen(value)}>
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain">
           <DialogHeader><DialogTitle>Report Maintenance Issue</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <Field label="Title"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Leaking kitchen tap" /></Field>
@@ -79,12 +84,13 @@ export default function MyMaintenance() {
             <Field label="Category"><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
             <Field label="Priority"><select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{PRIORITIES.map((p) => <option key={p}>{p}</option>)}</select></Field>
           </div>
-          <DialogFooter><Button onClick={create} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Submitting..." : "Submit Request"}</Button></DialogFooter>
+          <MaintenancePhotoUpload images={images} onChange={setImages} onBusyChange={setUploading} />
+          <DialogFooter><Button onClick={create} disabled={busy || uploading} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Submitting..." : "Submit Request"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!view} onOpenChange={() => setView(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain">
           {view && (
             <>
               <DialogHeader><DialogTitle>{view.title}</DialogTitle></DialogHeader>
@@ -92,6 +98,7 @@ export default function MyMaintenance() {
                 <Info label="Ticket" value={view.ticket_number} /><Info label="Category" value={view.category} /><Info label="Priority" value={view.priority} /><Info label="Status" value={<StatusBadge status={view.status} />} /><Info label="Reported" value={view.date_reported} />{view.contractor_name && <Info label="Contractor" value={view.contractor_name} />}
               </div>
               <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{view.description}</div>
+              <MaintenancePhotos images={view.images || []} />
               <div className="mt-3">
                 <p className="mb-1.5 text-xs font-medium uppercase text-slate-500">Progress Updates</p>
                 {(view.public_updates || []).length === 0 ? <p className="text-sm text-slate-400">No updates yet.</p> : (

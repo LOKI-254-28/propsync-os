@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Wrench, Search, Eye } from "lucide-react";
 import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 import { toast } from "@/components/ui/use-toast";
+import MaintenancePhotos from '@/components/maintenance/MaintenancePhotos';
 
 const STATUSES = ["Submitted", "Acknowledged", "Assigned", "Scheduled", "In Progress", "Awaiting Parts", "Completed", "Closed", "Rejected"];
 
@@ -106,7 +107,7 @@ export default function Maintenance() {
       )}
 
       <Dialog open={!!view} onOpenChange={() => setView(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain">
           {view && (
             <>
               <DialogHeader><DialogTitle>{view.title}</DialogTitle></DialogHeader>
@@ -119,6 +120,7 @@ export default function Maintenance() {
                 <Info label="Priority" value={<StatusBadge status={view.priority} />} />
               </div>
               <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{view.description}</div>
+              <MaintenancePhotos images={view.images || []} />
               <div className="mt-3 space-y-3">
                 <Field label="Status">
                   <select value={update.status} onChange={(e) => setUpdate({ ...update, status: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">

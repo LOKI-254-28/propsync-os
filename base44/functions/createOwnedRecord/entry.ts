@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 
 // Entities that require an approved landowner (or admin) to create,
 // and that carry owner_user_id for ownership isolation.
@@ -107,6 +107,34 @@ export default async function(req: Request): Promise<Response> {
     const record = { ...data };
     if (ENTITIES_WITH_OWNER.includes(entity)) {
       record.owner_user_id = user.id;
+    }
+    if (entity === 'Document') {
+      let tenancy = record.tenancy_id ? await base44.asServiceRole.entities.Tenancy.get(record.tenancy_id) : null;
+      if (!tenancy && record.tenant_id) {
+        const matches = await base44.asServiceRole.entities.Tenancy.filter({ tenant_id: record.tenant_id, ...(isAdmin ? {} : { owner_user_id: user.id }) }, '-created_date', 1);
+        tenancy = matches[0];
+        if (!isAdmin && !tenancy) return Response.json({ error: 'Choose a tenant linked to your property.' }, { status: 403 });
+      }
+      if (tenancy) {
+        if (!isAdmin && tenancy.owner_user_id !== user.id) return Response.json({ error: 'This tenancy is not yours.' }, { status: 403 });
+        record.tenancy_id = tenancy.id; record.tenant_id = tenancy.tenant_id;
+        record.tenant_user_id = tenancy.tenant_user_id || '';
+        record.property_id = tenancy.property_id; record.unit_id = tenancy.unit_id;
+      } else if (record.tenant_id) {
+        const tenant = await base44.asServiceRole.entities.Tenant.get(record.tenant_id);
+        record.tenant_user_id = tenant.user_id || '';
+      } else { record.tenant_user_id = ''; }
+      if (record.unit_id && !record.property_id) {
+        const unit = await base44.asServiceRole.entities.Unit.get(record.unit_id);
+        record.property_id = unit.property_id;
+      }
+      if (record.property_id) {
+        const property = await base44.asServiceRole.entities.Property.get(record.property_id);
+        if (!isAdmin && property.owner_user_id !== user.id) return Response.json({ error: 'This property is not yours.' }, { status: 403 });
+        record.owner_user_id = property.owner_user_id || user.id;
+      }
+      if (record.visibility === 'tenant_visible' && !record.tenant_id && !record.tenancy_id && !record.unit_id && !record.property_id) return Response.json({ error: 'Link tenant-visible documents to a tenant, tenancy, unit or property.' }, { status: 400 });
+      record.uploaded_by_role = 'staff'; record.uploaded_by = user.email || user.id;
     }
 
     const created = await base44.asServiceRole.entities[entity].create(record);

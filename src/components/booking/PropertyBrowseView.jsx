@@ -44,7 +44,7 @@ export default function PropertyBrowseView({ propertyId, mode }) {
         <div className="mt-4"><ReviewsSection rating={rating} reviews={reviews} /></div>
         {mode === "tenant" && <ReviewForm propertyId={p.id} onSaved={load} />}
       </div>
-      <PropertyMap latitude={p.latitude} longitude={p.longitude} name={p.name} />
+      {!unit && <PropertyMap latitude={p.latitude} longitude={p.longitude} name={p.name} />}
       <div>
         <h2 className="mb-3 font-medium text-slate-800">Units ({units.length})</h2>
         {units.length === 0 ? <p className="text-sm text-slate-500">No units listed yet.</p> : (

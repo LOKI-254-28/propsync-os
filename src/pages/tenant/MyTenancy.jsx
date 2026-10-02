@@ -3,6 +3,7 @@ import { useTenantData } from "@/lib/useTenantData";
 import { KES, daysBetween, todayISO } from "@/lib/finance";
 import { PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { ScrollText, FileText, Wrench, Bell } from "lucide-react";
+import TenancyRating from '@/components/reviews/TenancyRating';
 
 export default function MyTenancy() {
   const t = useTenantData();
@@ -13,7 +14,7 @@ export default function MyTenancy() {
 
   return (
     <div>
-      <PageHeader title="My Tenancy" description="Your tenancy agreement and terms." />
+      <PageHeader title="My Tenancies" description="Your current and previous rentals, agreements and ratings." />
       {tenancies.length === 0 ? <EmptyState icon={ScrollText} title="No tenancy records" /> : (
         <div className="space-y-6">
           {tenancies.map((ten) => {
@@ -28,6 +29,7 @@ export default function MyTenancy() {
                   <Info label="Unit" value={`${ten.unit_number} · ${ten.property_name}`} />
                   <Info label="Start date" value={ten.start_date} />
                   <Info label="Expected end" value={ten.expected_end_date || "Open"} />
+                  {ten.actual_end_date && <Info label="Actual end" value={ten.actual_end_date} />}
                   {daysToExpiry !== null && <Info label="Days to expiry" value={daysToExpiry > 0 ? `${daysToExpiry} days` : "Expired"} />}
                   <Info label="Monthly rent" value={KES(ten.monthly_rent)} />
                   <Info label="Security deposit" value={KES(ten.security_deposit)} />
@@ -42,6 +44,7 @@ export default function MyTenancy() {
                   <div><p className="text-xs text-slate-500">Maintenance</p><p className="font-semibold">{maint.length}</p></div>
                 </div>
                 {ten.agreement_document_url && <a href={ten.agreement_document_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:underline"><FileText className="h-4 w-4" />View tenancy agreement</a>}
+                <TenancyRating tenancy={ten} />
               </SectionCard>
             );
           })}

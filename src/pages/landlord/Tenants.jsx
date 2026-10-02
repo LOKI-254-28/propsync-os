@@ -10,6 +10,7 @@ import { Users, Plus, Search, Phone, Mail } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { secureCreate } from "@/lib/secureCreate";
 import TenantStats from "@/components/tenants/TenantStats";
+import RatingPanel from '@/components/reviews/RatingPanel';
 
 export default function Tenants() {
   const data = usePortfolioData();
@@ -69,6 +70,7 @@ export default function Tenants() {
                 <div><p className="text-sm font-semibold text-slate-900">{t.activeTenancy ? t.activeTenancy.unit_number : "—"}</p><p className="text-[10px] uppercase text-slate-500">Current Unit</p></div>
                 <div><p className={`text-sm font-semibold ${t.outstanding > 0 ? "text-rose-600" : "text-emerald-700"}`}>{KES(t.outstanding)}</p><p className="text-[10px] uppercase text-slate-500">Balance</p></div>
               </div>
+              <RatingPanel entity="TenantReview" filter={{ tenant_id: t.id }} targetId={t.id} canRate={t.tenancyCount > 0} title="Tenant ratings" />
             </div>
           ))}
         </div>

@@ -44,6 +44,7 @@ import Listings from '@/pages/landlord/Listings';
 import SiteVisits from '@/pages/landlord/SiteVisits';
 import PropertyView from '@/pages/tenant/PropertyView';
 import PublicPropertyView from '@/pages/public/PublicPropertyView';
+import ListingRedirect from '@/components/booking/ListingRedirect';
 
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
@@ -151,11 +152,12 @@ const TenantRoutes = () => (
       <Route path="/portal" element={<TenantDashboard />} />
       <Route path="/portal/units" element={<BrowseUnits />} />
       <Route path="/portal/listings" element={<BrowseListings />} />
-      <Route path="/portal/listings/:id" element={<ListingDetail />} />
+      <Route path="/portal/listings/:id" element={<ListingRedirect />} />
       <Route path="/portal/property/:id" element={<PropertyView />} />
       <Route path="/portal/applications" element={<MyApplications />} />
-      <Route path="/portal/my-properties" element={<MyProperties />} />
-      <Route path="/portal/tenancy" element={<MyTenancy />} />
+      <Route path="/portal/my-tenancies" element={<MyTenancy />} />
+      <Route path="/portal/my-properties" element={<Navigate to="/portal/my-tenancies" replace />} />
+      <Route path="/portal/tenancy" element={<Navigate to="/portal/my-tenancies" replace />} />
       <Route path="/portal/rent" element={<MyRent />} />
       <Route path="/portal/maintenance" element={<MyMaintenance />} />
       <Route path="/portal/inspections" element={<MyInspections />} />
@@ -198,7 +200,7 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route path="/" element={isAuthenticated ? <Navigate to={roleHome} replace /> : <PublicHome />} />
       <Route path="/listings" element={<PublicListings />} />
-      <Route path="/listings/:id" element={<PublicListingDetail />} />
+      <Route path="/listings/:id" element={<ListingRedirect publicView />} />
       <Route path="/browse/:id" element={<PublicPropertyView />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/how-it-works" element={<HowItWorks />} />

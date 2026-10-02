@@ -13,6 +13,7 @@ import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
 import MapPicker from "@/components/MapPicker";
 import { PROPERTY_TYPES, PropertyPhotos, PropertyAmenities, PropertyLocation } from "@/components/PropertyFields";
+import RatingPanel from '@/components/reviews/RatingPanel';
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -134,6 +135,8 @@ export default function PropertyDetail() {
           )}
         </SectionCard>
       </div>
+
+      <RatingPanel entity="TenancyReview" filter={{ property_id: property.id }} title="Public tenancy reviews" />
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

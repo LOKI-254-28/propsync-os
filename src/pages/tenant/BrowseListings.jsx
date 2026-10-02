@@ -62,7 +62,7 @@ export default function BrowseListings() {
             const prop = properties.find((p) => p.id === l.property_id);
             const unit = t.units.find((u) => u.id === l.unit_id);
             return (
-              <Link key={l.id} to={`/portal/listings/${l.id}`} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-300 hover:shadow-md">
+              <Link key={l.id} to={`/portal/property/${l.property_id}${l.unit_id ? `?unit=${encodeURIComponent(l.unit_id)}` : ''}`} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-300 hover:shadow-md">
                 <div className="flex h-40 items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-50">
                   {l.images?.[0] ? <img src={l.images[0]} alt={l.property_name} className="h-full w-full object-cover" /> : <Tag className="h-10 w-10 text-emerald-400" />}
                 </div>

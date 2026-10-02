@@ -24,7 +24,11 @@ export default async function(req: Request): Promise<Response> {
       };
     }));
 
-    const reviews = await sr.entities.PropertyReview.filter({ property_id }, '-created_date', 50);
+    const [propertyReviews, tenancyReviews] = await Promise.all([
+      sr.entities.PropertyReview.filter({ property_id }, '-created_date', 50),
+      sr.entities.TenancyReview.filter({ property_id, removed: false }, '-created_date', 50),
+    ]);
+    const reviews = [...propertyReviews, ...tenancyReviews].sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
     const avg = reviews.length ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length : 0;
 
     return Response.json({

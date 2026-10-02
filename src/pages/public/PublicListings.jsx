@@ -112,7 +112,7 @@ export default function PublicListings() {
 
 function ListingCard({ listing, property, unit }) {
   return (
-    <Link to={`/listings/${listing.id}`} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-300 hover:shadow-md">
+    <Link to={`/browse/${listing.property_id}${listing.unit_id ? `?unit=${encodeURIComponent(listing.unit_id)}` : ''}`} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-300 hover:shadow-md">
       <div className="flex h-40 items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-50">
         {listing.images?.[0] ? (
           <img src={listing.images[0]} alt={listing.property_name} className="h-full w-full object-cover" />

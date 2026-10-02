@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Save, Trash2 } from "lucide-react";
+import RatingPanel from '@/components/reviews/RatingPanel';
 import {
   AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
   AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -79,6 +80,8 @@ export default function MyProfile() {
           </SectionCard>
         </div>
       </div>
+
+      {tenant.id && <RatingPanel entity="TenantReview" filter={{ tenant_id: tenant.id }} title="Ratings from your landlords" />}
 
       {/* Danger Zone */}
       <div className="mt-6">

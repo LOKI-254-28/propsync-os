@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { portfolioStats, KES, monthKey, monthLabel } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import AdminApprovalSection from "@/components/AdminApprovalSection";
+import DashboardAlerts from '@/components/alerts/DashboardAlerts';
 import {
   Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, TrendingUp,
   Receipt, Columns3, ArrowRight, ClipboardCheck, FileText, ScrollText,
@@ -30,6 +31,7 @@ export default function Dashboard() {
       <PageHeader title={isAdmin ? "Admin Dashboard" : "Portfolio Dashboard"} description={isAdmin ? "Platform overview and pending account approvals." : "Live performance across all properties — every figure is computed from real records."} />
 
       {isAdmin && <AdminApprovalSection />}
+      <DashboardAlerts />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Properties" value={stats.propertiesCount} icon={Building2} accent="emerald" />

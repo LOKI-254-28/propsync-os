@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { signOut } from "@/lib/signOut";
+import useSectionAlerts from '@/components/alerts/useSectionAlerts';
+import AlertBadge from '@/components/alerts/AlertBadge';
 
 const ICONS = {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
@@ -22,7 +24,7 @@ export default function TenantLayout({ children }) {
   const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
   const [notLinked, setNotLinked] = useState(false);
-  const [unread, setUnread] = useState(0);
+  const { counts } = useSectionAlerts();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -41,10 +43,7 @@ export default function TenantLayout({ children }) {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!user || notLinked) return;
-    base44.entities.Notification.filter({ recipient_user_id: user.id }).then((n) => setUnread(n.filter((x) => !x.read).length)).catch(() => {});
-  }, [user, location.pathname, notLinked]);
+
 
   const handleLogout = async () => {
     await signOut();
@@ -53,14 +52,14 @@ export default function TenantLayout({ children }) {
   const NavItem = ({ item }) => {
     const Icon = ICONS[item.icon] || Circle;
     const active = location.pathname === item.path;
-    const showBadge = item.label === "Notices" && unread > 0;
+    const count = counts[item.path] || 0;
     return (
       <Link to={item.path} onClick={() => setMobileOpen(false)}
         className={cn("group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           active ? "bg-emerald-600 text-white shadow-sm" : "text-emerald-50/80 hover:bg-emerald-700/60 hover:text-white")}>
         <Icon style={{ width: 18, height: 18 }} className={active ? "text-white" : "text-emerald-200/70 group-hover:text-white"} />
         <span className="flex-1">{item.label}</span>
-        {showBadge && <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-emerald-900">{unread}</span>}
+        <AlertBadge count={count} />
       </Link>
     );
   };
@@ -72,7 +71,7 @@ export default function TenantLayout({ children }) {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-emerald-900"><Leaf className="h-5 w-5" /></div>
           <div>
             <p className="font-heading text-sm font-semibold text-white">PropWiz</p>
-            <p className="text-[10px] uppercase tracking-wider text-emerald-200/70">Client Portal</p>
+            <p className="text-[10px] uppercase tracking-wider text-emerald-200/70">Tenant Portal</p>
           </div>
         </div>
         <nav className="flex h-[calc(100vh-180px)] flex-col gap-0.5 overflow-y-auto pr-1">
@@ -83,7 +82,7 @@ export default function TenantLayout({ children }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">{tenant?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "T"}</div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-medium text-white">{tenant?.full_name || user?.email || "Tenant"}</p>
-              <p className="text-[10px] text-emerald-200/70">Client</p>
+              <p className="text-[10px] text-emerald-200/70">Tenant</p>
             </div>
             <button onClick={handleLogout} className="rounded-md p-1.5 text-emerald-200/70 hover:bg-emerald-700 hover:text-white" title="Sign out"><LogOut className="h-4 w-4" /></button>
           </div>
@@ -94,7 +93,7 @@ export default function TenantLayout({ children }) {
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:px-8">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {tenant?.full_name?.split(" ")[0] || "Tenant"}</div>
-          <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Client</span>
+          <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Tenant</span>
         </header>
         <main className="px-4 py-6 lg:px-8">
           {notLinked && (

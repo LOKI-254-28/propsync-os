@@ -24,6 +24,7 @@ export default function MyMaintenance() {
   const [busy, setBusy] = useState(false);
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [submissionRef, setSubmissionRef] = useState(() => genRef('MNT'));
 
   const activeTenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
   const list = useMemo(() => [...t.maintenance].sort((a, b) => new Date(b.date_reported || b.created_date) - new Date(a.date_reported || a.created_date)), [t.maintenance]);
@@ -33,24 +34,16 @@ export default function MyMaintenance() {
     if (!activeTenancy) { toast({ title: "Error", description: "You need an active tenancy to report maintenance.", variant: "destructive" }); return; }
     setBusy(true);
     try {
-      const me = t.user;
-      const ref = genRef("MNT");
-      const rec = await base44.entities.Maintenance.create({
-        ticket_number: ref, title: form.title, description: form.description, category: form.category, priority: form.priority, date_reported: todayISO(),
-        property_id: activeTenancy.property_id, property_name: activeTenancy.property_name, unit_id: activeTenancy.unit_id, unit_number: activeTenancy.unit_number,
-        tenant_id: t.tenant?.id, tenant_user_id: me.id, tenant_name: t.tenant?.full_name, tenancy_id: activeTenancy.id, status: "Submitted", public_updates: [],
-        owner_user_id: activeTenancy.owner_user_id || "", images,
-      });
-      await logAudit({ user: me, action: "Maintenance Submitted", entity: "Maintenance", entity_id: rec.id, entity_name: ref });
-      if (activeTenancy.owner_user_id) await notify({ recipient_user_id: activeTenancy.owner_user_id, type: "Maintenance", title: "New Maintenance Request", message: `${form.title} — ${activeTenancy.unit_number}`, related_entity: "Maintenance", related_id: rec.id, action_link: "/maintenance" });
+      await base44.functions.invoke('submitMaintenanceRequest', { ...form, tenancy_id: activeTenancy.id, ticket_number: submissionRef, images });
       toast({ title: "Success", description: "Maintenance request submitted." });
       setOpen(false);
       setForm({ title: "", description: "", category: "Plumbing", priority: "Medium" });
       setImages([]);
+      setSubmissionRef(genRef('MNT'));
       t.reload();
     } catch (err) {
       console.error("[Maintenance create error]", err);
-      toast({ title: "Error", description: "Could not submit maintenance request. Please try again.", variant: "destructive" });
+      toast({ title: "Error", description: err.response?.data?.error || err.message || "Could not submit maintenance request. Please try again.", variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -60,7 +53,7 @@ export default function MyMaintenance() {
 
   return (
     <div>
-      <PageHeader title="Maintenance" description="Report and track repair requests." actions={activeTenancy && <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Report Issue</Button>} />
+      <PageHeader title="Maintenance / Repairs" description="Report and track repair requests." actions={activeTenancy && <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Report Issue</Button>} />
       {!activeTenancy ? <EmptyState icon={Wrench} title="No active tenancy" description="You need an active tenancy to report maintenance." /> : list.length === 0 ? <EmptyState icon={Wrench} title="No maintenance requests" /> : (
         <div className="space-y-3">
           {list.map((m) => (

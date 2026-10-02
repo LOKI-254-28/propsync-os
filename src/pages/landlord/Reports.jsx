@@ -5,6 +5,7 @@ import { propertyStats } from "@/lib/finance";
 import { PageHeader, SectionCard, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Download } from "lucide-react";
+import ReportRequestsPanel from '@/components/reports/ReportRequestsPanel';
 
 const REPORTS = [
   { key: "rent", label: "Rent Collection", desc: "All rent charges with paid/outstanding balances" },
@@ -51,6 +52,7 @@ export default function Reports() {
     <div>
       <PageHeader title="Reports" description="Generate and export reports from live data." actions={<Button onClick={exportCSV} variant="outline" disabled={!rows.length}><Download className="mr-1.5 h-4 w-4" />Export CSV</Button>} />
 
+      <ReportRequestsPanel properties={data.properties} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {REPORTS.map((r) => (
           <button key={r.key} onClick={() => setActive(r.key)} className={`rounded-xl border p-4 text-left transition ${active === r.key ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white hover:border-emerald-300"}`}>

@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { KES, monthKey, monthLabel } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import AdminApprovalSection from "@/components/AdminApprovalSection";
+import DashboardAlerts from '@/components/alerts/DashboardAlerts';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -96,13 +97,14 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <PageHeader title="Admin Dashboard" description="Platform-wide oversight — all landowners, properties, and client activity." />
+      <PageHeader title="Admin Dashboard" description="Platform-wide oversight — all landowners, properties, and tenant activity." />
 
       <AdminApprovalSection />
+      <DashboardAlerts />
 
       {/* User Overview */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Users" value={stats.totalUsers} sub={`${stats.landowners} landowners · ${stats.clients} clients`} icon={Users} accent="emerald" />
+        <StatCard label="Total Users" value={stats.totalUsers} sub={`${stats.landowners} landowners · ${stats.clients} tenants`} icon={Users} accent="emerald" />
         <StatCard label="Pending Approvals" value={stats.pendingUsers} icon={Clock} accent="gold" />
         <StatCard label="Properties" value={stats.properties} icon={Building2} accent="emerald" />
         <StatCard label="Total Units" value={stats.units} sub={`${stats.occupiedCount} occupied · ${stats.availableCount} available`} icon={DoorOpen} accent="blue" />

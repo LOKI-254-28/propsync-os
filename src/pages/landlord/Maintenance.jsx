@@ -67,7 +67,7 @@ export default function Maintenance() {
 
   return (
     <div>
-      <PageHeader title="Maintenance" description="Ticketing system for repairs and maintenance across all units." />
+      <PageHeader title="Maintenance / Repairs" description="Ticketing system for repairs and maintenance across all units." />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">

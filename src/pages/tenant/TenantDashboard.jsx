@@ -4,6 +4,7 @@ import { useTenantData } from "@/lib/useTenantData";
 import { KES, monthKey, monthLabel, daysBetween, todayISO } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { Wallet, DoorOpen, Wrench, Bell, ScrollText, AlertTriangle, FileText, Search } from "lucide-react";
+import DashboardAlerts from '@/components/alerts/DashboardAlerts';
 
 export default function TenantDashboard() {
   const t = useTenantData();
@@ -19,6 +20,7 @@ export default function TenantDashboard() {
   return (
     <div>
       <PageHeader title={`Welcome, ${t.tenant?.full_name?.split(" ")[0] || "Tenant"}`} description="Your rental account overview." />
+      <DashboardAlerts />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Current Unit" value={activeTenancy?.unit_number || "—"} sub={activeTenancy?.property_name} icon={DoorOpen} accent="emerald" />

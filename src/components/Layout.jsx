@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { signOut } from "@/lib/signOut";
+import useSectionAlerts from '@/components/alerts/useSectionAlerts';
+import AlertBadge from '@/components/alerts/AlertBadge';
 
 const ICONS = {
   LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
@@ -24,7 +26,7 @@ export default function Layout({ children }) {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [settings, setSettings] = useState(null);
-  const [unread, setUnread] = useState(0);
+  const { counts, unread } = useSectionAlerts();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
 
@@ -39,10 +41,7 @@ export default function Layout({ children }) {
     base44.entities.Settings.list().then((s) => setSettings(s[0])).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-    base44.entities.Notification.filter({ recipient_user_id: user.id }).then((n) => setUnread(n.filter((x) => !x.read).length)).catch(() => {});
-  }, [user, location.pathname]);
+
 
   const orgName = settings?.organization_name || "PropWiz";
 
@@ -53,14 +52,14 @@ export default function Layout({ children }) {
   const NavItem = ({ item }) => {
     const Icon = ICONS[item.icon] || Circle;
     const active = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
-    const showBadge = item.label === "Notifications" && unread > 0;
+    const count = counts[item.path] || 0;
     return (
       <Link to={item.path} onClick={() => setMobileOpen(false)}
         className={cn("group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           active ? "bg-emerald-600 text-white shadow-sm" : "text-emerald-50/80 hover:bg-emerald-700/60 hover:text-white")}>
         <Icon style={{ width: 18, height: 18 }} className={active ? "text-white" : "text-emerald-200/70 group-hover:text-white"} />
         <span className="flex-1">{item.label}</span>
-        {showBadge && <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-emerald-900">{unread}</span>}
+        <AlertBadge count={count} />
       </Link>
     );
   };
@@ -97,7 +96,7 @@ export default function Layout({ children }) {
             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">{user?.account_type === 'admin' ? 'Admin' : 'Landowner'}</span>
             <span className="text-sm text-slate-500">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
           </div>
-          <Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" />{unread > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />}</Link>
+          <Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" /><span className="absolute -right-1 -top-1"><AlertBadge count={unread} /></span></Link>
         </header>
         <main className="px-4 py-6 lg:px-8">
           {pendingApproval && (

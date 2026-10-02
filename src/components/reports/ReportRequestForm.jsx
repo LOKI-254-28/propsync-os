@@ -1,0 +1,10 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Field } from '@/components/ui-bits';
+export default function ReportRequestForm({ properties, onSaved }) {
+  const [scope, setScope] = useState('Portfolio'), [propertyId, setPropertyId] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const submit = async e => { e.preventDefault(); setBusy(true); setError(''); try { await base44.functions.invoke('reportRequests', { action: 'create', scope, property_id: propertyId, message }); setMessage(''); await onSaved(); } catch(e) { setError(e.response?.data?.error || e.message); } finally { setBusy(false); } };
+  return <form onSubmit={submit} className="space-y-3"><Field label="Report scope"><select value={scope} onChange={e => setScope(e.target.value)} className="w-full rounded-md border border-input bg-background p-2 text-sm"><option value="Portfolio">Report on all my properties</option><option value="Property">Report on a particular property</option></select></Field>{scope === 'Property' && <Field label="Property"><select required value={propertyId} onChange={e => setPropertyId(e.target.value)} className="w-full rounded-md border border-input bg-background p-2 text-sm"><option value="">Choose a property</option>{properties.map(p => <option value={p.id} key={p.id}>{p.name}</option>)}</select></Field>}<Field label="What would you like to understand? (optional)"><Textarea value={message} maxLength={2000} onChange={e => setMessage(e.target.value)} placeholder="For example: collection trends, occupancy and repair costs" /></Field>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button disabled={busy || !properties.length}>{busy ? 'Submitting…' : 'Request report'}</Button>{!properties.length && <p className="text-sm text-muted-foreground">Add a property to request a report.</p>}</form>;
+}

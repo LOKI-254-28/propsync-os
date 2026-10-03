@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { FileText, Check, X, MessageSquare, Search, Calendar, FileSignature, Wallet, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import FileUploadButton from "@/components/FileUploadButton";
 import { downloadFile } from "@/lib/files";
 import VisitPanel from "@/components/applications/VisitPanel";
 import ProceedPanel from "@/components/applications/ProceedPanel";
@@ -24,6 +23,7 @@ export default function Applications() {
   const [review, setReview] = useState(null);
   const [response, setResponse] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [workflow, setWorkflow] = useState({ site_visit_date: "", site_visit_time: "", site_visit_notes: "", agreement_url: "", payment_amount: 0, payment_due_date: "", payment_method: "M-Pesa", payment_instructions: "" });
 
   const list = useMemo(() => data.applications
@@ -164,7 +164,7 @@ export default function Applications() {
         </SectionCard>
       )}
 
-      <Dialog open={!!review} onOpenChange={() => setReview(null)}>
+      <Dialog open={!!review} onOpenChange={(value) => { if (!value && !uploading) setReview(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {review && (
             <>
@@ -217,8 +217,10 @@ export default function Applications() {
 
               {/* Workflow actions based on status */}
               <div className="mt-2 space-y-3 border-t border-slate-100 pt-3">
-                <VisitPanel app={review} role="landlord" onUpdated={() => { setReview(null); data.reload(); }} />
-                <ProceedPanel app={review} onUpdated={() => { setReview(null); data.reload(); }} />
+                <fieldset disabled={uploading}>
+                  <VisitPanel app={review} role="landlord" onUpdated={() => { setReview(null); data.reload(); }} />
+                </fieldset>
+                <ProceedPanel app={review} onBusyChange={setUploading} onUpdated={() => { setReview(null); data.reload(); }} />
 
                 {["Submitted", "Pending"].includes(s) && !review.visit_skipped && (
                   <div className="flex flex-wrap gap-2">
@@ -239,14 +241,7 @@ export default function Applications() {
 
                 {["Information Provided"].includes(s) && (
                   <div className="space-y-3">
-                    {s === "Site Visit Completed" && (
-                      <div className="rounded-lg border border-slate-200 p-3">
-                        <p className="mb-2 text-xs font-medium uppercase text-slate-500">Upload Agreement</p>
-                        <FileUploadButton onUploaded={(file) => setWorkflow({ ...workflow, agreement_url: file.file_uri })} label="Upload agreement document" />
-                        {workflow.agreement_url && <p className="mt-1 text-xs text-emerald-600">Agreement ready to issue</p>}
-                        <Button onClick={() => patch({ status: "Agreement Issued", agreement_url: workflow.agreement_url, agreement_status: "Issued" }, "Agreement Issued")} disabled={busy || !workflow.agreement_url} className="mt-2 bg-emerald-600 hover:bg-emerald-700"><FileSignature className="mr-1.5 h-4 w-4" />Issue Agreement</Button>
-                      </div>
-                    )}
+
                     <div className="flex flex-wrap gap-2">
                       <Button onClick={approveAndComplete} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Complete</Button>
                       <Button onClick={reject} disabled={busy} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-50"><X className="mr-1.5 h-4 w-4" />Reject</Button>

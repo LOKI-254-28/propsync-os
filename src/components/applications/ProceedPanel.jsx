@@ -7,10 +7,11 @@ import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from "@/components/FileUploadButton";
 
 // Landlord decision after the site visit is accepted (or skipped): Proceed (send agreement) or Terminate.
-export default function ProceedPanel({ app, onUpdated }) {
+export default function ProceedPanel({ app, onUpdated, onBusyChange }) {
   const [open, setOpen] = useState(false);
   const [agreement, setAgreement] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const show = ["Site Visit Scheduled", "Site Visit Completed"].includes(app.status) || (app.status === "Submitted" && app.visit_skipped);
   if (!show) return null;
 
@@ -31,15 +32,15 @@ export default function ProceedPanel({ app, onUpdated }) {
   return (
     <div className="w-full rounded-lg border border-slate-200 p-3">
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" disabled={busy} onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1 h-4 w-4" />Proceed</Button>
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => run({ status: "Rejected", landlord_response: "The landlord has terminated this application." }, "Application terminated")} className="border-rose-200 text-rose-700 hover:bg-rose-50"><X className="mr-1 h-4 w-4" />Terminate application</Button>
+        <Button size="sm" disabled={busy || uploading} onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1 h-4 w-4" />Proceed</Button>
+        <Button size="sm" variant="outline" disabled={busy || uploading} onClick={() => run({ status: "Rejected", landlord_response: "The landlord has terminated this application." }, "Application terminated")} className="border-rose-200 text-rose-700 hover:bg-rose-50"><X className="mr-1 h-4 w-4" />Terminate application</Button>
       </div>
       {open && (
         <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
           <p className="text-xs font-medium uppercase text-slate-500">Tenancy agreement</p>
-          <FileUploadButton onUploaded={(f) => setAgreement(f.file_uri)} label="Upload agreement" />
+          <FileUploadButton onUploaded={(f) => setAgreement(f?.file_uri || "")} onBusyChange={(value) => { setUploading(value); onBusyChange?.(value); }} label="Upload agreement" />
           {agreement && <p className="text-xs text-emerald-600">Agreement attached.</p>}
-          <Button size="sm" disabled={busy || !agreement} onClick={() => run({ status: "Agreement Issued", agreement_url: agreement, agreement_status: "Issued" }, "Agreement sent to tenant")} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button size="sm" disabled={busy || uploading || !agreement} onClick={() => run({ status: "Agreement Issued", agreement_url: agreement, agreement_status: "Issued" }, "Agreement sent to tenant")} className="bg-emerald-600 hover:bg-emerald-700">
             {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileSignature className="mr-1 h-4 w-4" />}Send to tenant
           </Button>
         </div>

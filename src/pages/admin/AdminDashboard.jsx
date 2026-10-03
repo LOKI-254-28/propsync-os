@@ -5,12 +5,7 @@ import { KES, monthKey, monthLabel } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import AdminApprovalSection from "@/components/AdminApprovalSection";
 import DashboardAlerts from '@/components/alerts/DashboardAlerts';
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
-  AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import TenantDataWipe from '@/components/admin/TenantDataWipe';
 import {
   Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, TrendingUp,
   Receipt, ArrowRight, FileText, ScrollText, Clock, Trash2,
@@ -25,31 +20,24 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState([]);
   const [maintenance, setMaintenance] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [purging, setPurging] = useState(false);
-  const [purgeOpen, setPurgeOpen] = useState(false);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [u, p, un, t, pay, m, a] = await Promise.all([
-          base44.entities.User.list("-created_date", 500),
-          base44.entities.Property.list("-created_date", 500),
-          base44.entities.Unit.list("-created_date", 500),
-          base44.entities.Tenancy.list("-created_date", 500),
-          base44.entities.Payment.list("-created_date", 500),
-          base44.entities.Maintenance.list("-created_date", 500),
-          base44.entities.Application.list("-created_date", 500),
-        ]);
-        setUsers(u); setProperties(p); setUnits(un); setTenancies(t);
-        setPayments(pay); setMaintenance(m); setApplications(a);
-      } catch (e) {
-        console.error("[AdminDashboard load error]", e);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+
+  const loadDashboard = async () => {
+    try {
+      const [u, p, un, t, pay, m, a] = await Promise.all([
+        base44.entities.User.list('-created_date', 500),
+        base44.entities.Property.list('-created_date', 500),
+        base44.entities.Unit.list('-created_date', 500),
+        base44.entities.Tenancy.list('-created_date', 500),
+        base44.entities.Payment.list('-created_date', 500),
+        base44.entities.Maintenance.list('-created_date', 500),
+        base44.entities.Application.list('-created_date', 500),
+      ]);
+      setUsers(u); setProperties(p); setUnits(un); setTenancies(t);
+      setPayments(pay); setMaintenance(m); setApplications(a);
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { loadDashboard(); }, []);
 
   const stats = useMemo(() => {
       const activeTenancies = tenancies.filter((t) => ["Active", "Expiring Soon", "Notice Given"].includes(t.status));
@@ -73,22 +61,6 @@ export default function AdminDashboard() {
       };
     }, [users, properties, units, tenancies, payments, maintenance, applications]);
 
-  const handlePurge = async () => {
-    setPurging(true);
-    try {
-      const res = await base44.functions.invoke("purgeNonAdminUsers", {});
-      const data = res.data;
-      toast({ title: "Purge complete", description: `${data.removedCount} account(s) removed · ${data.kept} kept.` });
-      setPurgeOpen(false);
-      const u = await base44.entities.User.list("-created_date", 500);
-      setUsers(u);
-    } catch (e) {
-      toast({ title: "Purge failed", description: e?.message || "Something went wrong", variant: "destructive" });
-    } finally {
-      setPurging(false);
-    }
-  };
-
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
   const recentPayments = [...payments].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)).slice(0, 6);
@@ -99,7 +71,7 @@ export default function AdminDashboard() {
     <div>
       <PageHeader title="Admin Dashboard" description="Platform-wide oversight — all landowners, properties, and tenant activity." />
 
-      <AdminApprovalSection />
+      <AdminApprovalSection key={users.length} />
       <DashboardAlerts />
 
       {/* User Overview */}
@@ -196,43 +168,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Danger Zone */}
-      <div className="mt-6">
-        <SectionCard title="Danger Zone">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-800">Purge non-admin accounts</p>
-              <p className="text-sm text-slate-500">Permanently delete every user who is not an admin or landowner. Historical records are kept but orphaned. This cannot be undone.</p>
-            </div>
-            <AlertDialog open={purgeOpen} onOpenChange={setPurgeOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={purging}>
-                  <Trash2 className="mr-1.5 h-4 w-4" />
-                  {purging ? "Purging..." : "Purge non-admin accounts"}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Purge all non-admin accounts?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This permanently deletes every user whose account is not an admin or landowner. Records they own will be kept but orphaned. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={purging}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handlePurge}
-                    disabled={purging}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {purging ? "Purging..." : "Yes, purge accounts"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </SectionCard>
-      </div>
+      <TenantDataWipe onComplete={loadDashboard} />
     </div>
   );
 }

@@ -31,15 +31,22 @@ export function FileUploadButton({ onUploaded, onBusyChange = () => {}, label = 
     setBusy(true); onBusyChange(true); onUploaded(null);
     setProgress(20);
     setFileName(file.name);
+    let uploadTimeout;
     try {
       setProgress(60);
-      const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+      const { file_uri } = await Promise.race([
+        base44.integrations.Core.UploadPrivateFile({ file }),
+        new Promise((_, reject) => {
+          uploadTimeout = setTimeout(() => reject(new Error("Upload timed out. Please try again.")), 60000);
+        }),
+      ]);
       setProgress(100);
       onUploaded({ file_uri, file_name: file.name, mime_type: file.type, size: file.size });
     } catch (err) {
       setError(err.message || "Upload failed. Please try again.");
       setFileName("");
     } finally {
+      clearTimeout(uploadTimeout);
       setBusy(false); onBusyChange(false);
       setTimeout(() => setProgress(0), 1200);
       e.target.value = "";

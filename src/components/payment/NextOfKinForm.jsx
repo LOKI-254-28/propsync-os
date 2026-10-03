@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui-bits";
-import FileUploadButton from "@/components/FileUploadButton";
+import IdCopyUpload from "@/components/payment/IdCopyUpload";
 import { Loader2 } from "lucide-react";
 
 // Collected just before payment: next of kin name, ID number, ID copy, phone and/or email.
@@ -41,7 +41,7 @@ export default function NextOfKinForm({ app, onSaved, onBusyChange }) {
         <Field label="Email"><Input type="email" value={f.email} onChange={set("email")} /></Field>
       </div>
       <Field label="Copy of their ID">
-        <FileUploadButton disabled={busy} onBusyChange={value => { setUploading(value); onBusyChange?.(value); }} onUploaded={(file) => setF(current => ({ ...current, id_document_uri: file.file_uri }))} label="Upload ID copy" />
+        <IdCopyUpload disabled={busy} onBusyChange={value => { setUploading(value); onBusyChange?.(value); }} onUploaded={(file) => setF(current => ({ ...current, id_document_uri: file.file_uri }))} />
       </Field>
       {err && <p className="text-sm text-red-600">{err}</p>}
       <Button onClick={save} disabled={busy || uploading} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}Save and continue to payment</Button>

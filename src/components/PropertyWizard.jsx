@@ -16,6 +16,7 @@ const STEPS = ["Basics", "Location", "Amenities", "Review"];
 export default function PropertyWizard({ open, onClose, onCreated }) {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     name: "", code: "", address: "", property_type: "Apartment Complex",
     contact_phone: "", contact_email: "", monthly_operating_expenses: 0,
@@ -118,7 +119,7 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && close()}>
+    <Dialog open={open} onOpenChange={(o) => !o && !busy && !uploading && close()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>New Property</DialogTitle>
@@ -198,7 +199,7 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
               </Field>
             </div>
             <div className="col-span-2">
-              <PropertyPhotos images={form.images} onChange={(imgs) => setForm({ ...form, images: imgs })} />
+              <PropertyPhotos images={form.images} onBusyChange={setUploading} onChange={(imgs) => setForm(current => ({ ...current, images: imgs }))} />
             </div>
           </div>
         )}
@@ -266,21 +267,21 @@ export default function PropertyWizard({ open, onClose, onCreated }) {
         )}
 
         <DialogFooter className="flex-row justify-between">
-          <Button variant="ghost" onClick={close} disabled={busy}>
+          <Button variant="ghost" onClick={close} disabled={busy || uploading}>
             Cancel
           </Button>
           <div className="flex gap-2">
             {step > 0 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)} disabled={busy}>
+              <Button variant="outline" onClick={() => setStep(step - 1)} disabled={busy || uploading}>
                 Back
               </Button>
             )}
             {step < STEPS.length - 1 ? (
-              <Button onClick={() => setStep(step + 1)} disabled={!canNext()} className="bg-emerald-600 hover:bg-emerald-700">
+              <Button onClick={() => setStep(step + 1)} disabled={busy || uploading || !canNext()} className="bg-emerald-600 hover:bg-emerald-700">
                 Next
               </Button>
             ) : (
-              <Button onClick={submit} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">
+              <Button onClick={submit} disabled={busy || uploading} className="bg-emerald-600 hover:bg-emerald-700">
                 {busy ? (
                   <>
                     <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />

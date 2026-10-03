@@ -7,7 +7,8 @@ import FileUploadButton from "@/components/FileUploadButton";
 import { Loader2 } from "lucide-react";
 
 // Collected just before payment: next of kin name, ID number, ID copy, phone and/or email.
-export default function NextOfKinForm({ app, onSaved }) {
+export default function NextOfKinForm({ app, onSaved, onBusyChange }) {
+  const [uploading, setUploading] = useState(false);
   const [f, setF] = useState({ full_name: "", id_number: "", phone: "", email: "", id_document_uri: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -40,10 +41,10 @@ export default function NextOfKinForm({ app, onSaved }) {
         <Field label="Email"><Input type="email" value={f.email} onChange={set("email")} /></Field>
       </div>
       <Field label="Copy of their ID">
-        <FileUploadButton onUploaded={(file) => setF({ ...f, id_document_uri: file.file_uri })} label="Upload ID copy" />
+        <FileUploadButton disabled={busy} onBusyChange={value => { setUploading(value); onBusyChange?.(value); }} onUploaded={(file) => setF(current => ({ ...current, id_document_uri: file.file_uri }))} label="Upload ID copy" />
       </Field>
       {err && <p className="text-sm text-red-600">{err}</p>}
-      <Button onClick={save} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}Save and continue to payment</Button>
+      <Button onClick={save} disabled={busy || uploading} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}Save and continue to payment</Button>
     </div>
   );
 }

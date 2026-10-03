@@ -20,6 +20,7 @@ export default function PropertyDetail() {
   const data = usePortfolioData();
   const { submitting, run } = useCrud();
   const [editOpen, setEditOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({});
 
   const property = data.properties.find((p) => p.id === id);
@@ -138,7 +139,7 @@ export default function PropertyDetail() {
 
       <RatingPanel entity="TenancyReview" filter={{ property_id: property.id }} title="Public tenancy reviews" />
 
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog open={editOpen} onOpenChange={value => !uploading && !submitting && setEditOpen(value)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Property</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
@@ -157,11 +158,11 @@ export default function PropertyDetail() {
             <Field label="Contact phone"><Input value={form.contact_phone || ""} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} /></Field>
             <Field label="Contact email"><Input value={form.contact_email || ""} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} /></Field>
             <div className="col-span-2"><Field label="Description"><Textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
-            <div className="col-span-2"><PropertyPhotos images={form.images} onChange={(imgs) => setForm({ ...form, images: imgs })} /></div>
+            <div className="col-span-2"><PropertyPhotos images={form.images} onBusyChange={setUploading} onChange={(imgs) => setForm(current => ({ ...current, images: imgs }))} /></div>
             <div className="col-span-2"><PropertyAmenities selected={form.amenities} onToggle={toggleAmenity} /></div>
             <div className="col-span-2"><PropertyLocation latitude={form.latitude} longitude={form.longitude} onChange={(p) => setForm({ ...form, latitude: p.lat, longitude: p.lng })} /></div>
           </div>
-          <DialogFooter><Button onClick={save} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}</Button></DialogFooter>
+          <DialogFooter><Button onClick={save} disabled={submitting || uploading} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

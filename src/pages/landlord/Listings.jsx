@@ -11,14 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tag, Plus, Search, Loader2, Edit, Eye, Upload } from "lucide-react";
 import { useCrud } from "@/lib/useCrud";
 import { toast } from "@/components/ui/use-toast";
-import FileUploadButton from "@/components/FileUploadButton";
+import PropertyPhotos from '@/components/PropertyPhotos';
 
-const empty = { property_id: "", unit_id: "", listing_type: "Rent", price: 0, description: "" };
+const empty = { property_id: "", unit_id: "", listing_type: "Rent", price: 0, description: "", images: [] };
 
 export default function Listings() {
   const data = usePortfolioData();
   const { submitting, run } = useCrud();
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [editRec, setEditRec] = useState(null);
   const [viewRec, setViewRec] = useState(null);
   const [search, setSearch] = useState("");
@@ -44,14 +45,14 @@ export default function Listings() {
         await base44.entities.Listing.update(editRec.id, {
           property_id: form.property_id, property_name: prop?.name || "",
           unit_id: form.unit_id, unit_number: unit?.unit_number || "",
-          listing_type: form.listing_type, price: Number(form.price), description: form.description,
+          listing_type: form.listing_type, price: Number(form.price), description: form.description, images: form.images,
         });
         await logAudit({ user: me, action: "Listing Updated", entity: "Listing", entity_id: editRec.id, entity_name: editRec.listing_reference });
       } else {
         await secureCreate("Listing", {
           listing_reference: genRef("LST"), property_id: form.property_id, property_name: prop?.name || "",
           unit_id: form.unit_id, unit_number: unit?.unit_number || "",
-          listing_type: form.listing_type, price: Number(form.price), description: form.description,
+          listing_type: form.listing_type, price: Number(form.price), description: form.description, images: form.images,
           status: "Draft", date_listed: todayISO(),
         });
       }
@@ -118,8 +119,8 @@ export default function Listings() {
       )}
 
       {/* Create / Edit dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={open} onOpenChange={value => !uploading && !submitting && setOpen(value)}>
+        <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editRec ? "Edit Listing" : "Add Listing"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <Field label="Property">
@@ -142,7 +143,8 @@ export default function Listings() {
             <Field label="Price (KES)"><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>
             <div className="col-span-2"><Field label="Description"><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
           </div>
-          <DialogFooter><Button onClick={save} disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Saving...</> : editRec ? "Save Changes" : "Create Listing"}</Button></DialogFooter>
+          <PropertyPhotos label="Listing photos" images={form.images} onBusyChange={setUploading} onChange={images => setForm(current => ({ ...current, images }))} />
+          <DialogFooter><Button onClick={save} disabled={submitting || uploading} className="bg-emerald-600 hover:bg-emerald-700">{submitting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Saving...</> : editRec ? "Save Changes" : "Create Listing"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -103,7 +103,7 @@ export default function MyDocuments() {
             <Field label="Category">
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{TENANT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
             </Field>
-            <Field label="File"><FileUploadButton onUploaded={setUploaded} onBusyChange={setUploading} label="Choose file" /></Field>
+            <Field label="File"><FileUploadButton disabled={busy} onUploaded={setUploaded} onBusyChange={setUploading} label="Choose file" /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
           </div>
           <DialogFooter><Button onClick={submit} disabled={busy || uploading || !uploaded} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Uploading..." : "Submit for Review"}</Button></DialogFooter>

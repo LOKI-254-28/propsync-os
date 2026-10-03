@@ -205,7 +205,7 @@ export default function Documents() {
               </select>
             </Field>
             <Field label="Expiry date (optional)"><Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></Field>
-            <Field label="File (PDF, JPG, PNG — max 10 MB)"><FileUploadButton onUploaded={setUploaded} onBusyChange={setUploading} label="Choose file" /></Field>
+            <Field label="File (PDF, JPG, PNG — max 10 MB)"><FileUploadButton disabled={busy} onUploaded={setUploaded} onBusyChange={setUploading} label="Choose file" /></Field>
             <Field label="Notes"><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
           </div>

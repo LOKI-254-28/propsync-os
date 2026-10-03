@@ -8,7 +8,8 @@ import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
 // Upload a payment receipt (manual paybill or bank) for the landlord to verify.
-export default function ReceiptSubmit({ app, method, onDone }) {
+export default function ReceiptSubmit({ app, method, onDone, onBusyChange, disabled = false }) {
+  const [uploading, setUploading] = useState(false);
   const [proof, setProof] = useState("");
   const [ref, setRef] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,8 +31,8 @@ export default function ReceiptSubmit({ app, method, onDone }) {
   return (
     <div className="space-y-2">
       <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction code / reference" />
-      <FileUploadButton onUploaded={(f) => setProof(f.file_uri)} label="Upload receipt photo" />
-      <Button size="sm" disabled={busy || !proof} onClick={submit} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Submit receipt</Button>
+      <FileUploadButton disabled={busy || disabled} onBusyChange={value => { setUploading(value); onBusyChange?.(value); }} onUploaded={(f) => setProof(f.file_uri)} label="Upload receipt photo" />
+      <Button size="sm" disabled={busy || uploading || disabled || !proof} onClick={submit} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Submit receipt</Button>
     </div>
   );
 }

@@ -1,8 +1,5 @@
-import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { Field } from "@/components/ui-bits";
-import { Loader2, Check, MapPin, Image as ImageIcon, X } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import React from 'react';
+import { Check, MapPin } from 'lucide-react';
 import MapPicker from "@/components/MapPicker";
 
 export const PROPERTY_TYPES = ["Apartment Complex", "Building", "Mixed Use", "Commercial", "Townhouse", "Villa"];
@@ -11,71 +8,7 @@ export const AMENITIES = [
   "Gym", "Pool", "Security guard", "Perimeter wall", "Garbage collection", "Kids' playground", "Garden",
 ];
 
-export function PropertyPhotos({ images, onChange }) {
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async (files) => {
-    const valid = Array.from(files).filter(
-      (f) => ["image/jpeg", "image/png", "image/webp"].includes(f.type) && f.size <= 10 * 1024 * 1024
-    );
-    if (!valid.length) {
-      toast({ title: "Upload error", description: "Only JPG, PNG, or WebP images up to 10MB.", variant: "destructive" });
-      return;
-    }
-    setUploading(true);
-    try {
-      const urls = [];
-      for (const f of valid) {
-        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: f });
-        urls.push(file_url);
-      }
-      onChange([...(images || []), ...urls]);
-    } catch (err) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const removeImage = (idx) => onChange((images || []).filter((_, i) => i !== idx));
-
-  return (
-    <Field label="Property photos">
-      <div className="flex flex-wrap gap-2">
-        {(images || []).map((url, i) => (
-          <div key={i} className="relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200">
-            <img src={url} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
-            <button
-              type="button"
-              onClick={() => removeImage(i)}
-              className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ))}
-        <label
-          className={`flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-emerald-400 hover:text-emerald-600 ${
-            uploading ? "pointer-events-none opacity-50" : ""
-          }`}
-        >
-          {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              handleUpload(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </label>
-      </div>
-      <p className="mt-1 text-xs text-slate-400">JPG, PNG, or WebP — up to 10MB each. Photos are public so they render on the listings page.</p>
-    </Field>
-  );
-}
+export { default as PropertyPhotos } from '@/components/PropertyPhotos';
 
 export function PropertyAmenities({ selected, onToggle }) {
   return (

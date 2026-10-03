@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui-bits";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, X, Image as ImageIcon, Save } from "lucide-react";
+import { Loader2, X, Save } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
+import FileUploadButton from '@/components/FileUploadButton';
+import { Image } from '@/components/ui/image';
 
 const UNIT_TYPES = ["Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "Penthouse", "Commercial", "Other"];
 const ROOMS = ["Living room", "Kitchen", "Bedroom", "Bathroom", "Balcony", "Exterior"];
@@ -35,29 +37,6 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
   }, [unit]);
 
   if (!form || !unit) return null;
-
-  const uploadRoom = async (room, files) => {
-    const valid = Array.from(files).filter(
-      (f) => ["image/jpeg", "image/png", "image/webp"].includes(f.type) && f.size <= 10 * 1024 * 1024
-    );
-    if (!valid.length) {
-      toast({ title: "Upload error", description: "Only JPG, PNG, or WebP up to 10MB.", variant: "destructive" });
-      return;
-    }
-    setUploadingRoom(room);
-    try {
-      const added = [];
-      for (const f of valid) {
-        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: f });
-        added.push({ room, url: file_url });
-      }
-      setForm({ ...form, room_photos: [...form.room_photos, ...added] });
-    } catch (e) {
-      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
-    } finally {
-      setUploadingRoom(null);
-    }
-  };
 
   const removePhoto = (idx) =>
     setForm({ ...form, room_photos: form.room_photos.filter((_, i) => i !== idx) });
@@ -97,7 +76,7 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
   const canRename = !unit.current_tenancy_id && !["Occupied", "Notice Given"].includes(unit.status);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && !busy && uploadingRoom === null && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Unit — {unit.unit_number}</DialogTitle>
@@ -159,31 +138,15 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
                 <div key={room} className="rounded-lg border border-slate-200 p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-xs font-medium text-slate-600">{room}</p>
-                    <label
-                      className={`flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-emerald-300 hover:text-emerald-700 ${
-                        uploadingRoom === room ? "pointer-events-none opacity-50" : ""
-                      }`}
-                    >
-                      {uploadingRoom === room ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-                      Add photo
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => {
-                          uploadRoom(room, e.target.files);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
+                    <FileUploadButton public multiple imageOnly label="Add photo" disabled={busy || uploadingRoom !== null} onBusyChange={value => setUploadingRoom(value ? room : null)} onUploaded={file => setForm(current => ({ ...current, room_photos: [...current.room_photos, { room, url: file.file_url }] }))} />
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {photos.map((p) => (
                       <div key={p.i} className="relative h-16 w-24 overflow-hidden rounded-md border border-slate-200">
-                        <img src={p.url} alt={room} className="h-full w-full object-cover" />
+                        <Image src={p.url} alt={room} className="h-full w-full" />
                         <button
                           type="button"
+                          disabled={uploadingRoom !== null}
                           onClick={() => removePhoto(p.i)}
                           className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
                         >
@@ -200,10 +163,10 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} disabled={busy}>
+          <Button variant="ghost" onClick={onClose} disabled={busy || uploadingRoom !== null}>
             Cancel
           </Button>
-          <Button onClick={save} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={save} disabled={busy || uploadingRoom !== null} className="bg-emerald-600 hover:bg-emerald-700">
             {busy ? (
               <>
                 <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />

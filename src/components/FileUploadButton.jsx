@@ -1,81 +1,24 @@
-import React, { useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Upload, CheckCircle2 } from "lucide-react";
+import React, { useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Upload, CheckCircle2, Loader2 } from 'lucide-react';
+import useFileUpload from '@/hooks/useFileUpload';
 
-const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
-const ALLOWED_EXT = ".pdf,.jpg,.jpeg,.png";
-const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-
-export function FileUploadButton({ onUploaded, onBusyChange = () => {}, label = "Choose File", variant = "outline", size = "sm", className = "" }) {
+export function FileUploadButton({ onUploaded, onBusyChange, public: isPublic = false, multiple = false, imageOnly = false, maxFiles = Infinity, disabled = false, label = 'Choose File', variant = 'outline', size = 'sm', className = '' }) {
   const inputRef = useRef(null);
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const [fileName, setFileName] = useState("");
-
-  const handle = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError("");
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Only PDF, JPG, or PNG files are allowed.");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > MAX_SIZE) {
-      setError("File must be 10 MB or smaller.");
-      e.target.value = "";
-      return;
-    }
-    setBusy(true); onBusyChange(true); onUploaded(null);
-    setProgress(20);
-    setFileName(file.name);
-    let uploadTimeout;
-    try {
-      setProgress(60);
-      const { file_uri } = await Promise.race([
-        base44.integrations.Core.UploadPrivateFile({ file }),
-        new Promise((_, reject) => {
-          uploadTimeout = setTimeout(() => reject(new Error("Upload timed out. Please try again.")), 60000);
-        }),
-      ]);
-      setProgress(100);
-      onUploaded({ file_uri, file_name: file.name, mime_type: file.type, size: file.size });
-    } catch (err) {
-      setError(err.message || "Upload failed. Please try again.");
-      setFileName("");
-    } finally {
-      clearTimeout(uploadTimeout);
-      setBusy(false); onBusyChange(false);
-      setTimeout(() => setProgress(0), 1200);
-      e.target.value = "";
-    }
-  };
-
+  const { busy, error, fileName, handle } = useFileUpload({ onUploaded, onBusyChange, isPublic, multiple, imageOnly, maxFiles });
   return (
     <div className={className}>
-      <input ref={inputRef} type="file" accept={ALLOWED_EXT} onChange={handle} className="hidden" />
+      <input ref={inputRef} type="file" multiple={multiple} accept={imageOnly ? '.jpg,.jpeg,.png,.webp' : '.pdf,.jpg,.jpeg,.png'} disabled={busy || disabled} onChange={handle} className="hidden" />
       <div className="flex items-center gap-2">
-        <Button type="button" variant={variant} size={size} onClick={() => inputRef.current?.click()} disabled={busy}>
-          <Upload className="h-4 w-4" />
-          {busy ? "Uploading..." : label}
+        <Button type="button" variant={variant} size={size} onClick={() => inputRef.current?.click()} disabled={busy || disabled}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {busy ? 'Uploading...' : label}
         </Button>
-        {fileName && !busy && (
-          <span className="flex items-center gap-1 text-xs text-slate-600 truncate max-w-[220px]">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            {fileName}
-          </span>
-        )}
+        {fileName && !busy && <span className="flex max-w-[220px] items-center gap-1 truncate text-xs text-muted-foreground"><CheckCircle2 className="h-3.5 w-3.5 shrink-0" />{fileName}</span>}
       </div>
-      {busy && progress > 0 && (
-        <div className="mt-1.5 h-1.5 w-full max-w-xs rounded-full bg-slate-100">
-          <div className="h-1.5 rounded-full bg-emerald-500 transition-all duration-300" style={{ width: `${progress}%` }} />
-        </div>
-      )}
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {busy && <div role="progressbar" aria-label="Uploading file" className="mt-1.5 h-1.5 w-full max-w-xs animate-pulse rounded-full bg-muted"><div className="h-full w-3/5 rounded-full bg-primary" /></div>}
+      {error && <p role="alert" className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );
 }
-
 export default FileUploadButton;

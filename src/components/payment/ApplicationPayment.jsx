@@ -11,6 +11,9 @@ import ReceiptSubmit from "@/components/payment/ReceiptSubmit";
 export default function ApplicationPayment({ app, onClose, onDone }) {
   const [kin, setKin] = useState(undefined);
   const [settings, setSettings] = useState(null);
+  const [uploads, setUploads] = useState({});
+  const uploading = Object.values(uploads).some(Boolean);
+  const uploadState = key => value => setUploads(current => ({ ...current, [key]: value }));
 
   useEffect(() => {
     base44.entities.NextOfKin.filter({ application_id: app.id }).then((r) => setKin(r[0] || null)).catch(() => setKin(null));
@@ -19,7 +22,7 @@ export default function ApplicationPayment({ app, onClose, onDone }) {
 
   const done = () => { onClose(); onDone(); };
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open onOpenChange={value => !value && !uploading && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>Pay for {app.unit_number} · {app.property_name}</DialogTitle></DialogHeader>
         <div className="rounded-lg bg-emerald-50 p-3 text-sm">
@@ -27,10 +30,10 @@ export default function ApplicationPayment({ app, onClose, onDone }) {
           <p className="text-emerald-700">{app.booked_occupied ? "Half the deposit reserves this unit until the current tenant leaves." : "Deposit + first month's rent."}</p>
         </div>
         {kin === undefined ? <div className="py-8 text-center text-sm text-slate-500">Loading…</div>
-          : kin === null ? <NextOfKinForm app={app} onSaved={setKin} />
+          : kin === null ? <NextOfKinForm app={app} onSaved={setKin} onBusyChange={uploadState('kin')} />
           : (
             <div className="grid gap-4 md:grid-cols-3">
-              <MpesaCard app={app} settings={settings} onDone={done} />
+              <MpesaCard app={app} settings={settings} onDone={done} onBusyChange={uploadState('mpesa')} disabled={uploading} />
               <div className="space-y-3 rounded-xl border border-slate-200 p-4">
                 <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Landmark className="h-5 w-5 text-slate-500" />Bank transfer</h4>
                 <div className="space-y-0.5 text-sm text-slate-600">
@@ -39,7 +42,7 @@ export default function ApplicationPayment({ app, onClose, onDone }) {
                   <p>Account no.: <b>{settings?.bank_account_number || "—"}</b></p>
                   <p>Reference: <b>{app.application_reference}</b></p>
                 </div>
-                <ReceiptSubmit app={app} method="Bank Transfer" onDone={done} />
+                <ReceiptSubmit app={app} method="Bank Transfer" onDone={done} onBusyChange={uploadState('bank')} disabled={uploading} />
               </div>
             </div>
           )}

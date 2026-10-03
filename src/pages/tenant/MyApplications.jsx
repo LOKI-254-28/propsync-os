@@ -21,6 +21,7 @@ export default function MyApplications() {
   const [actionType, setActionType] = useState("");
   const [payApp, setPayApp] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [uploadingAgreement, setUploadingAgreement] = useState(false);
   const [form, setForm] = useState({ info: "", site_visit_date: "", site_visit_time: "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "", documents: [] });
 
   const list = useMemo(() => [...t.applications].sort((a, b) => new Date(b.submitted_date || b.created_date) - new Date(a.submitted_date || a.created_date)), [t.applications]);
@@ -32,7 +33,7 @@ export default function MyApplications() {
   };
 
   const submitAction = async () => {
-    if (!actionApp || !actionType) return;
+    if (!actionApp || !actionType || uploadingAgreement) return;
     setBusy(true);
     try {
       const me = t.user;
@@ -148,7 +149,7 @@ export default function MyApplications() {
 
       {payApp && <ApplicationPayment app={payApp} onClose={() => setPayApp(null)} onDone={t.reload} />}
 
-      <Dialog open={!!actionApp} onOpenChange={() => setActionApp(null)}>
+      <Dialog open={!!actionApp} onOpenChange={(value) => { if (!value && !uploadingAgreement) setActionApp(null); }}>
         <DialogContent className="max-w-md">
           {actionApp && (
             <>
@@ -187,7 +188,7 @@ export default function MyApplications() {
                 {actionType === "agreement" && (
                   <>
                     {actionApp.agreement_url && <button type="button" onClick={() => downloadFile(actionApp.agreement_url)} className="inline-flex items-center gap-1 text-sm text-amber-700 underline">View original agreement <ExternalLink className="h-3 w-3" /></button>}
-                    <Field label="Upload executed (signed) agreement"><FileUploadButton onUploaded={(file) => setForm({ ...form, agreement_executed_url: file.file_uri })} label="Upload signed agreement" /></Field>
+                    <Field label="Upload executed (signed) agreement"><FileUploadButton onUploaded={(file) => setForm((current) => ({ ...current, agreement_executed_url: file?.file_uri || "" }))} onBusyChange={setUploadingAgreement} label="Upload signed agreement" /></Field>
                   </>
                 )}
                 {actionType === "payment" && (
@@ -203,7 +204,7 @@ export default function MyApplications() {
                   </>
                 )}
               </div>
-              <DialogFooter><Button onClick={submitAction} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Submitting...</> : "Submit"}</Button></DialogFooter>
+              <DialogFooter><Button onClick={submitAction} disabled={busy || uploadingAgreement || (actionType === "agreement" && !form.agreement_executed_url)} className="bg-emerald-600 hover:bg-emerald-700">{busy ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Submitting...</> : "Submit"}</Button></DialogFooter>
             </>
           )}
         </DialogContent>

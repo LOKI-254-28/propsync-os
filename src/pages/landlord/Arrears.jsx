@@ -25,7 +25,7 @@ export default function Arrears() {
   const [busy, setBusy] = useState(false);
 
   const arrearsCharges = useMemo(() => data.charges
-    .filter((c) => c.status !== "Void" && c.status !== "Paid" && Number(c.outstanding || 0) > 0 && c.due_date && new Date(c.due_date) < new Date())
+    .filter((c) => c.status !== "Void" && c.status !== "Paid" && Number(c.outstanding || 0) > 0 && c.due_date && c.due_date < todayISO())
     .map((c) => ({ ...c, daysOverdue: daysBetween(c.due_date, todayISO()), classification: classify(c) }))
     .sort((a, b) => b.daysOverdue - a.daysOverdue), [data.charges]);
 

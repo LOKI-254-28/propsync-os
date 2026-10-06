@@ -123,7 +123,7 @@ export default function UserManagement() {
                     <td className="py-3">
                       {u.approval_status ? <StatusBadge status={u.approval_status === "approved" ? "Approved" : u.approval_status === "pending" ? "Pending" : "Rejected"} /> : <StatusBadge status="Active" />}
                     </td>
-                    <td className="py-3 text-slate-600">{u.created_date ? new Date(u.created_date).toLocaleDateString() : "—"}</td>
+                    <td className="py-3 text-slate-600">{u.created_date ? new Date(u.created_date).toLocaleDateString('en-KE',{timeZone:'Africa/Nairobi'}) : "—"}</td>
                     <td className="py-3 text-right">
                       {u.approval_status === "pending" && (
                         <div className="flex justify-end gap-1.5">

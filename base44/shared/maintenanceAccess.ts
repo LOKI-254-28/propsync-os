@@ -7,7 +7,9 @@ export async function assignedMaintenanceScope(sr,user) {
 }
 export async function maintenanceAccess(sr,user,ticket) {
   const [properties,contractors]=await Promise.all([sr.entities.Property.filter({id:ticket.property_id},'-created_date',1),ticket.contractor_id?sr.entities.Contractor.filter({id:ticket.contractor_id},'-created_date',1):Promise.resolve([])]);
-  const property=properties[0],contractor=contractors[0],manager=user.role==='admin'||!!property&&property.owner_user_id===user.id,tenant=ticket.tenant_user_id===user.id;
+  const property=properties[0],contractor=contractors[0];
+  if(ticket.tenancy_id){const tenancy=await sr.entities.Tenancy.get(ticket.tenancy_id);if(tenancy.property_id!==ticket.property_id||tenancy.unit_id!==ticket.unit_id||tenancy.tenant_user_id!==ticket.tenant_user_id)throw registryError('This maintenance request has inconsistent tenancy links.',409);}
+  const manager=user.role==='admin'||!!property&&property.owner_user_id===user.id,tenant=ticket.tenant_user_id===user.id;
   const assigned=!!contractor&&contractor.status==='Active'&&!!property&&contractor.owner_user_id===property.owner_user_id;
   const worker=assigned&&contractor.user_id===user.id;
   if(!manager&&!tenant&&!worker)throw registryError('This maintenance request is private to its tenant, landlord and currently authorized assigned contractor.',403);

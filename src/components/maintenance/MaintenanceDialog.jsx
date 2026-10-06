@@ -11,8 +11,9 @@ export default function MaintenanceDialog({ maintenanceId, onClose, onUpdated })
   const query=useQuery({queryKey:['maintenance-ticket',maintenanceId],queryFn:async()=>(await base44.functions.invoke('maintenanceOps',{action:'details',maintenance_id:maintenanceId})).data,refetchInterval:20000});
   const ticket=query.data?.ticket;
   return <Dialog open onOpenChange={value=>{if(!value&&!busy)onClose();}}>
-    <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto overscroll-contain">
-      <DialogHeader><DialogTitle>{ticket?.title || 'Maintenance Request'}</DialogTitle></DialogHeader>
+    <DialogContent className="flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-2xl flex-col overflow-hidden">
+      <DialogHeader className="shrink-0"><DialogTitle>{ticket?.title || 'Maintenance Request'}</DialogTitle></DialogHeader>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
       {query.isLoading&&<p className="text-sm text-muted-foreground">Loading this request…</p>}
       {query.error&&<p role="alert" className="text-sm text-destructive">{query.error.response?.data?.error || query.error.message}</p>}
       {ticket&&!query.error&&<>
@@ -24,6 +25,7 @@ export default function MaintenanceDialog({ maintenanceId, onClose, onUpdated })
         {query.data.can_manage&&<MaintenanceManagement ticket={ticket} contractors={query.data.contractors} statuses={query.data.allowed_statuses} onSaved={onUpdated} onBusyChange={setBusy} locked={busy}/>}
         <MaintenanceConversation ticket={ticket} canMessage={query.data.can_message} onBusyChange={setBusy} locked={busy}/>
       </>}
+      </div>
     </DialogContent>
   </Dialog>;
 }

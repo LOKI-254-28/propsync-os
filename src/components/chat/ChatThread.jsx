@@ -59,7 +59,7 @@ export default function ChatThread({ tenancy, role, userId }) {
             <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
               <div className={cn("max-w-[75%] rounded-2xl px-3 py-2 text-sm", mine ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-800")}>
                 <p className="whitespace-pre-wrap break-words">{m.text}</p>
-                <p className={cn("mt-1 text-[10px]", mine ? "text-emerald-100" : "text-slate-400")}>{new Date(m.created_date).toLocaleString()}</p>
+                <p className={cn("mt-1 text-[10px]", mine ? "text-emerald-100" : "text-slate-400")}>{new Date(m.created_date).toLocaleString('en-KE',{timeZone:'Africa/Nairobi'})}</p>
               </div>
             </div>
           );

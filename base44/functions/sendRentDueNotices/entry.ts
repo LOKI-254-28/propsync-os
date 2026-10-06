@@ -1,16 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import {nairobiToday} from '../../shared/nairobiDates.ts';
 
 // Scheduled monthly rent-due notices.
 // Fires on the 27th of each month (5 days before the 1st). For every active
 // tenancy it idempotently creates that month's RentCharge, then sends a
 // branded rent-due email and an in-app Notice to the tenant.
-// Runs as the service role. A logged-in non-admin invoking it directly gets 403;
-// a scheduled run (no user) is allowed through.
+// Only authenticated administrators may run this operation, including scheduled invocations.
 export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    if (user && user.role !== 'admin' && user.account_type !== 'admin') {
+    if (!user) return Response.json({error:'Authentication required'},{status:401});
+    if (user.role !== 'admin') {
       return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
@@ -18,13 +19,14 @@ export default async function(req: Request): Promise<Response> {
     // billingPeriod defaults to the upcoming month (the month whose 1st is the due date)
     let billingPeriod = body.billingPeriod;
     if (!billingPeriod) {
-      const d = new Date();
-      const y = d.getUTCFullYear();
-      const m = d.getUTCMonth(); // 0-indexed
+      const [year,month]=nairobiToday().slice(0,7).split('-').map(Number);
+      const y = year;
+      const m = month - 1; // Nairobi calendar month, 0-indexed
       const ny = m === 11 ? y + 1 : y;
       const nm = m === 11 ? 0 : m + 1;
       billingPeriod = `${ny}-${String(nm + 1).padStart(2, '0')}`;
     }
+    if(typeof billingPeriod!=='string'||!/^\d{4}-(0[1-9]|1[0-2])$/.test(billingPeriod))return Response.json({error:'Choose a valid billing month.'},{status:400});
     const dueDate = `${billingPeriod}-01`;
 
     // Active tenancies across all owners
@@ -71,7 +73,7 @@ export default async function(req: Request): Promise<Response> {
       await base44.asServiceRole.entities.RentCharge.bulkCreate(toCreate);
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = nairobiToday();
     let emailed = 0;
     let noticed = 0;
     for (const { tenancy, email } of reminders) {
@@ -117,7 +119,7 @@ export default async function(req: Request): Promise<Response> {
               <p style="font-size:14px;color:#475569;margin:8px 0 12px;">Your rent for <strong>${billingPeriod}</strong> is due on <strong>${dueDate}</strong>. Please make your payment on time to avoid arrears.</p>
               <a href="${link}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:14px;">View your rent</a>
             </div>
-            <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:12px;">© ${new Date().getFullYear()} PropWiz. Rentals made simple.</p>
+            <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:12px;">© ${nairobiToday().slice(0,4)} PropWiz. Rentals made simple.</p>
           </div>`;
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({

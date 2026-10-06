@@ -65,7 +65,7 @@ export default async function(req: Request): Promise<Response> {
         amount_paid: 0,
         outstanding: amt,
         status: 'Unpaid',
-        owner_user_id: user.id,
+        owner_user_id: t.owner_user_id || user.id,
       });
     }
 

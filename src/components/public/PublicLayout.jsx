@@ -43,7 +43,7 @@ export default function PublicLayout({ children }) {
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-500">
           <Link to="/the-propwiz-experience" className="mb-3 inline-block hover:underline">The PropWiz Experience</Link>
-          <p>© {new Date().getFullYear()} PropWiz. Rentals made simple.</p>
+          <p>© {new Date().toLocaleDateString('en-KE',{timeZone:'Africa/Nairobi',year:'numeric'})} PropWiz. Rentals made simple.</p>
         </div>
       </footer>
     </div>

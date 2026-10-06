@@ -17,6 +17,7 @@ import ApplicationPayment from "@/components/payment/ApplicationPayment";
 import { syncUploadedDocuments } from '@/lib/registerUpload';
 import { patchApplication } from '@/lib/applicationActions';
 import MoveInInspectionPanel from '@/components/inspections/MoveInInspectionPanel';
+import {addDays,nairobiToday} from '@/lib/nairobiDates';
 
 export default function MyApplications() {
   const t = useTenantData();
@@ -53,7 +54,7 @@ export default function MyApplications() {
         label = "Site Visit Reschedule Requested";
       } else if (actionType === "agreement") {
         if (!form.agreement_executed_url) { toast({ title: "Validation error", description: "Please upload the executed agreement.", variant: "destructive" }); setBusy(false); return; }
-        updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Payment Requested", payment_status: "Requested", payment_due_date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) };
+        updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Payment Requested", payment_status: "Requested", payment_due_date: addDays(nairobiToday(),7) };
         label = "Agreement Executed";
       } else if (actionType === "payment") {
         if (!form.payment_proof_url) { toast({ title: "Validation error", description: "Please upload payment proof.", variant: "destructive" }); setBusy(false); return; }

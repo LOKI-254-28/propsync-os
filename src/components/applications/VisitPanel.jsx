@@ -17,7 +17,7 @@ export default function VisitPanel({ app, role, onUpdated }) {
   const other = role === "landlord" ? "tenant" : "landlord";
   const hasSlot = !!app.site_visit_date;
   const scheduled = app.status === "Site Visit Scheduled";
-  const upcoming = hasSlot && new Date(`${app.site_visit_date}T${app.site_visit_time || "23:59"}`) > new Date();
+  const upcoming = hasSlot && new Date(`${app.site_visit_date}T${app.site_visit_time || "23:59"}+03:00`) > new Date();
   const waiting = !scheduled && hasSlot && app.site_visit_proposed_by === role;
   const canAccept = !scheduled && hasSlot && !waiting;
   const canReschedule = !scheduled || upcoming;

@@ -6,6 +6,7 @@ import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/co
 import AdminApprovalSection from "@/components/AdminApprovalSection";
 import DashboardAlerts from '@/components/alerts/DashboardAlerts';
 import TenantDataWipe from '@/components/admin/TenantDataWipe';
+import {occupancySummary} from '@/lib/occupancy';
 import {
   Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, TrendingUp,
   Receipt, ArrowRight, FileText, ScrollText, Clock, Trash2,
@@ -40,21 +41,20 @@ export default function AdminDashboard() {
   useEffect(() => { loadDashboard(); }, []);
 
   const stats = useMemo(() => {
-      const activeTenancies = tenancies.filter((t) => ["Active", "Expiring Soon", "Notice Given"].includes(t.status));
-      const occupiedCount = units.filter((u) => u.status === "Occupied").length;
-      const availableCount = units.filter((u) => u.status === "Available").length;
-      const vacantCount = units.filter((u) => u.status === "Vacant" || u.status === "Available").length;
+      const occupancy=occupancySummary(units,tenancies);
+      const activeTenancies=occupancy.tenancies;
+      const occupiedCount=occupancy.occupied.length,availableCount=occupancy.available.length,vacantCount=occupancy.vacant.length;
       const openMaintenance = maintenance.filter((m) => !["Completed", "Closed", "Rejected"].includes(m.status)).length;
       const mk = monthKey();
-      const expectedThisMonth = tenancies.filter((t) => ["Active", "Expiring Soon", "Notice Given"].includes(t.status)).reduce((s, t) => s + (t.monthly_rent || 0), 0);
+      const expectedThisMonth = activeTenancies.reduce((s,t)=>s+Number(t.monthly_rent || 0),0);
       const collectedThisMonth = payments.filter((p) => p.status === "Successful" && p.payment_date && p.payment_date.startsWith(mk)).reduce((s, p) => s + (p.amount || 0), 0);
       const pendingUsers = users.filter((u) => u.approval_status === "pending").length;
       const landowners = users.filter((u) => u.account_type === "landowner").length;
       const clients = users.filter((u) => u.account_type === "client").length;
-      const admins = users.filter((u) => u.account_type === "admin" || u.role === "admin").length;
+      const admins = users.filter((u) => u.role === "admin").length;
       return {
         totalUsers: users.length, pendingUsers, landowners, clients, admins,
-        properties: properties.length, units: units.length, occupiedCount, availableCount, vacantCount,
+        properties: properties.length, units: occupancy.live.length, occupiedCount, availableCount, vacantCount,
         activeTenancies: activeTenancies.length, openMaintenance,
         expectedThisMonth, collectedThisMonth,
         applications: applications.length,

@@ -35,7 +35,7 @@ export default function Notifications() {
               <div key={n.id} className={`flex items-start justify-between rounded-lg border px-4 py-3 ${n.read ? "border-slate-100 bg-white" : "border-emerald-200 bg-emerald-50/40"}`}>
                 <div className="flex items-start gap-3">
                   <div className={`mt-0.5 h-2 w-2 rounded-full ${n.read ? "bg-slate-300" : "bg-emerald-500"}`} />
-                  <div><p className="font-medium text-slate-900">{n.title}</p><p className="text-sm text-slate-600">{n.message}</p><p className="mt-0.5 text-xs text-slate-400">{new Date(n.date).toLocaleString()}</p></div>
+                  <div><p className="font-medium text-slate-900">{n.title}</p><p className="text-sm text-slate-600">{n.message}</p><p className="mt-0.5 text-xs text-slate-400">{new Date(n.date).toLocaleString('en-KE',{timeZone:'Africa/Nairobi'})}</p></div>
                 </div>
                 {!n.read && <button onClick={() => markRead(n.id)} className="text-emerald-700 hover:text-emerald-800"><Check className="h-4 w-4" /></button>}
               </div>

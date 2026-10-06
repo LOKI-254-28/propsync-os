@@ -94,7 +94,7 @@ export default function Layout({ children }) {
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden items-center gap-3 lg:flex">
             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">{user?.account_type === 'admin' ? 'Admin' : 'Landowner'}</span>
-            <span className="text-sm text-slate-500">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+            <span className="text-sm text-slate-500">{new Date().toLocaleDateString("en-US", { timeZone: 'Africa/Nairobi', weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
           </div>
           <Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" /><span className="absolute -right-1 -top-1"><AlertBadge count={unread} /></span></Link>
         </header>

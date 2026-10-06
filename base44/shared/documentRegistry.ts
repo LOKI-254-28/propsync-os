@@ -92,7 +92,7 @@ export async function syncRecordFiles(sr, user, entity, record, historical = fal
       links, source:`${entity}:${record.id}`, category:entry.category,
       title:`${entry.category} – ${record.applicant_name || record.tenant_name || record.full_name || record.property_name || record.name || record.unit_number || entity}`,
       visibility: ['Property','Unit','Listing','Expense'].includes(entity) ? 'staff_only' : 'tenant_visible',
-      date: historical ? (record.created_date || '').slice(0,10) || undefined : undefined, historical,
+      date: historical && record.created_date ? nairobiToday(record.created_date) : undefined, historical,
     });
     result.linked++;
   }

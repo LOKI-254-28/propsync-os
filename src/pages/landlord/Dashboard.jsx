@@ -6,6 +6,7 @@ import { portfolioStats, KES, monthKey, monthLabel } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import AdminApprovalSection from "@/components/AdminApprovalSection";
 import DashboardAlerts from '@/components/alerts/DashboardAlerts';
+import {nairobiToday,addDays} from '@/lib/nairobiDates';
 import {
   Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, TrendingUp,
   Receipt, Columns3, ArrowRight, ClipboardCheck, FileText, ScrollText,
@@ -22,7 +23,7 @@ export default function Dashboard() {
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
   const recentPayments = [...data.payments].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)).slice(0, 6);
-  const expiringTenancies = data.tenancies.filter((t) => t.status === "Expiring Soon" || (t.expected_end_date && new Date(t.expected_end_date) < new Date(Date.now() + 30 * 86400000) && ["Active"].includes(t.status))).slice(0, 5);
+  const expiringTenancies = data.tenancies.filter((t) => t.status === "Expiring Soon" || (t.expected_end_date && t.expected_end_date < addDays(nairobiToday(),30) && ["Active"].includes(t.status))).slice(0, 5);
   const openApps = data.applications.filter((a) => ["Pending", "Under Review"].includes(a.status)).slice(0, 5);
   const openMaint = data.maintenance.filter((m) => !["Completed", "Closed", "Rejected"].includes(m.status)).slice(0, 5);
 

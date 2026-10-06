@@ -13,8 +13,10 @@ export async function buildReportSnapshot(sr, request) {
     let next;
     do { const page = await sr.entities[name].filter({ ...query, ...extra }, { limit: 200, cursor: next }); page.items.forEach(handle); next = page.has_more ? page.next_cursor : null; } while (next);
   };
+  const occupiedUnits=new Map();
+  await scan('Tenancy',t=>{if(['Active','Expiring Soon','Notice Given'].includes(t.status)&&(!t.start_date||t.start_date<=today)&&(!t.actual_end_date||t.actual_end_date>today))occupiedUnits.set(t.unit_id,t);});
   await Promise.all([
-    scan('Unit', u => { summary.units++; if (['Occupied', 'Notice Given'].includes(u.status)) summary.occupied++; occupancy.set(u.status || 'Unknown', (occupancy.get(u.status || 'Unknown') || 0) + 1); }),
+    scan('Unit', u => { const t=occupiedUnits.get(u.id),occupied=!!t&&t.property_id===u.property_id; const status=occupied?(t.status==='Notice Given'?'Notice Given':'Occupied'):['Occupied','Notice Given'].includes(u.status)?'Available':u.status || 'Unknown'; if(status!=='Inactive')summary.units++; if(occupied)summary.occupied++; occupancy.set(status,(occupancy.get(status)||0)+1); }),
     scan('RentCharge', c => { summary.charged += Number(c.amount || 0); summary.paidAgainstCharges += Number(c.amount_paid || 0); summary.outstanding += Number(c.outstanding || 0); if (c.due_date < today && Number(c.outstanding) > 0) summary.arrears += Number(c.outstanding); }, { status: { $ne: 'Void' } }),
     scan('Payment', p => { const amount = Number(p.amount || 0); summary.income += amount; const row = monthly.get((p.payment_date || '').slice(0,7)); if (row) row.income += amount; }, { status: 'Successful' }),
     scan('Expense', e => { const amount = Number(e.amount || 0); summary.expenses += amount; const row = monthly.get((e.date || '').slice(0,7)); if (row) row.expenses += amount; }),

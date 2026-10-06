@@ -3,18 +3,12 @@ import { StatCard } from "@/components/ui-bits";
 import { KES } from "@/lib/finance";
 import { DoorOpen, Users, DoorClosed, Wrench, Percent, Wallet } from "lucide-react";
 
-const ACTIVE = ["Active", "Expiring Soon", "Notice Given"];
-const HELD = ["Reserved", "Application Pending"];
+import {occupancySummary} from '@/lib/occupancy';
 
 // Unit statistics computed from real units and active tenancies (not the unit status flag alone).
 export default function UnitStats({ units, tenancies }) {
-  const live = units.filter((u) => u.status !== "Inactive");
-  const occupiedIds = new Set(tenancies.filter((t) => ACTIVE.includes(t.status)).map((t) => t.unit_id));
-  const occupied = live.filter((u) => occupiedIds.has(u.id));
-  const held = live.filter((u) => !occupiedIds.has(u.id) && HELD.includes(u.status));
-  const maint = live.filter((u) => !occupiedIds.has(u.id) && u.status === "Under Maintenance");
-  const vacant = live.length - occupied.length - held.length - maint.length;
-  const rate = live.length ? Math.round((occupied.length / live.length) * 100) : 0;
+  const {live,occupied,held,maintenance:maint,vacant:vacantUnits,rate}=occupancySummary(units,tenancies);
+  const vacant=vacantUnits.length;
   const potential = live.reduce((s, u) => s + Number(u.monthly_rent || 0), 0);
   const actual = occupied.reduce((s, u) => s + Number(u.monthly_rent || 0), 0);
 

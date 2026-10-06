@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { computeUnitAvailability } from '../../shared/unitAvailability.ts';
 import { syncRecordFiles } from '../../shared/documentRegistry.ts';
+import {nairobiToday,addDays} from '../../shared/nairobiDates.ts';
 
 const CLOSED = ['Rejected', 'Withdrawn', 'Cancelled', 'Expired', 'Completed'];
 const SLOT = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -38,7 +39,7 @@ export default async function(req: Request): Promise<Response> {
     const avail = await computeUnitAvailability(sr, unit);
     if (!avail.bookable) return Response.json({ error: 'This unit is not open for booking yet.' }, { status: 409 });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = nairobiToday();
     const schedule = b.visit === 'schedule';
     if (schedule && (!b.visit_date || b.visit_date < today || !SLOT.test(b.visit_time || ''))) {
       return Response.json({ error: 'Choose a valid visit date and time.' }, { status: 400 });
@@ -72,7 +73,7 @@ export default async function(req: Request): Promise<Response> {
       message: String(b.message || '').slice(0, 1000),
       documents:[idDoc.file_uri,photoDoc.file_uri],
       status: legacyReservation ? 'Pending' : schedule ? 'Site Visit Requested' : 'Submitted',
-      ...(legacyReservation ? { reservation_expiry:new Date(Date.now()+3*86400000).toISOString().slice(0,10) } : {}),
+      ...(legacyReservation ? { reservation_expiry:addDays(today,3) } : {}),
       submitted_date: today,
       application_type: 'rental',
       owner_user_id: property.owner_user_id || '',

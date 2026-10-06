@@ -6,6 +6,8 @@ import { PageHeader, SectionCard, EmptyState, Field } from "@/components/ui-bits
 import { Button } from "@/components/ui/button";
 import { BarChart3, Download } from "lucide-react";
 import ReportRequestsPanel from '@/components/reports/ReportRequestsPanel';
+import {occupancySummary} from '@/lib/occupancy';
+import {nairobiToday} from '@/lib/nairobiDates';
 
 const REPORTS = [
   { key: "rent", label: "Rent Collection", desc: "All rent charges with paid/outstanding balances" },
@@ -26,9 +28,9 @@ export default function Reports() {
   const rows = useMemo(() => {
     let r = [];
     if (active === "rent") r = data.charges.filter((c) => !filterProp || c.property_id === filterProp).map((c) => ({ Period: c.billing_period, Tenant: c.tenant_name, Unit: c.unit_number, Property: c.property_name, Amount: c.amount, Paid: c.amount_paid, Outstanding: c.outstanding, Status: c.status }));
-    else if (active === "arrears") r = data.charges.filter((c) => c.status !== "Void" && c.outstanding > 0 && c.due_date && new Date(c.due_date) < new Date() && (!filterProp || c.property_id === filterProp)).map((c) => ({ Period: c.billing_period, Tenant: c.tenant_name, Unit: c.unit_number, Due: c.due_date, Outstanding: c.outstanding, Status: c.status }));
+    else if (active === "arrears") r = data.charges.filter((c) => c.status !== "Void" && c.outstanding > 0 && c.due_date && c.due_date < nairobiToday() && (!filterProp || c.property_id === filterProp)).map((c) => ({ Period: c.billing_period, Tenant: c.tenant_name, Unit: c.unit_number, Due: c.due_date, Outstanding: c.outstanding, Status: c.status }));
     else if (active === "tenants") r = data.tenants.map((t) => { const outstanding = data.charges.filter((c) => c.tenant_id === t.id && c.status !== "Void" && c.status !== "Paid").reduce((s, c) => s + Number(c.outstanding || 0), 0); const tenancy = data.tenancies.find((x) => x.tenant_id === t.id && ["Active", "Expiring Soon", "Notice Given"].includes(x.status)); return { Name: t.full_name, Email: t.email, Phone: t.phone, Unit: tenancy?.unit_number || "—", Status: t.status, Outstanding: outstanding }; });
-    else if (active === "occupancy") r = data.units.filter((u) => !filterProp || u.property_id === filterProp).map((u) => ({ Unit: u.unit_number, Property: u.property_name, Type: u.unit_type, Bedrooms: u.bedrooms, Rent: u.monthly_rent, Tenant: u.current_tenant_name || "—", Status: u.status }));
+    else if (active === "occupancy") r = occupancySummary(data.units,data.tenancies).units.filter((u) => !filterProp || u.property_id === filterProp).map((u) => ({ Unit: u.unit_number, Property: u.property_name, Type: u.unit_type, Bedrooms: u.bedrooms, Rent: u.monthly_rent, Tenant: u.current_tenant_name || "—", Status: u.status }));
     else if (active === "maintenance") r = data.maintenance.filter((m) => !filterProp || m.property_id === filterProp).map((m) => ({ Ticket: m.ticket_number, Title: m.title, Unit: m.unit_number, Category: m.category, Priority: m.priority, Status: m.status, Cost: m.actual_cost || 0, Date: m.date_reported }));
     else if (active === "income") { const pays = data.payments.filter((p) => p.status === "Successful" && (!filterProp || p.property_id === filterProp)); const exps = data.expenses.filter((e) => !filterProp || e.property_id === filterProp); r = [...pays.map((p) => ({ Date: p.payment_date, Type: "Income", Description: `Payment — ${p.tenant_name}`, Amount: p.amount })), ...exps.map((e) => ({ Date: e.date, Type: "Expense", Description: `${e.category} — ${e.description}`, Amount: -e.amount }))].sort((a, b) => new Date(b.Date) - new Date(a.Date)); }
     else if (active === "tenancyExpiry") r = data.tenancies.filter((t) => t.expected_end_date && (!filterProp || t.property_id === filterProp)).sort((a, b) => new Date(a.expected_end_date) - new Date(b.expected_end_date)).map((t) => ({ Reference: t.tenancy_reference, Tenant: t.tenant_name, Unit: t.unit_number, Start: t.start_date, End: t.expected_end_date, Status: t.status }));

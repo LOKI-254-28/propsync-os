@@ -15,6 +15,8 @@ import { downloadFile } from "@/lib/files";
 import VisitPanel from "@/components/applications/VisitPanel";
 import ApplicationPayment from "@/components/payment/ApplicationPayment";
 import { syncUploadedDocuments } from '@/lib/registerUpload';
+import { patchApplication } from '@/lib/applicationActions';
+import MoveInInspectionPanel from '@/components/inspections/MoveInInspectionPanel';
 
 export default function MyApplications() {
   const t = useTenantData();
@@ -58,7 +60,7 @@ export default function MyApplications() {
         updates = { payment_proof_url: form.payment_proof_url, payment_reference: form.payment_reference, payment_status: "Proof Submitted", status: "Payment Proof Submitted" };
         label = "Payment Proof Submitted";
       }
-      await base44.entities.Application.update(actionApp.id, updates);
+      await patchApplication(actionApp.id, updates);
       await syncUploadedDocuments('Application',actionApp.id);
       await logAudit({ user: me, action: `Application ${label}`, entity: "Application", entity_id: actionApp.id, entity_name: actionApp.application_reference });
       if (actionApp.owner_user_id) {
@@ -135,6 +137,8 @@ export default function MyApplications() {
                   <p className="text-rose-700">{a.landlord_response}</p>
                 </div>
               )}
+
+              {['Payment Verified','Approved','Completed'].includes(a.status) && <MoveInInspectionPanel app={a} role="tenant" onUpdated={t.reload} />}
 
               {/* Client actions based on status */}
               <div className="mt-3 flex flex-wrap gap-2">

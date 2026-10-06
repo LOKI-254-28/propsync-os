@@ -13,6 +13,8 @@ import { toast } from "@/components/ui/use-toast";
 import { downloadFile } from "@/lib/files";
 import VisitPanel from "@/components/applications/VisitPanel";
 import ProceedPanel from "@/components/applications/ProceedPanel";
+import { patchApplication, completeApplication } from '@/lib/applicationActions';
+import MoveInInspectionPanel from '@/components/inspections/MoveInInspectionPanel';
 
 const STATUSES = ["Submitted", "Under Review", "More Information Required", "Information Provided", "Site Visit Requested", "Site Visit Scheduled", "Site Visit Completed", "Agreement Issued", "Agreement Executed", "Payment Requested", "Payment Proof Submitted", "Payment Verified", "Approved", "Completed", "Rejected", "Withdrawn", "Cancelled", "Expired"];
 
@@ -42,7 +44,7 @@ export default function Applications() {
     setBusy(true);
     try {
       const me = await base44.auth.me();
-      await base44.entities.Application.update(review.id, updates);
+      await patchApplication(review.id, updates);
       await logAudit({ user: me, action: `Application ${actionLabel}`, entity: "Application", entity_id: review.id, entity_name: review.application_reference, new_value: updates });
       if (notifyClient && review.tenant_user_id) await notify({ recipient_user_id: review.tenant_user_id, type: "Application", title: `Application ${actionLabel}`, message: `Your application for ${review.unit_number} has been updated: ${actionLabel}.`, related_entity: "Application", related_id: review.id, action_link: "/portal/applications" });
       toast({ title: "Success", description: `Application ${actionLabel.toLowerCase()}.` });
@@ -60,7 +62,7 @@ export default function Applications() {
     setBusy(true);
     try {
       const me = await base44.auth.me();
-      await base44.entities.Application.update(review.id, { status: "Rejected", landlord_response: response });
+      await patchApplication(review.id, { status: "Rejected", landlord_response: response });
       const unit = data.units.find((u) => u.id === review.unit_id);
       if (unit && unit.status === "Application Pending") await base44.entities.Unit.update(unit.id, { status: "Available" });
       if (review.listing_id) {
@@ -83,31 +85,7 @@ export default function Applications() {
     if (!review) return;
     setBusy(true);
     try {
-      const me = await base44.auth.me();
-      const unit = data.units.find((u) => u.id === review.unit_id);
-      let tenantRec = data.tenants.find((t) => t.id === review.tenant_id) || data.tenants.find((t) => t.email === review.applicant_email);
-      if (!tenantRec) {
-        tenantRec = await secureCreate("Tenant", { full_name: review.applicant_name, email: review.applicant_email, phone: review.applicant_phone, id_number: review.id_number, occupation: review.occupation, monthly_income: review.monthly_income, user_id: review.tenant_user_id, status: "Active", profile_type: "tenant" });
-      }
-      const tUserId = tenantRec.user_id || review.tenant_user_id;
-
-      if (review.application_type === "rental") {
-        if (!unit) throw new Error("Unit not found for this application.");
-        const ref = genRef("TEN");
-        const tenancy = await secureCreate("Tenancy", {
-          tenancy_reference: ref, tenant_id: tenantRec.id, tenant_name: tenantRec.full_name, tenant_user_id: tUserId,
-          property_id: unit.property_id, property_name: unit.property_name, unit_id: unit.id, unit_number: unit.unit_number,
-          start_date: review.proposed_start_date || todayISO(), expected_end_date: "",
-          monthly_rent: review.monthly_rent || unit.monthly_rent, security_deposit: unit.security_deposit, service_charge: unit.service_charge,
-          payment_due_day: 1, grace_period_days: 7, notice_period_days: 30, status: "Active",
-        });
-        await base44.entities.Unit.update(unit.id, { status: "Occupied", current_tenancy_id: tenancy.id, current_tenant_name: tenantRec.full_name });
-        if (review.listing_id) await base44.entities.Listing.update(review.listing_id, { status: "Rented", date_closed: todayISO() });
-        await logAudit({ user: me, action: "Application Approved → Tenancy Created", entity: "Tenancy", entity_id: tenancy.id, entity_name: ref });
-        if (tUserId) await notify({ recipient_user_id: tUserId, type: "Tenancy", title: "Application Approved!", message: `Your tenancy for ${unit.unit_number} has been created.`, related_entity: "Tenancy", related_id: tenancy.id, action_link: "/portal/tenancy" });
-      }
-
-      await base44.entities.Application.update(review.id, { status: "Completed", landlord_response: response || "Application approved and completed." });
+      await completeApplication(review.id, response || 'Application approved and completed.');
       toast({ title: "Success", description: "Application approved and completed." });
       setReview(null); setResponse(""); data.reload();
     } catch (err) {
@@ -164,7 +142,7 @@ export default function Applications() {
         </SectionCard>
       )}
 
-      <Dialog open={!!review} onOpenChange={(value) => { if (!value && !uploading) setReview(null); }}>
+      <Dialog open={!!review} onOpenChange={(value) => { if (!value && !uploading && !busy) setReview(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {review && (
             <>
@@ -215,6 +193,8 @@ export default function Applications() {
 
               <Field label="Landlord response"><Textarea value={response} onChange={(e) => setResponse(e.target.value)} rows={2} placeholder="Message to applicant..." /></Field>
 
+              {['Payment Verified','Approved','Completed'].includes(s) && <MoveInInspectionPanel app={review} role="landlord" onBusyChange={setUploading} onUpdated={() => {setReview(null);data.reload();}} />}
+
               {/* Workflow actions based on status */}
               <div className="mt-2 space-y-3 border-t border-slate-100 pt-3">
                 <fieldset disabled={uploading}>
@@ -243,7 +223,7 @@ export default function Applications() {
                   <div className="space-y-3">
 
                     <div className="flex flex-wrap gap-2">
-                      <Button onClick={approveAndComplete} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Complete</Button>
+                      <Button onClick={() => patch({status:'Under Review'},'Marked Under Review')} disabled={busy} variant="outline">Continue Review</Button>
                       <Button onClick={reject} disabled={busy} variant="outline" className="border-rose-200 text-rose-700 hover:bg-rose-50"><X className="mr-1.5 h-4 w-4" />Reject</Button>
                     </div>
                   </div>
@@ -280,11 +260,11 @@ export default function Applications() {
                 )}
 
                 {s === "Payment Verified" && (
-                  <Button onClick={approveAndComplete} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Complete {appTypeLabel}</Button>
+                  <Button onClick={approveAndComplete} disabled={busy || uploading || data.inspections.find(i => i.id === review.inspection_id)?.tenant_approval_status !== 'Approved'} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Start Tenancy</Button>
                 )}
 
                 {s === "Approved" && (
-                  <Button onClick={approveAndComplete} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Complete {appTypeLabel}</Button>
+                  <Button onClick={approveAndComplete} disabled={busy || uploading || data.inspections.find(i => i.id === review.inspection_id)?.tenant_approval_status !== 'Approved'} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Start Tenancy</Button>
                 )}
 
                 {(s === "Completed") && <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">This application has been completed.</div>}

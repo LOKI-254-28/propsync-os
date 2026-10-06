@@ -37,12 +37,19 @@ export async function inspectionAction(sr,user,context,body) {
   }
   if (body.action !== 'inspection_respond') throw registryError('Unknown inspection action.');
   if (staff || app.tenant_user_id !== user.id) throw registryError('Only the associated tenant can approve or reject this record.',403);
-  if (!current || current.id !== body.inspection_id || current.tenant_approval_status !== 'Pending') throw registryError('Reload the current pending inspection before responding.',409);
+  if (typeof body.request_id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(body.request_id)) throw registryError('A response reference is required.');
+  if (!current || current.id !== body.inspection_id) throw registryError('Reload the current inspection before responding.',409);
+  if (current.tenant_approval_status !== 'Pending') {
+    if (current.response_token !== body.request_id || current.responded_by !== user.id) throw registryError('This inspection has already received a response.',409);
+    await syncRecordFiles(sr,user,'Inspection',current);
+    await sr.entities.Application.update(app.id,{inspection_approval_status:current.tenant_approval_status});
+    return {inspection:current};
+  }
   if (!['Approved','Rejected'].includes(body.decision) || typeof (body.comment || '') !== 'string' || (body.comment || '').length > 2000 || (body.decision === 'Rejected' && !body.comment?.trim())) throw registryError('Choose a decision and add a comment when rejecting.');
   const supporting = body.supporting_documents || [];
   if (supporting.length > 6) throw registryError('Attach up to six supporting files.');
   await ownedUploads(sr,user,supporting,{appId:app.id});
-  const token = crypto.randomUUID();
+  const token = body.request_id;
   await sr.entities.Inspection.updateMany({id:current.id,tenant_approval_status:'Pending'},{$set:{tenant_approval_status:body.decision,tenant_comment:body.comment || '',supporting_documents:supporting,responded_by:user.id,responded_at:new Date().toISOString(),response_token:token}});
   const inspection = await sr.entities.Inspection.get(current.id);
   if (inspection.response_token !== token) throw registryError('This inspection has already received a response.',409);

@@ -11,12 +11,12 @@ export async function completeApplication(sr,user,context,body) {
   if (!inspection || inspection.application_id !== app.id || inspection.tenant_approval_status !== 'Approved' || inspection.responded_by !== app.tenant_user_id) throw registryError('The tenant must approve the move-in inspection first.',409);
   if (app.agreement_status !== 'Executed' || !app.agreement_executed_url) throw registryError('A signed agreement is required.',409);
   if (typeof body.request_id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(body.request_id)) throw registryError('A completion reference is required.');
-  const token = body.request_id, now = new Date().toISOString(), stale = new Date(Date.now()-6*60000).toISOString();
-  await sr.entities.Application.updateMany({id:app.id,status:{$in:['Payment Verified','Approved']},$or:[{completion_token:{$in:['',null]}},{completion_token:{$exists:false}},{completion_token:token},{completion_started_at:{$lt:stale}}]},{$set:{completion_token:token,completion_started_at:now}});
+  const token = crypto.randomUUID(), now = new Date().toISOString(), stale = new Date(Date.now()-6*60000).toISOString();
+  await sr.entities.Application.updateMany({id:app.id,status:{$in:['Payment Verified','Approved']},$or:[{completion_token:{$in:['',null]}},{completion_token:{$exists:false}},{completion_started_at:{$lt:stale}}]},{$set:{completion_token:token,completion_started_at:now}});
   if ((await sr.entities.Application.get(app.id)).completion_token !== token) throw registryError('Completion is already in progress. Please retry shortly.',409);
   let tenancy = existing;
   try {
-    await sr.entities.Unit.updateMany({id:unit.id,$or:[{activation_token:{$in:['',null]}},{activation_token:{$exists:false}},{activation_token:token},{activation_started_at:{$lt:stale}}]},{$set:{activation_token:token,activation_started_at:now}});
+    await sr.entities.Unit.updateMany({id:unit.id,$or:[{activation_token:{$in:['',null]}},{activation_token:{$exists:false}},{activation_started_at:{$lt:stale}}]},{$set:{activation_token:token,activation_started_at:now}});
     const locked = await sr.entities.Unit.get(unit.id);
     if (locked.activation_token !== token) throw registryError('Another tenancy is being created for this unit.',409);
     const active = await sr.entities.Tenancy.filter({unit_id:unit.id,status:{$in:['Active','Expiring Soon','Notice Given']}});

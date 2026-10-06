@@ -22,6 +22,7 @@ export async function patchApplication(sr,user,context,updates) {
     if (target === 'Payment Verified' && (!app.payment_proof_url || app.payment_status !== 'Proof Submitted')) throw registryError('A submitted payment proof is required.',409);
     if ('payment_amount' in updates && (!Number.isFinite(updates.payment_amount) || updates.payment_amount <= 0)) throw registryError('Enter a positive payment amount.');
     if (target === 'Payment Requested' && app.status === 'Agreement Executed' && !app.agreement_executed_url) throw registryError('The signed agreement is missing.',409);
+    if ('agreement_status' in updates && !(target === 'Agreement Issued' && updates.agreement_status === 'Issued')) throw registryError('The signed agreement must be submitted by the tenant.',403);
     if ('agreement_url' in updates) {
       if (target !== 'Agreement Issued' || !updates.agreement_url) throw registryError('Issue the agreement using the agreement action.');
       await ownedUploads(sr,user,[updates.agreement_url],{appId:app.id});

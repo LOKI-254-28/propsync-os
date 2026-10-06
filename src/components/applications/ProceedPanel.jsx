@@ -6,6 +6,7 @@ import { Check, X, FileSignature, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from "@/components/FileUploadButton";
 import { syncUploadedDocuments } from '@/lib/registerUpload';
+import { patchApplication } from '@/lib/applicationActions';
 
 // Landlord decision after the site visit is accepted (or skipped): Proceed (send agreement) or Terminate.
 export default function ProceedPanel({ app, onUpdated, onBusyChange }) {
@@ -19,7 +20,7 @@ export default function ProceedPanel({ app, onUpdated, onBusyChange }) {
   const run = async (updates, title) => {
     setBusy(true);
     try {
-      await base44.entities.Application.update(app.id, updates);
+      await patchApplication(app.id, updates);
       await syncUploadedDocuments('Application',app.id);
       if (app.tenant_user_id) await notify({ recipient_user_id: app.tenant_user_id, type: "Application", title, message: `${title} — ${app.unit_number} · ${app.property_name}.`, related_entity: "Application", related_id: app.id, action_link: "/portal/applications" });
       toast({ title });

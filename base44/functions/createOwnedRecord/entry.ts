@@ -99,6 +99,13 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ ok: true, records: created });
     }
 
+    // Application-linked inspection and tenancy actions must use the approval flow.
+    if (data?.application_id && ['Inspection','Tenancy'].includes(entity)) return Response.json({error:'Use the application approval workflow for this record.'},{status:409});
+    if (entity === 'Tenancy' && data?.unit_id) {
+      const pending = await base44.asServiceRole.entities.Application.filter({unit_id:data.unit_id,status:{$nin:['Completed','Rejected','Withdrawn','Cancelled','Expired']}},'-created_date',1);
+      if (pending.length) return Response.json({error:'Complete the pending application and inspection approvals before creating this tenancy.'},{status:409});
+    }
+
     // ---- Single record creation ----
     if (!data) return Response.json({ error: 'Data is required' }, { status: 400 });
 

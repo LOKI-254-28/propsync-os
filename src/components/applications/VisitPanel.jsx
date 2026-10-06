@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Check, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import VisitSlotPicker from "@/components/applications/VisitSlotPicker";
+import { patchApplication } from '@/lib/applicationActions';
 
 // Site-visit negotiation used by both the landlord and the tenant. role: "landlord" | "tenant".
 export default function VisitPanel({ app, role, onUpdated }) {
@@ -25,7 +26,7 @@ export default function VisitPanel({ app, role, onUpdated }) {
   const run = async (updates, title) => {
     setBusy(true);
     try {
-      await base44.entities.Application.update(app.id, updates);
+      await patchApplication(app.id, updates);
       const to = role === "landlord" ? app.tenant_user_id : app.owner_user_id;
       if (to) await notify({ recipient_user_id: to, type: "Application", title, message: `${title} for ${app.unit_number} · ${app.property_name}.`, related_entity: "Application", related_id: app.id, action_link: role === "landlord" ? "/portal/applications" : "/site-visits" });
       toast({ title });

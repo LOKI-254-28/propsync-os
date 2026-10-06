@@ -1,0 +1,6 @@
+import React from 'react';
+import { Input } from '@/components/ui/input';
+export default function InspectionChecklist({rows,onChange,disabled}) {
+  const change=(index,field,value)=>onChange(rows.map((row,i)=>i===index?{...row,[field]:value}:row));
+  return <div className="space-y-2"><p className="text-sm font-medium">Unit condition checklist</p>{rows.map((row,index)=><div key={row.area} className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-3"><span className="self-center text-sm">{row.area}</span><select aria-label={`${row.area} condition`} disabled={disabled} value={row.condition} onChange={e=>change(index,'condition',e.target.value)} className="rounded-md border border-input bg-background p-2 text-sm">{['Excellent','Good','Fair','Poor'].map(value=><option key={value}>{value}</option>)}</select><Input aria-label={`${row.area} notes`} disabled={disabled} value={row.notes} onChange={e=>change(index,'notes',e.target.value)} placeholder="Condition notes" maxLength={1000}/></div>)}</div>;
+}

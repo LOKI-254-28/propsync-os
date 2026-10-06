@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { syncUploadedDocuments } from '@/lib/registerUpload';
+import { patchApplication } from '@/lib/applicationActions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui-bits";
@@ -23,7 +24,7 @@ export default function NextOfKinForm({ app, onSaved, onBusyChange }) {
     setBusy(true);
     try {
       const rec = await base44.entities.NextOfKin.create({ ...f, application_id: app.id, tenant_user_id: app.tenant_user_id, owner_user_id: app.owner_user_id });
-      await base44.entities.Application.update(app.id, { next_of_kin_id: rec.id });
+      await patchApplication(app.id, { next_of_kin_id: rec.id });
       await syncUploadedDocuments('NextOfKin',rec.id);
       onSaved(rec);
     } catch (e) {

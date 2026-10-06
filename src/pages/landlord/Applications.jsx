@@ -26,6 +26,7 @@ export default function Applications() {
   const [response, setResponse] = useState("");
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [inspectionApproved, setInspectionApproved] = useState(false);
   const [workflow, setWorkflow] = useState({ site_visit_date: "", site_visit_time: "", site_visit_notes: "", agreement_url: "", payment_amount: 0, payment_due_date: "", payment_method: "M-Pesa", payment_instructions: "" });
 
   const list = useMemo(() => data.applications
@@ -35,6 +36,7 @@ export default function Applications() {
 
   const openReview = (a) => {
     setReview(a);
+    setInspectionApproved(data.inspections.find(i=>i.id === a.inspection_id)?.tenant_approval_status === 'Approved');
     setResponse(a.landlord_response || "");
     setWorkflow({ site_visit_date: a.site_visit_date || "", site_visit_time: a.site_visit_time || "", site_visit_notes: a.site_visit_notes || "", agreement_url: a.agreement_url || "", payment_amount: a.payment_amount || a.monthly_rent || 0, payment_due_date: a.payment_due_date || "", payment_method: a.payment_method || "M-Pesa", payment_instructions: a.payment_instructions || "" });
   };
@@ -193,7 +195,7 @@ export default function Applications() {
 
               <Field label="Landlord response"><Textarea value={response} onChange={(e) => setResponse(e.target.value)} rows={2} placeholder="Message to applicant..." /></Field>
 
-              {['Payment Verified','Approved','Completed'].includes(s) && <MoveInInspectionPanel app={review} role="landlord" onBusyChange={setUploading} onUpdated={() => {setReview(null);data.reload();}} />}
+              {['Payment Verified','Approved','Completed'].includes(s) && <MoveInInspectionPanel app={review} role="landlord" onBusyChange={setUploading} onApprovalChange={setInspectionApproved} onUpdated={() => {setReview(null);data.reload();}} />}
 
               {/* Workflow actions based on status */}
               <div className="mt-2 space-y-3 border-t border-slate-100 pt-3">
@@ -260,11 +262,11 @@ export default function Applications() {
                 )}
 
                 {s === "Payment Verified" && (
-                  <Button onClick={approveAndComplete} disabled={busy || uploading || data.inspections.find(i => i.id === review.inspection_id)?.tenant_approval_status !== 'Approved'} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Start Tenancy</Button>
+                  <Button onClick={approveAndComplete} disabled={busy || uploading || !inspectionApproved} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Start Tenancy</Button>
                 )}
 
                 {s === "Approved" && (
-                  <Button onClick={approveAndComplete} disabled={busy || uploading || data.inspections.find(i => i.id === review.inspection_id)?.tenant_approval_status !== 'Approved'} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Start Tenancy</Button>
+                  <Button onClick={approveAndComplete} disabled={busy || uploading || !inspectionApproved} className="bg-emerald-600 hover:bg-emerald-700"><Check className="mr-1.5 h-4 w-4" />Approve & Start Tenancy</Button>
                 )}
 
                 {(s === "Completed") && <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">This application has been completed.</div>}

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ClipboardCheck, Plus, Calendar } from "lucide-react";
+import InspectionDetails from '@/components/inspections/InspectionDetails';
 
 export default function Inspections() {
   const data = usePortfolioData();
@@ -96,13 +97,14 @@ export default function Inspections() {
       </Dialog>
 
       <Dialog open={!!view} onOpenChange={() => setView(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           {view && (
             <>
               <DialogHeader><DialogTitle>Inspection — {view.inspection_reference}</DialogTitle></DialogHeader>
               <div className="grid grid-cols-2 gap-3 py-2 text-sm">
                 <Info label="Type" value={view.type} /><Info label="Unit" value={view.unit_number} /><Info label="Date" value={view.scheduled_date} /><Info label="Status" value={<StatusBadge status={view.status} />} />
               </div>
+              {view.application_id && <InspectionDetails inspection={view}/>}
               {view.status !== "Completed" ? (
                 <div className="space-y-3">
                   <Field label="Condition rating"><select value={result.condition_rating} onChange={(e) => setResult({ ...result, condition_rating: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{["Excellent", "Good", "Fair", "Poor"].map((c) => <option key={c}>{c}</option>)}</select></Field>

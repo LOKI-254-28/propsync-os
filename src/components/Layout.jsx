@@ -17,7 +17,7 @@ import useSectionAlerts from '@/components/alerts/useSectionAlerts';
 import AlertBadge from '@/components/alerts/AlertBadge';
 
 const ICONS = {
-  LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
+  LogOut, LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, Bell, FolderOpen, Receipt, BarChart3,
   Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote, CalendarClock, MessageSquare,
 };

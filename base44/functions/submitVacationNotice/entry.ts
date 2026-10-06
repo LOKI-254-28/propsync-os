@@ -1,34 +1,35 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { waitUntil } from 'base44:runtime';
-import { nairobiToday, addDays } from '../../shared/nairobiDates.ts';
+import { vacationAccess } from '../../shared/vacationAccess.ts';
+import { createVacation,updateVacation } from '../../shared/vacationActions.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
     const b = createClientFromRequest(req), user = await b.auth.me();
     if (!user) return Response.json({ error: 'Please sign in.' }, { status: 401 });
-    const { tenancy_id, type, proposed_vacation_date, reason = '' } = await req.json();
-    const today = nairobiToday();
-    if (typeof tenancy_id !== 'string' || !tenancy_id || !['Vacation Notice', 'Termination Notice', 'Early Termination Request'].includes(type) || typeof proposed_vacation_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(proposed_vacation_date) || !Number.isFinite(new Date(`${proposed_vacation_date}T00:00:00Z`).getTime()) || new Date(`${proposed_vacation_date}T00:00:00Z`).toISOString().slice(0,10) !== proposed_vacation_date || proposed_vacation_date < today || typeof reason !== 'string' || reason.length > 3000) return Response.json({ error: 'Choose a valid notice type and an exit date that is today or later.' }, { status: 400 });
-    const ten = await b.entities.Tenancy.get(tenancy_id);
-    if (ten.tenant_user_id !== user.id || !['Active', 'Expiring Soon', 'Notice Given'].includes(ten.status)) return Response.json({ error: 'You can only submit notice for your own active tenancy.' }, { status: 403 });
-    const sr = b.asServiceRole;
-    const property = await sr.entities.Property.get(ten.property_id);
-    const previous = await b.entities.VacationRequest.filter({ tenancy_id, status: { $nin: ['Rejected', 'Completed'] } }, '-created_date', 1);
-    let notice = previous[0];
-    if (notice && (notice.type !== type || notice.proposed_vacation_date !== proposed_vacation_date)) return Response.json({ error: 'You already have an open notice for this tenancy. Contact your landlord to change it.' }, { status: 409 });
-    if (!notice) {
-      const days = Number(ten.notice_period_days ?? 30);
-      notice = await sr.entities.VacationRequest.create({ request_reference: `VAC-${crypto.randomUUID().slice(0,8).toUpperCase()}`, type, tenant_id: ten.tenant_id, tenant_user_id: user.id, tenant_name: ten.tenant_name || user.full_name || user.email, tenancy_id: ten.id, tenancy_reference: ten.tenancy_reference || '', property_id: ten.property_id, property_name: ten.property_name || property.name, unit_id: ten.unit_id, unit_number: ten.unit_number || '', date_submitted: today, proposed_vacation_date, notice_period_days: days, calculated_notice_expiry: addDays(today, days), reason: reason.trim(), status: 'Submitted', owner_user_id: property.owner_user_id || ten.owner_user_id || '' });
-    } else if (!notice.owner_user_id && property.owner_user_id) {
-      notice = await sr.entities.VacationRequest.update(notice.id, { owner_user_id: property.owner_user_id });
+    const body=await req.json(),sr=b.asServiceRole;
+    body.action=body.action || 'submit';
+    if(!['submit','reply','acknowledge','status','complete','events'].includes(body.action))return Response.json({error:'Choose a valid notice action.'},{status:400});
+    for(const key of ['reason','message','landlord_response','deposit_treatment','final_meter_reading','handover_notes'])if(body[key]!==undefined&&(typeof body[key]!=='string'||body[key].length>3000))return Response.json({error:'Notice text must be at most 3,000 characters.'},{status:400});
+    let notice;
+    if(body.action!=='submit') {
+      if(typeof body.notice_id!=='string'||body.notice_id.length>100)return Response.json({error:'Choose a notice.'},{status:400});
+      notice=await sr.entities.VacationRequest.get(body.notice_id);
     }
-    if (ten.status !== 'Notice Given') await sr.entities.Tenancy.update(ten.id, { status: 'Notice Given' });
-    const unit = await sr.entities.Unit.get(ten.unit_id);
-    if (!unit.current_tenancy_id || unit.current_tenancy_id === ten.id) await sr.entities.Unit.update(unit.id, { status: 'Notice Given' });
-    if (!previous.length) waitUntil(Promise.all([
-      sr.entities.AuditLog.create({ user_id: user.id, user_email: user.email, user_role: user.role, action: 'Vacation Notice Submitted', entity: 'VacationRequest', entity_id: notice.id, entity_name: notice.request_reference, timestamp: new Date().toISOString() }),
-      ...(notice.owner_user_id ? [sr.entities.Notification.create({ recipient_user_id: notice.owner_user_id, type: 'Vacation', title: 'Vacation Notice Submitted', message: `${notice.tenant_name} submitted a ${type}.`, related_entity: 'VacationRequest', related_id: notice.id, action_link: '/vacation-requests', date: new Date().toISOString(), read: false })] : []),
-    ]));
-    return Response.json({ notice });
-  } catch(error) { return Response.json({ error: error.message }, { status: 500 }); }
+    const access=await vacationAccess(b,user,notice?.tenancy_id || body.tenancy_id);
+    if(notice&&((notice.property_id&&notice.property_id!==access.property.id)||(notice.unit_id&&notice.unit_id!==access.tenancy.unit_id)))return Response.json({error:'This notice has inconsistent tenancy links.'},{status:409});
+    if(body.action==='events') {
+      if(body.cursor!==undefined&&body.cursor!==null&&(typeof body.cursor!=='string'||body.cursor.length>2000))return Response.json({error:'Invalid history cursor.'},{status:400});
+      const page=await sr.entities.VacationNoticeEvent.filter({vacation_request_id:notice.id},{sort:'-created_date',limit:50,cursor:body.cursor || undefined});
+      return Response.json(page);
+    }
+    body.operation_id=body.operation_id || crypto.randomUUID();
+    if(typeof body.operation_id!=='string'||!/^[a-f0-9-]{36}$/i.test(body.operation_id))return Response.json({error:'Invalid operation reference.'},{status:400});
+    const result=body.action==='submit'?await createVacation(sr,user,body,access):await updateVacation(sr,user,body,notice,access);
+    if(result.changed) {
+      const recipient=access.manager?result.notice.tenant_user_id:access.property.owner_user_id;
+      waitUntil(Promise.all([sr.entities.AuditLog.create({user_id:user.id,user_email:user.email,user_role:user.role,action:`Vacation Notice ${body.action}`,entity:'VacationRequest',entity_id:result.notice.id,timestamp:new Date().toISOString()}),...(recipient&&recipient!==user.id?[sr.entities.Notification.create({recipient_user_id:recipient,type:'Vacation',title:`${result.notice.type}: ${result.notice.status}`,message:body.message || body.landlord_response || 'Your tenancy notice has been updated.',related_entity:'VacationRequest',related_id:result.notice.id,action_link:access.manager?'/portal/vacation':'/vacation-requests',date:new Date().toISOString(),read:false})]:[])]));
+    }
+    return Response.json(result);
+  } catch(error) { return Response.json({ error: error.message }, { status: error.status || 500 }); }
 }

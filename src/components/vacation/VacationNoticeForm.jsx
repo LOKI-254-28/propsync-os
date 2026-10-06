@@ -1,0 +1,16 @@
+import React,{useState} from 'react';
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogFooter} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
+import {Field} from '@/components/ui-bits';
+import {nairobiToday,noticeExpiry} from '@/lib/nairobiDates';
+import NoticeAttachments from '@/components/vacation/NoticeAttachments';
+import useVacationAction from '@/hooks/useVacationAction';
+export default function VacationNoticeForm({tenancies,manager,onClose,onCreated}) {
+  const [form,setForm]=useState({tenancy_id:tenancies[0]?.id || '',type:'Vacation Notice',proposed_vacation_date:'',reason:''});
+  const [attachments,setAttachments]=useState([]),[uploading,setUploading]=useState(false);
+  const {send,busy,error}=useVacationAction(onCreated),tenancy=tenancies.find(t=>t.id===form.tenancy_id),disabled=busy||uploading;
+  const change=(name,value)=>setForm(previous=>({...previous,[name]:value}));
+  return <Dialog open onOpenChange={value=>{if(!value&&!disabled)onClose();}}><DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>{manager?'Issue vacation / termination notice':'Submit vacation / termination notice'}</DialogTitle></DialogHeader><fieldset disabled={disabled} className="space-y-3"><Field label="Tenancy"><select className="w-full rounded-md border border-input bg-background p-2 text-sm" value={form.tenancy_id} onChange={e=>{change('tenancy_id',e.target.value);setAttachments([]);}}>{tenancies.map(t=><option key={t.id} value={t.id}>{t.tenant_name} · {t.property_name} · {t.unit_number}</option>)}</select></Field><Field label="Notice type"><select className="w-full rounded-md border border-input bg-background p-2 text-sm" value={form.type} onChange={e=>change('type',e.target.value)}>{['Vacation Notice','Termination Notice','Early Termination Request'].map(type=><option key={type}>{type}</option>)}</select></Field><Field label="Proposed exit date"><Input type="date" min={nairobiToday()} value={form.proposed_vacation_date} onChange={e=>change('proposed_vacation_date',e.target.value)}/></Field><p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Notice period: {tenancy?.notice_period_days ?? 30} days. Calculated expiry: {noticeExpiry(tenancy?.notice_period_days ?? 30)}. Issuing a notice does not end the tenancy or settle its balance.</p><Field label="Reason"><Textarea rows={3} maxLength={3000} value={form.reason} onChange={e=>change('reason',e.target.value)}/></Field></fieldset><NoticeAttachments key={form.tenancy_id} files={attachments} onChange={setAttachments} tenancyId={tenancy?.id} disabled={disabled} onBusyChange={setUploading}/>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button disabled={disabled||!tenancy||!form.proposed_vacation_date} onClick={()=>send({action:'submit',...form,attachments})}>{disabled?'Please wait…':manager?'Issue Notice':'Submit Notice'}</Button></DialogFooter></DialogContent></Dialog>;
+}

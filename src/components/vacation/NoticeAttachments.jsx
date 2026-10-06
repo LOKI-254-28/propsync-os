@@ -1,0 +1,7 @@
+import React from 'react';
+import FileUploadButton from '@/components/FileUploadButton';
+import {Button} from '@/components/ui/button';
+import {downloadFile} from '@/lib/files';
+export default function NoticeAttachments({files=[],onChange,tenancyId,noticeId,onBusyChange,disabled=false}) {
+  return <div className="space-y-2">{files.map((uri,index)=><div key={uri} className="flex items-center gap-2"><Button type="button" variant="link" size="sm" onClick={()=>downloadFile(uri)} className="max-w-full truncate">Attachment {index+1}: {uri.split('/').pop()}</Button>{onChange&&<Button type="button" size="sm" variant="ghost" disabled={disabled} onClick={()=>onChange(files.filter(f=>f!==uri))}>Remove</Button>}</div>)}{onChange&&tenancyId&&files.length<5&&<><FileUploadButton multiple maxFiles={5-files.length} disabled={disabled} onBusyChange={onBusyChange} label="Attach supporting files" documentContext={{entity:noticeId?'VacationRequest':'Tenancy',record_id:noticeId || tenancyId,category:'Notice Attachment',visibility:'tenant_visible'}} onUploaded={file=>onChange(previous=>[...new Set([...previous,file.file_uri])])}/><p className="text-xs text-muted-foreground">PDF, JPG or PNG, up to 10 MB each; five files per submission.</p></>}</div>;
+}

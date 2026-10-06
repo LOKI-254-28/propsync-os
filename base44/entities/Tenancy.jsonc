@@ -107,6 +107,13 @@
     "review_lock_started_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "notice_creation_token": {
+      "type": "string"
+    },
+    "notice_creation_started_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

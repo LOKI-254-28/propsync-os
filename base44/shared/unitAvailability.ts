@@ -1,3 +1,4 @@
+import { nairobiToday } from './nairobiDates.ts';
 // Derived unit availability (never stored) — computed from Unit + Tenancy + VacationRequest + Inspection.
 const LIVE_TENANCY = ['Active', 'Expiring Soon', 'Notice Given', 'Pending'];
 const EXIT_STATUSES = ['Notice Given', 'Terminated', 'Vacated'];
@@ -20,12 +21,12 @@ export async function computeUnitAvailability(sr, unit) {
   }
 
   const [vacations, inspections] = await Promise.all([
-    sr.entities.VacationRequest.filter({ tenancy_id: current.id }),
+    sr.entities.VacationRequest.filter({ tenancy_id: current.id, status: { $in: ['Approved','Final Inspection Scheduled','Completed'] } }),
     sr.entities.Inspection.filter({ tenancy_id: current.id, status: 'Completed' }),
   ]);
-  const vac = vacations.find((v) => v.proposed_vacation_date);
+  const vac = vacations.filter(v=>v.proposed_vacation_date).sort((a,b)=>String(b.date_submitted || b.created_date).localeCompare(String(a.date_submitted || a.created_date)))[0];
   const available_from = vac?.proposed_vacation_date || current.expected_end_date || null;
-  const exitInspection = inspections.some((i) => ['Final', 'Move-out'].includes(i.type));
+  const exitInspection = !!vac && inspections.some(i=>['Final','Move-out'].includes(i.type) && i.completed_date && i.completed_date <= nairobiToday() && i.completed_date >= vac.date_submitted);
   const exitRequested = EXIT_STATUSES.includes(current.status) || vacations.length > 0;
   const exit_confirmed = exitInspection && exitRequested;
 

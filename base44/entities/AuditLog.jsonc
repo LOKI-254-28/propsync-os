@@ -44,7 +44,33 @@
         "role": "admin"
       }
     },
-    "create": {},
+    "create": {
+      "$and": [
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "user"
+              }
+            }
+          ]
+        },
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "data.user_role": "{{user.role}}"
+        }
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "admin"

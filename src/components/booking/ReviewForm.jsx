@@ -11,20 +11,23 @@ export default function ReviewForm({ propertyId, onSaved }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
+  const [locked,setLocked]=useState(false);
 
   useEffect(() => {
     base44.functions.invoke("postPropertyReview", { property_id: propertyId, check: true })
       .then(({ data }) => {
         setEligible(data.eligible);
-        if (data.existing) { setRating(data.existing.rating); setComment(data.existing.comment || ""); }
+        if (data.existing) { setLocked(true); setRating(data.existing.rating); setComment(data.existing.comment || ""); }
       }).catch(() => {});
   }, [propertyId]);
 
   if (!eligible) return null;
+  if (locked) return <p className="mt-4 text-sm text-muted-foreground">Your property review has been submitted and is preserved with this tenancy.</p>;
   const save = async () => {
     setBusy(true);
     try {
       await base44.functions.invoke("postPropertyReview", { property_id: propertyId, rating, comment });
+      setLocked(true);
       toast({ title: "Review saved" });
       onSaved();
     } catch (e) {

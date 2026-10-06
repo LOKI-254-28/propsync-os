@@ -91,7 +91,7 @@ export default function Dashboard() {
           <SectionCard title="Alerts" >
             <div className="space-y-3 text-sm">
               <AlertRow icon={FileText} count={openApps.length} label="Pending applications" to="/applications" />
-              <AlertRow icon={ScrollText} count={expiringTenancies.length} label="Expiring tenancies" to="/tenancies" />
+              <AlertRow icon={ScrollText} count={expiringTenancies.length} label="Expiring tenancies" to="/tenants?tab=tenancies" />
               <AlertRow icon={AlertTriangle} count={stats.arrearsCount} label="Arrears charges" to="/arrears" />
               <AlertRow icon={DoorOpen} count={stats.vacantCount} label="Vacant units" to="/units" />
               <AlertRow icon={Wrench} count={stats.openMaintenance} label="Open maintenance" to="/maintenance" />

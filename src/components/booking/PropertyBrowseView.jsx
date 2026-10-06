@@ -41,7 +41,7 @@ export default function PropertyBrowseView({ propertyId, mode }) {
         {p.address && <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><MapPin className="h-4 w-4" />{p.address}</p>}
         {p.description && <p className="mt-3 text-sm text-slate-700">{p.description}</p>}
         {p.amenities.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{p.amenities.map((a) => <span key={a} className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800">{a}</span>)}</div>}
-        <div className="mt-4"><ReviewsSection rating={rating} reviews={reviews} /></div>
+        <div className="mt-4 space-y-4"><section><h2 className="mb-2 font-heading font-semibold">Property reviews</h2><ReviewsSection rating={data.property_rating || {average:0,count:0}} reviews={data.property_reviews || []}/></section><section><h2 className="mb-2 font-heading font-semibold">Tenancy-experience reviews</h2><ReviewsSection rating={data.tenancy_rating || {average:0,count:0}} reviews={data.tenancy_reviews || []}/></section></div>
         {mode === "tenant" && <ReviewForm propertyId={p.id} onSaved={load} />}
       </div>
       {!unit && <PropertyMap latitude={p.latitude} longitude={p.longitude} name={p.name} />}

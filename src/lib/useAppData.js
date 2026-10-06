@@ -6,7 +6,7 @@ import { loadDocuments } from '@/lib/documentList';
 // Loads portfolio records for admin/landowner dashboards.
 // Landowners see only their own records (filtered by owner_user_id).
 // Admins see all records.
-export function usePortfolioData() {
+export function usePortfolioData({enabled=true}={}) {
   const [data, setData] = useState({
     properties: [], units: [], tenants: [], tenancies: [], charges: [],
     payments: [], applications: [], maintenance: [], inspections: [],
@@ -34,7 +34,7 @@ export function usePortfolioData() {
       ] = await Promise.all([
         owned('Property', '-created_date', 200),
         owned('Unit', '-created_date', 500),
-        base44.entities.Tenant.list('-created_date', 200),
+        isLandowner ? Promise.resolve([]) : base44.entities.Tenant.list('-created_date', 500),
         owned('Tenancy', '-created_date', 500),
         owned('RentCharge', '-due_date', 1000),
         owned('Payment', '-payment_date', 500),
@@ -49,12 +49,13 @@ export function usePortfolioData() {
         loadDocuments(),
         owned('Listing', '-created_date', 200),
       ]);
-      setData({ properties, units, tenants, tenancies, charges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings });
+      const visibleTenants=isLandowner ? await base44.entities.Tenant.filter({$or:[{id:{$in:[...new Set(tenancies.map(t=>t.tenant_id).filter(Boolean))]}},{user_id:{$in:[...new Set(tenancies.map(t=>t.tenant_user_id).filter(Boolean))]}},{owner_user_id:me.id}]},'-created_date',500) : tenants;
+      setData({ properties, units, tenants:visibleTenants, tenancies, charges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if(enabled) load(); }, [enabled]);
   return { ...data, loading, reload: load };
 }

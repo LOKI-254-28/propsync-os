@@ -25,10 +25,12 @@ export default async function(req: Request): Promise<Response> {
     }));
 
     const [propertyReviews, tenancyReviews] = await Promise.all([
-      sr.entities.PropertyReview.filter({ property_id }, '-created_date', 50),
+      sr.entities.PropertyReview.filter({ property_id,removed:{$ne:true} }, '-created_date', 50),
       sr.entities.TenancyReview.filter({ property_id, removed: false }, '-created_date', 50),
     ]);
     const reviews = [...propertyReviews, ...tenancyReviews].sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
+    const summarize=items=>({average:items.length?Math.round(items.reduce((s,r)=>s+Number(r.rating||0),0)/items.length*10)/10:0,count:items.length});
+    const publicReview=r=>({id:r.id,rating:r.rating,comment:r.comment,tenant_name:r.tenant_name,date:r.created_date});
     const avg = reviews.length ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length : 0;
 
     return Response.json({
@@ -37,7 +39,9 @@ export default async function(req: Request): Promise<Response> {
         amenities: p.amenities || [], images: p.images || [], latitude: p.latitude, longitude: p.longitude,
       },
       units: outUnits,
-      reviews: reviews.map((r) => ({ id: r.id, rating: r.rating, comment: r.comment, tenant_name: r.tenant_name, date: r.created_date })),
+      reviews: reviews.map(publicReview),
+      property_reviews:propertyReviews.map(publicReview),tenancy_reviews:tenancyReviews.map(publicReview),
+      property_rating:summarize(propertyReviews),tenancy_rating:summarize(tenancyReviews),
       rating: { average: Math.round(avg * 10) / 10, count: reviews.length },
     });
   } catch (error) {

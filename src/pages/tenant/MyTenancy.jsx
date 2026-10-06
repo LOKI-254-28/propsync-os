@@ -4,6 +4,7 @@ import { KES, daysBetween, todayISO } from "@/lib/finance";
 import { PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { ScrollText, FileText, Wrench, Bell } from "lucide-react";
 import TenancyRating from '@/components/reviews/TenancyRating';
+import { downloadFile } from '@/lib/files';
 
 export default function MyTenancy() {
   const t = useTenantData();
@@ -43,7 +44,7 @@ export default function MyTenancy() {
                   <div><p className="text-xs text-slate-500">Outstanding</p><p className={`font-semibold ${outstanding > 0 ? "text-rose-600" : "text-emerald-700"}`}>{KES(outstanding)}</p></div>
                   <div><p className="text-xs text-slate-500">Maintenance</p><p className="font-semibold">{maint.length}</p></div>
                 </div>
-                {ten.agreement_document_url && <a href={ten.agreement_document_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:underline"><FileText className="h-4 w-4" />View tenancy agreement</a>}
+                {ten.agreement_document_url && <button type="button" onClick={()=>downloadFile(ten.agreement_document_url)} className="mt-3 inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:underline"><FileText className="h-4 w-4" />View tenancy agreement</button>}
                 <TenancyRating tenancy={ten} />
               </SectionCard>
             );

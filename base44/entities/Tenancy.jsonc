@@ -94,6 +94,19 @@
     },
     "inspection_id": {
       "type": "string"
+    },
+    "tenant_rating_token": {
+      "type": "string"
+    },
+    "tenancy_review_token": {
+      "type": "string"
+    },
+    "property_review_token": {
+      "type": "string"
+    },
+    "review_lock_started_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

@@ -10,11 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollText, Plus, Search, Eye } from "lucide-react";
 
-export default function Tenancies() {
-  const data = usePortfolioData();
+export default function Tenancies({portfolioData}) {
+  const loaded = usePortfolioData({enabled:!portfolioData});
+  const data = portfolioData || loaded;
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(null);
+  const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const [form, setForm] = useState({ tenant_id: "", unit_id: "", start_date: todayISO(), expected_end_date: "", monthly_rent: 0, security_deposit: 0, service_charge: 0, payment_due_day: 1, grace_period_days: 7, notice_period_days: 30 });
 
   const list = useMemo(() => data.tenancies.filter((t) => t.tenant_name?.toLowerCase().includes(search.toLowerCase()) || t.unit_number?.toLowerCase().includes(search.toLowerCase()) || t.tenancy_reference?.toLowerCase().includes(search.toLowerCase())), [data.tenancies, search]);
@@ -23,7 +25,9 @@ export default function Tenancies() {
   const availableUnits = data.units.filter((u) => ["Available", "Vacant"].includes(u.status));
 
   const create = async () => {
-    if (!form.tenant_id || !form.unit_id) return;
+    if (busy || !form.tenant_id || !form.unit_id) return;
+    setBusy(true);setError('');
+    try {
     const tenant = data.tenants.find((t) => t.id === form.tenant_id);
     const unit = data.units.find((u) => u.id === form.unit_id);
     const ref = genRef("TEN");
@@ -43,13 +47,14 @@ export default function Tenancies() {
     setOpen(false);
     setForm({ tenant_id: "", unit_id: "", start_date: todayISO(), expected_end_date: "", monthly_rent: 0, security_deposit: 0, service_charge: 0, payment_due_day: 1, grace_period_days: 7, notice_period_days: 30 });
     data.reload();
+    } catch(e){setError(e.response?.data?.error || e.message);} finally{setBusy(false);}
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
   return (
     <div>
-      <PageHeader title="Tenancies" description="All tenancy agreements, active and historical." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Create Tenancy</Button>} />
+      <PageHeader title="Tenancy records" description="Manage current tenancies and access historical agreements." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Create Tenancy</Button>} />
 
       <div className="mb-4 relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -83,7 +88,7 @@ export default function Tenancies() {
       )}
 
       {/* Create tenancy */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={value=>{if(!busy)setOpen(value);}}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Create Tenancy</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
@@ -108,7 +113,7 @@ export default function Tenancies() {
             <Field label="Grace period (days)"><Input type="number" value={form.grace_period_days} onChange={(e) => setForm({ ...form, grace_period_days: Number(e.target.value) })} /></Field>
             <Field label="Notice period (days)"><Input type="number" value={form.notice_period_days} onChange={(e) => setForm({ ...form, notice_period_days: Number(e.target.value) })} /></Field>
           </div>
-          <DialogFooter><Button onClick={create} className="bg-emerald-600 hover:bg-emerald-700">Create Tenancy</Button></DialogFooter>
+          {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button onClick={create} disabled={busy||!form.tenant_id||!form.unit_id} className="bg-emerald-600 hover:bg-emerald-700">{busy?'Creating…':'Create Tenancy'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

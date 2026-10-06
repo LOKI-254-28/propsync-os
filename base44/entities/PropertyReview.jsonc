@@ -17,13 +17,28 @@
     "tenancy_id": {
       "type": "string"
     },
+    "owner_user_id": {
+      "type": "string"
+    },
     "rating": {
       "type": "number",
       "minimum": 1,
       "maximum": 5
     },
     "comment": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "removed": {
+      "type": "boolean",
+      "default": false
+    },
+    "removed_by": {
       "type": "string"
+    },
+    "removed_date": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
@@ -31,7 +46,26 @@
     "rating"
   ],
   "rls": {
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "data.removed": {
+            "$ne": true
+          }
+        },
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "create": {
       "user_condition": {
         "role": "admin"

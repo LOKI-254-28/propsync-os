@@ -8,6 +8,18 @@
     "tenant_user_id": {
       "type": "string"
     },
+    "tenancy_id": {
+      "type": "string"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "property_id": {
+      "type": "string"
+    },
+    "property_name": {
+      "type": "string"
+    },
     "owner_user_id": {
       "type": "string"
     },
@@ -22,6 +34,14 @@
     "comment": {
       "type": "string",
       "maxLength": 2000
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "Public",
+        "Hidden"
+      ],
+      "default": "Public"
     },
     "removed": {
       "type": "boolean",
@@ -44,7 +64,21 @@
     "read": {
       "$or": [
         {
-          "data.tenant_user_id": "{{user.id}}"
+          "$and": [
+            {
+              "data.removed": {
+                "$ne": true
+              }
+            },
+            {
+              "data.visibility": {
+                "$in": [
+                  "Public",
+                  null
+                ]
+              }
+            }
+          ]
         },
         {
           "data.owner_user_id": "{{user.id}}"

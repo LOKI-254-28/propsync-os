@@ -24,7 +24,6 @@ import PropertyDetail from '@/pages/landlord/PropertyDetail';
 import Units from '@/pages/landlord/Units';
 import Tenants from '@/pages/landlord/Tenants';
 import Applications from '@/pages/landlord/Applications';
-import Tenancies from '@/pages/landlord/Tenancies';
 import RentPayments from '@/pages/landlord/RentPayments';
 import Arrears from '@/pages/landlord/Arrears';
 import Maintenance from '@/pages/landlord/Maintenance';
@@ -89,7 +88,7 @@ const LandlordRoutes = () => (
       <Route path="/tenants" element={<Tenants />} />
       <Route path="/applications" element={<Applications />} />
       <Route path="/site-visits" element={<SiteVisits />} />
-      <Route path="/tenancies" element={<Tenancies />} />
+      <Route path="/tenancies" element={<Navigate to="/tenants?tab=tenancies" replace />} />
       <Route path="/rent" element={<RentPayments />} />
       <Route path="/arrears" element={<Arrears />} />
       <Route path="/maintenance" element={<Maintenance />} />
@@ -124,7 +123,7 @@ const AdminRoutes = () => (
       <Route path="/tenants" element={<Tenants />} />
       <Route path="/applications" element={<Applications />} />
       <Route path="/site-visits" element={<SiteVisits />} />
-      <Route path="/tenancies" element={<Tenancies />} />
+      <Route path="/tenancies" element={<Navigate to="/tenants?tab=tenancies" replace />} />
       <Route path="/rent" element={<RentPayments />} />
       <Route path="/arrears" element={<Arrears />} />
       <Route path="/maintenance" element={<Maintenance />} />

@@ -11,7 +11,7 @@ const PROVIDER_ENTITIES = [
 // Entities that have an owner_user_id field (Tenant does not).
 const ENTITIES_WITH_OWNER = [
   'Property', 'Unit', 'Listing', 'Tenancy',
-  'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection', 'Contractor',
+  'Expense', 'Notice', 'RentCharge', 'Document', 'Inspection', 'Contractor', 'Tenant',
 ];
 
 // Validate that child-entity references belong to the authenticated landowner.

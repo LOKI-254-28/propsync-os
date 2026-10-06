@@ -8,10 +8,11 @@ export default async function(req: Request): Promise<Response> {
     const { visited_path } = await req.json();
     const admin = user.role === 'admin', tenant = !admin && (user.account_type || user.data?.account_type) !== 'landowner';
     const prefix = tenant ? '/portal' : '', path = section => `${prefix}/${section}`;
-    const routes = { Application: path('applications'), SiteVisit: tenant ? path('applications') : '/site-visits', Maintenance: path('maintenance'), Document: path('documents'), Inspection: path('inspections'), Notice: path('notices'), Payment: path('rent'), RentCharge: path('rent'), Feedback: path('feedback'), VacationRequest: tenant ? path('vacation') : '/vacation-requests', ChatMessage: path('chat'), ReportRequest: '/reports', User: '/admin/users', Tenancy: tenant ? '/portal/my-tenancies' : '/tenancies' };
+    const routes = { Application: path('applications'), SiteVisit: tenant ? path('applications') : '/site-visits', Maintenance: path('maintenance'), Document: path('documents'), Inspection: path('inspections'), Notice: path('notices'), Payment: path('rent'), RentCharge: path('rent'), Feedback: path('feedback'), VacationRequest: tenant ? path('vacation') : '/vacation-requests', ChatMessage: path('chat'), ReportRequest: '/reports', User: '/admin/users', Tenancy: tenant ? '/portal/my-tenancies' : '/tenants' };
     const allowed = new Set([...Object.values(routes), '/notifications', '/portal/profile', '/arrears']);
     const routeFor = n => {
       const linked = typeof n.action_link === 'string' ? n.action_link.split(/[?#]/)[0] : '';
+      if (!tenant && linked==='/tenancies') return '/tenants';
       if (allowed.has(linked)) return linked;
       return routes[n.related_entity] || routes[n.type] || null;
     };

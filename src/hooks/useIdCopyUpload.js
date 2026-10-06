@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { registerUpload } from '@/lib/registerUpload';
 
-export default function useIdCopyUpload({ onUploaded, onBusyChange }) {
+export default function useIdCopyUpload({ onUploaded, onBusyChange, documentContext }) {
   const request = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -34,7 +35,9 @@ export default function useIdCopyUpload({ onUploaded, onBusyChange }) {
       if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : result.error?.message || result.message || `ID upload failed (${response.status}). Please try again.`);
       if (!result.file_uri) throw new Error('The upload did not return a saved ID. Please try again.');
       if (controller.signal.aborted) throw new DOMException('Upload cancelled', 'AbortError');
-      onUploaded({ file_uri: result.file_uri, file_name: file.name, mime_type: file.type, size: file.size });
+      const tracked = await registerUpload({ file_uri: result.file_uri, file_name: file.name, mime_type: file.type, size: file.size }, documentContext);
+      if (controller.signal.aborted) throw new DOMException('Upload cancelled', 'AbortError');
+      await onUploaded(tracked);
       setFileName(file.name);
     } catch (err) {
       setError(controller.signal.aborted ? (timedOut ? 'Upload timed out. The request was stopped; please retry.' : 'Upload cancelled. You can choose the file again.') : err.message || 'ID upload failed. Please try again.');

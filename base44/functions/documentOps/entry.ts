@@ -2,6 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { waitUntil } from 'base44:runtime';
 import { documentAccess } from '../../shared/documentAccess.ts';
 import { nairobiToday } from '../../shared/nairobiDates.ts';
+import { documentAction } from '../../shared/documentActions.ts';
+import { upsertDocument } from '../../shared/documentRegistry.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -13,6 +15,7 @@ export default async function(req: Request): Promise<Response> {
     const { action } = body;
 
     const sr = base44.asServiceRole;
+    if (['register_upload', 'sync_record', 'backfill'].includes(action)) return Response.json(await documentAction(base44,user,body));
     if (['list', 'get', 'review', 'staff_delete'].includes(action)) {
       const access = await documentAccess(sr, user);
       if (action === 'list') {
@@ -34,7 +37,10 @@ export default async function(req: Request): Promise<Response> {
         if (!['verified', 'rejected'].includes(body.status) || typeof (body.review_note || '') !== 'string' || (body.review_note || '').length > 2000) return Response.json({ error: 'Choose a valid review status.' }, { status: 400 });
         await sr.entities.Document.update(doc.id, { status: body.status, review_note: body.review_note || '' });
         if (doc.tenant_user_id) waitUntil(sr.entities.Notification.create({ recipient_user_id: doc.tenant_user_id, type: 'document_review', title: 'Document reviewed', message: `Your document "${doc.title}" was ${body.status}.`, related_entity: 'Document', related_id: doc.id, action_link: '/portal/documents', date: new Date().toISOString(), read: false }));
-      } else await sr.entities.Document.delete(doc.id);
+      } else {
+        if (doc.linked || doc.source_entities?.length) return Response.json({ error: 'This document is used by a workflow and cannot be deleted here.' }, { status: 409 });
+        await sr.entities.Document.delete(doc.id);
+      }
       return Response.json({ ok: true });
     }
 
@@ -48,23 +54,12 @@ export default async function(req: Request): Promise<Response> {
       let tenant = (await base44.entities.Tenant.filter({ user_id: user.id }, '-created_date', 1))[0];
       if (!tenant) tenant = await sr.entities.Tenant.create({ user_id: user.id, full_name: user.full_name || user.email, email: user.email, status: 'Active', profile_type: 'tenant' });
       const property = tenancy ? await sr.entities.Property.get(tenancy.property_id) : null;
-      const doc = await base44.asServiceRole.entities.Document.create({
-        title,
-        category,
-        file_uri,
-        file_name: file_name || '',
-        mime_type: mime_type || '',
-        size: Number(size) || 0,
-        tenant_id: tenant.id,
-        tenant_user_id: user.id,
-        tenancy_id: tenancy?.id || '',
-        property_id: tenancy?.property_id || '', unit_id: tenancy?.unit_id || '',
-        owner_user_id: property?.owner_user_id || tenancy?.owner_user_id || '',
-        uploaded_by: user.email || user.id,
-        uploaded_by_role: 'tenant',
-        visibility: 'tenant_visible',
-        status: 'pending',
-        date_uploaded: nairobiToday(),
+      const existing = (await sr.entities.Document.filter({ file_uri }, '-created_date', 1))[0];
+      if (!existing || (existing.uploaded_by_user_id !== user.id && existing.uploaded_by !== user.email)) return Response.json({ error: 'Upload the file using the document picker first.' }, { status: 403 });
+      const doc = await sr.entities.Document.update(existing.id, {
+        title, category, tenant_id:tenant.id, tenant_user_id:user.id,
+        tenancy_id:tenancy?.id || '', property_id:tenancy?.property_id || '', unit_id:tenancy?.unit_id || '',
+        owner_user_id:property?.owner_user_id || '', linked:!!tenancy, visibility:'tenant_visible',
       });
       if (doc.owner_user_id) waitUntil(sr.entities.Notification.create({ recipient_user_id: doc.owner_user_id, type: 'document_upload', title: 'New tenant document uploaded', message: `${tenant.full_name} uploaded "${title}". Review pending.`, related_entity: 'Document', related_id: doc.id, action_link: '/documents', date: new Date().toISOString(), read: false }));
       return Response.json({ document: doc });
@@ -81,6 +76,7 @@ export default async function(req: Request): Promise<Response> {
           return Response.json({ error: 'You can only delete your own pending uploads.' }, { status: 403 });
         }
       }
+      if (doc.linked || doc.source_entities?.length) return Response.json({ error: 'This file is linked to a workflow and cannot be deleted here.' }, { status: 409 });
       await base44.asServiceRole.entities.Document.delete(document_id);
       try {
         await base44.asServiceRole.entities.AuditLog.create({
@@ -99,6 +95,6 @@ export default async function(req: Request): Promise<Response> {
 
     return Response.json({ error: 'Unknown action: ' + action }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: error.status || 500 });
   }
 }

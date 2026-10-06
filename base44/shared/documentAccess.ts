@@ -18,10 +18,14 @@ export async function documentAccess(sr, user) {
   const current = tenancies.filter(t => ['Active', 'Expiring Soon', 'Notice Given'].includes(t.status));
   const sharedProperties = staff ? propertyIds : current.map(t => t.property_id);
   const sharedUnits = staff ? units.map(u => u.id) : current.map(t => t.unit_id);
-  const query = { $or: [staff ? { owner_user_id: user.id } : { tenant_user_id: user.id }, { tenant_id: { $in: relatedTenants } }, { tenancy_id: { $in: tenancyIds } }, { application_id: { $in: applicationIds } }, { property_id: { $in: sharedProperties } }, { unit_id: { $in: sharedUnits } }] };
+  const query = { $or: [{ uploaded_by_user_id: user.id }, { uploaded_by: user.email }, staff ? { owner_user_id: user.id } : { tenant_user_id: user.id }, { tenant_id: { $in: relatedTenants } }, { tenancy_id: { $in: tenancyIds } }, { application_id: { $in: applicationIds } }, { property_id: { $in: sharedProperties } }, { unit_id: { $in: sharedUnits } }] };
   const canRead = doc => {
     const linked = tenancyIds.includes(doc.tenancy_id) || applicationIds.includes(doc.application_id);
-    if (staff) return doc.owner_user_id === user.id || linked || propertyIds.includes(doc.property_id) || sharedUnits.includes(doc.unit_id) || (!doc.tenancy_id && !doc.application_id && !doc.property_id && !doc.unit_id && doc.uploaded_by_role === 'tenant' && relatedTenants.includes(doc.tenant_id));
+    if (doc.uploaded_by_user_id === user.id || doc.uploaded_by === user.email) return true;
+    if (staff) {
+      if (doc.owner_user_id && doc.owner_user_id !== user.id) return false;
+      return doc.owner_user_id === user.id || propertyIds.includes(doc.property_id) || sharedUnits.includes(doc.unit_id);
+    }
     const mine = doc.tenant_user_id === user.id || tenantIds.includes(doc.tenant_id);
     if (mine && doc.uploaded_by_role === 'tenant') return true;
     if (doc.visibility !== 'tenant_visible' || (doc.tenant_user_id && doc.tenant_user_id !== user.id) || (doc.tenant_id && !tenantIds.includes(doc.tenant_id))) return false;

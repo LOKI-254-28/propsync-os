@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-export default function useFileUpload({ onUploaded, onBusyChange, isPublic, multiple, imageOnly, maxFiles }) {
+import { registerUpload } from '@/lib/registerUpload';
+export default function useFileUpload({ onUploaded, onBusyChange, isPublic, multiple, imageOnly, maxFiles, documentContext }) {
   const lock = useRef(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [fileName, setFileName] = useState('');
   const handle = async (event) => {
@@ -20,7 +21,8 @@ export default function useFileUpload({ onUploaded, onBusyChange, isPublic, mult
             isPublic ? base44.integrations.Core.UploadPublicFile({ file }) : base44.integrations.Core.UploadPrivateFile({ file }),
             new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Upload timed out. Please try again.')), 60000); }),
           ]);
-          await onUploaded({ ...result, file_name: file.name, mime_type: file.type, size: file.size });
+          const tracked = await registerUpload({ ...result, file_name: file.name, mime_type: file.type, size: file.size }, documentContext);
+          await onUploaded(tracked);
           setFileName(file.name);
         } finally { clearTimeout(timer); }
       }

@@ -10,6 +10,7 @@ import { Field } from "@/components/ui-bits";
 import { CalendarClock, SkipForward, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import VisitSlotPicker from "@/components/applications/VisitSlotPicker";
+import ApplicationIdentityUploads from '@/components/booking/ApplicationIdentityUploads';
 
 // "Select Unit" menu: schedule a site visit or skip it, then create the application.
 export default function SelectUnitFlow({ unit, onClose }) {
@@ -18,16 +19,21 @@ export default function SelectUnitFlow({ unit, onClose }) {
   const [slot, setSlot] = useState({ date: "", time: "" });
   const [form, setForm] = useState({ proposed_start_date: unit.available_from || todayISO(), message: "", occupation: "", id_number: "", monthly_income: "" });
   const [busy, setBusy] = useState(false);
+  const [identity, setIdentity] = useState({ id: null, photo: null });
+  const [uploads, setUploads] = useState({ id: false, photo: false });
+  const uploading = uploads.id || uploads.photo;
   const [err, setErr] = useState("");
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const submit = async () => {
+    if (busy || uploading || !identity.id || !identity.photo) return;
     setErr("");
     setBusy(true);
     try {
       await base44.functions.invoke("bookUnit", {
         unit_id: unit.id, visit: step, visit_date: slot.date, visit_time: slot.time, ...form,
         monthly_income: Number(form.monthly_income) || 0,
+        id_document_id: identity.id.document_id, photo_document_id: identity.photo.document_id,
       });
       toast({ title: step === "schedule" ? "Visit requested" : "Application submitted", description: "Track it under My Applications." });
       onClose();
@@ -41,7 +47,7 @@ export default function SelectUnitFlow({ unit, onClose }) {
 
   const ready = step === "skip" || (slot.date && slot.time);
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open onOpenChange={() => { if (!busy && !uploading) onClose(); }}>
       <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
         <DialogHeader><DialogTitle>Select unit {unit.unit_number}</DialogTitle></DialogHeader>
         {step === "menu" ? (
@@ -53,6 +59,7 @@ export default function SelectUnitFlow({ unit, onClose }) {
           <div className="space-y-3 py-2">
             {step === "schedule" && <Field label="Proposed visit date & time"><VisitSlotPicker {...slot} onChange={setSlot} /></Field>}
             <Field label="ID number"><Input value={form.id_number} onChange={set("id_number")} /></Field>
+            <ApplicationIdentityUploads unitId={unit.id} files={identity} onChange={setIdentity} disabled={busy || uploading} onBusyChange={(kind,value) => setUploads(current => ({ ...current, [kind]: value }))} />
             <Field label="Occupation"><Input value={form.occupation} onChange={set("occupation")} /></Field>
             <Field label="Monthly income (KES)"><Input type="number" value={form.monthly_income} onChange={set("monthly_income")} /></Field>
             <Field label="Preferred move-in date" hint={unit.occupied ? "Not earlier than the current tenant's exit date." : undefined}><Input type="date" min={unit.available_from || todayISO()} value={form.proposed_start_date} onChange={set("proposed_start_date")} /></Field>
@@ -62,8 +69,8 @@ export default function SelectUnitFlow({ unit, onClose }) {
         )}
         {step !== "menu" && (
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setStep("menu")}>Back</Button>
-            <Button onClick={submit} disabled={busy || !ready} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{step === "schedule" ? "Request visit" : "Submit application"}</Button>
+            <Button variant="ghost" disabled={busy || uploading} onClick={() => setStep("menu")}>Back</Button>
+            <Button onClick={submit} disabled={busy || uploading || !ready || !identity.id || !identity.photo} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{step === "schedule" ? "Request visit" : "Submit application"}</Button>
           </DialogFooter>
         )}
       </DialogContent>

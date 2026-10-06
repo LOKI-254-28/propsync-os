@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Upload, CheckCircle2, Loader2 } from 'lucide-react';
 import useFileUpload from '@/hooks/useFileUpload';
 
-export function FileUploadButton({ onUploaded, onBusyChange, public: isPublic = false, multiple = false, imageOnly = false, maxFiles = Infinity, disabled = false, label = 'Choose File', variant = 'outline', size = 'sm', className = '' }) {
+export function FileUploadButton({ onUploaded, onBusyChange, public: isPublic = false, multiple = false, imageOnly = false, maxFiles = Infinity, documentContext, disabled = false, label = 'Choose File', variant = 'outline', size = 'sm', className = '' }) {
   const inputRef = useRef(null);
-  const { busy, error, fileName, handle } = useFileUpload({ onUploaded, onBusyChange, isPublic, multiple, imageOnly, maxFiles });
+  const { busy, error, fileName, handle } = useFileUpload({ onUploaded, onBusyChange, isPublic, multiple, imageOnly, maxFiles, documentContext });
   return (
     <div className={className}>
       <input ref={inputRef} type="file" multiple={multiple} accept={imageOnly ? '.jpg,.jpeg,.png,.webp' : '.pdf,.jpg,.jpeg,.png'} disabled={busy || disabled} onChange={handle} className="hidden" />

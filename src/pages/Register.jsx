@@ -72,23 +72,7 @@ export default function Register() {
       if (accountType === "client") {
         if (listingId) {
           const l = await base44.entities.Listing.get(listingId);
-          await base44.entities.Application.create({
-            application_reference: genRef("APP"),
-            tenant_user_id: me.id,
-            applicant_name: fullName,
-            applicant_email: email,
-            property_id: l.property_id,
-            property_name: l.property_name,
-            unit_id: l.unit_id || "",
-            unit_number: l.unit_number || "",
-            monthly_rent: l.price || 0,
-            status: "Submitted",
-            submitted_date: todayISO(),
-            application_type: "rental",
-            listing_id: l.id,
-            owner_user_id: l.owner_user_id || "",
-          });
-          window.location.href = returnTo || "/portal";
+          window.location.href = returnTo || `/portal/property/${l.property_id}?unit=${l.unit_id || ''}`;
         } else {
           window.location.href = "/portal";
         }

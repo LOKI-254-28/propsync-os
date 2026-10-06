@@ -14,6 +14,7 @@ import { toast } from "@/components/ui/use-toast";
 import MapPicker from "@/components/MapPicker";
 import { PROPERTY_TYPES, PropertyPhotos, PropertyAmenities, PropertyLocation } from "@/components/PropertyFields";
 import RatingPanel from '@/components/reviews/RatingPanel';
+import { syncUploadedDocuments } from '@/lib/registerUpload';
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -66,6 +67,7 @@ export default function PropertyDetail() {
         images: form.images, amenities: form.amenities,
         latitude: form.latitude, longitude: form.longitude,
       });
+      await syncUploadedDocuments('Property',property.id);
       await logAudit({ user: me, action: "Property Updated", entity: "Property", entity_id: property.id, entity_name: property.name });
       setEditOpen(false); data.reload();
     }, { success: "Property updated successfully.", error: "Could not update property." });
@@ -158,7 +160,7 @@ export default function PropertyDetail() {
             <Field label="Contact phone"><Input value={form.contact_phone || ""} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} /></Field>
             <Field label="Contact email"><Input value={form.contact_email || ""} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} /></Field>
             <div className="col-span-2"><Field label="Description"><Textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></Field></div>
-            <div className="col-span-2"><PropertyPhotos images={form.images} onBusyChange={setUploading} onChange={(imgs) => setForm(current => ({ ...current, images: imgs }))} /></div>
+            <div className="col-span-2"><PropertyPhotos documentContext={{entity:'Property',record_id:property.id,category:'Property Photo'}} images={form.images} onBusyChange={setUploading} onChange={(imgs) => setForm(current => ({ ...current, images: imgs }))} /></div>
             <div className="col-span-2"><PropertyAmenities selected={form.amenities} onToggle={toggleAmenity} /></div>
             <div className="col-span-2"><PropertyLocation latitude={form.latitude} longitude={form.longitude} onChange={(p) => setForm({ ...form, latitude: p.lat, longitude: p.lng })} /></div>
           </div>

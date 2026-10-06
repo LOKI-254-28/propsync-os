@@ -3,7 +3,7 @@ import { waitUntil } from 'base44:runtime';
 import { documentAccess } from '../../shared/documentAccess.ts';
 import { nairobiToday } from '../../shared/nairobiDates.ts';
 import { documentAction } from '../../shared/documentActions.ts';
-import { upsertDocument } from '../../shared/documentRegistry.ts';
+
 
 export default async function(req: Request): Promise<Response> {
   try {

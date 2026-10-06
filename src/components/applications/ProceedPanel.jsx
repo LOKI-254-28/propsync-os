@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Check, X, FileSignature, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from "@/components/FileUploadButton";
+import { syncUploadedDocuments } from '@/lib/registerUpload';
 
 // Landlord decision after the site visit is accepted (or skipped): Proceed (send agreement) or Terminate.
 export default function ProceedPanel({ app, onUpdated, onBusyChange }) {
@@ -19,6 +20,7 @@ export default function ProceedPanel({ app, onUpdated, onBusyChange }) {
     setBusy(true);
     try {
       await base44.entities.Application.update(app.id, updates);
+      await syncUploadedDocuments('Application',app.id);
       if (app.tenant_user_id) await notify({ recipient_user_id: app.tenant_user_id, type: "Application", title, message: `${title} — ${app.unit_number} · ${app.property_name}.`, related_entity: "Application", related_id: app.id, action_link: "/portal/applications" });
       toast({ title });
       onUpdated?.();
@@ -38,7 +40,7 @@ export default function ProceedPanel({ app, onUpdated, onBusyChange }) {
       {open && (
         <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
           <p className="text-xs font-medium uppercase text-slate-500">Tenancy agreement</p>
-          <FileUploadButton onUploaded={(f) => setAgreement(f?.file_uri || "")} onBusyChange={(value) => { setUploading(value); onBusyChange?.(value); }} label="Upload agreement" />
+          <FileUploadButton documentContext={{entity:'Application',record_id:app.id,category:'Lease Agreement'}} onUploaded={(f) => setAgreement(f?.file_uri || "")} onBusyChange={(value) => { setUploading(value); onBusyChange?.(value); }} label="Upload agreement" />
           {agreement && <p className="text-xs text-emerald-600">Agreement attached.</p>}
           <Button size="sm" disabled={busy || uploading || !agreement} onClick={() => run({ status: "Agreement Issued", agreement_url: agreement, agreement_status: "Issued" }, "Agreement sent to tenant")} className="bg-emerald-600 hover:bg-emerald-700">
             {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileSignature className="mr-1 h-4 w-4" />}Send to tenant

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { syncUploadedDocuments } from '@/lib/registerUpload';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui-bits";
@@ -23,6 +24,7 @@ export default function NextOfKinForm({ app, onSaved, onBusyChange }) {
     try {
       const rec = await base44.entities.NextOfKin.create({ ...f, application_id: app.id, tenant_user_id: app.tenant_user_id, owner_user_id: app.owner_user_id });
       await base44.entities.Application.update(app.id, { next_of_kin_id: rec.id });
+      await syncUploadedDocuments('NextOfKin',rec.id);
       onSaved(rec);
     } catch (e) {
       setErr("Could not save next of kin. Please try again.");
@@ -41,7 +43,7 @@ export default function NextOfKinForm({ app, onSaved, onBusyChange }) {
         <Field label="Email"><Input type="email" value={f.email} onChange={set("email")} /></Field>
       </div>
       <Field label="Copy of their ID">
-        <IdCopyUpload disabled={busy} onBusyChange={value => { setUploading(value); onBusyChange?.(value); }} onUploaded={(file) => setF(current => ({ ...current, id_document_uri: file.file_uri }))} />
+        <IdCopyUpload documentContext={{entity:'Application',record_id:app.id,category:'ID/Passport'}} disabled={busy} onBusyChange={value => { setUploading(value); onBusyChange?.(value); }} onUploaded={(file) => setF(current => ({ ...current, id_document_uri: file.file_uri }))} />
       </Field>
       {err && <p className="text-sm text-red-600">{err}</p>}
       <Button onClick={save} disabled={busy || uploading} className="bg-emerald-600 hover:bg-emerald-700">{busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}Save and continue to payment</Button>

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { fileFields, syncRecordFiles } from '../../shared/documentRegistry.ts';
 
 // Entities that require an approved landowner (or admin) to create,
 // and that carry owner_user_id for ownership isolation.
@@ -137,7 +138,17 @@ export default async function(req: Request): Promise<Response> {
       record.uploaded_by_role = 'staff'; record.uploaded_by = user.email || user.id;
     }
 
-    const created = await base44.asServiceRole.entities[entity].create(record);
+    let created;
+    if (entity === 'Document') {
+      const existing = (await base44.asServiceRole.entities.Document.filter({file_uri:record.file_uri},'-created_date',1))[0];
+      if (!existing || (existing.uploaded_by_user_id !== user.id && existing.uploaded_by !== user.email)) return Response.json({error:'Upload the file using the document picker first.'},{status:403});
+      if (existing.linked && existing.owner_user_id && existing.owner_user_id !== record.owner_user_id) return Response.json({error:'The document belongs to a different property owner.'},{status:403});
+      const { uploaded_by_user_id, source_entities, storage_type, ...metadata } = record;
+      created = await base44.asServiceRole.entities.Document.update(existing.id,{...metadata,linked:!!(record.property_id || record.tenancy_id || record.tenant_id || record.unit_id)});
+    } else {
+      created = await base44.asServiceRole.entities[entity].create(record);
+      if (fileFields[entity]) await syncRecordFiles(base44.asServiceRole,user,entity,created);
+    }
 
     try {
       await base44.asServiceRole.entities.AuditLog.create({

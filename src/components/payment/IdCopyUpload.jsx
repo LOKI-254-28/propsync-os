@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import useIdCopyUpload from '@/hooks/useIdCopyUpload';
 
-export default function IdCopyUpload({ disabled, onUploaded, onBusyChange }) {
+export default function IdCopyUpload({ disabled, onUploaded, onBusyChange, documentContext }) {
   const input = useRef(null);
-  const { busy, error, fileName, handle, cancel } = useIdCopyUpload({ onUploaded, onBusyChange });
+  const { busy, error, fileName, handle, cancel } = useIdCopyUpload({ onUploaded, onBusyChange, documentContext });
   return (
     <div className="space-y-1.5">
       <input ref={input} type="file" accept=".pdf,.jpg,.jpeg,.png" disabled={busy || disabled} onChange={handle} className="hidden" />

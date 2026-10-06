@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { computeUnitAvailability } from '../../shared/unitAvailability.ts';
+import { syncRecordFiles } from '../../shared/documentRegistry.ts';
 
 const CLOSED = ['Rejected', 'Withdrawn', 'Cancelled', 'Expired', 'Completed'];
 const SLOT = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -17,16 +18,25 @@ export default async function(req: Request): Promise<Response> {
 
     const b = await req.json();
     const sr = base44.asServiceRole;
+    if (typeof b.id_document_id !== 'string' || typeof b.photo_document_id !== 'string' || b.id_document_id === b.photo_document_id) return Response.json({ error:'Upload your ID copy and a clear, recent photograph before submitting.' }, { status:400 });
+    const identity = await sr.entities.Document.filter({ id:{ $in:[b.id_document_id,b.photo_document_id] } });
+    const idDoc = identity.find(d => d.id === b.id_document_id), photoDoc = identity.find(d => d.id === b.photo_document_id);
+    if (!idDoc || !photoDoc || identity.some(d => d.uploaded_by_user_id !== user.id || d.storage_type !== 'private' || d.status === 'rejected' || !d.size || d.size > 10*1024*1024) || idDoc.category !== 'ID/Passport' || !['application/pdf','image/jpeg','image/png'].includes(idDoc.mime_type) || photoDoc.category !== 'Applicant Photo' || !['image/jpeg','image/png','image/webp'].includes(photoDoc.mime_type)) return Response.json({ error:'Both documents must be your own valid private uploads.' }, { status:403 });
     const unit = await sr.entities.Unit.get(b.unit_id).catch(() => null);
     if (!unit) return Response.json({ error: 'Unit not found' }, { status: 404 });
 
-    const avail = await computeUnitAvailability(sr, unit);
-    if (!avail.bookable) return Response.json({ error: 'This unit is not open for booking yet.' }, { status: 409 });
-
     const mine = await sr.entities.Application.filter({ tenant_user_id: user.id, unit_id: unit.id });
-    if (mine.some((a) => !CLOSED.includes(a.status))) {
+    const open = mine.find(a => !CLOSED.includes(a.status));
+    if (open) {
+      if ((open.documents || []).includes(idDoc.file_uri) && (open.documents || []).includes(photoDoc.file_uri)) {
+        await syncRecordFiles(sr,user,'Application',open);
+        return Response.json({ok:true,application:open});
+      }
       return Response.json({ error: 'You already have an open application for this unit.' }, { status: 409 });
     }
+    if (identity.some(d => d.application_id)) return Response.json({ error:'Use new uploads for this application.' }, {status:409});
+    const avail = await computeUnitAvailability(sr, unit);
+    if (!avail.bookable) return Response.json({ error: 'This unit is not open for booking yet.' }, { status: 409 });
 
     const today = new Date().toISOString().slice(0, 10);
     const schedule = b.visit === 'schedule';
@@ -41,6 +51,8 @@ export default async function(req: Request): Promise<Response> {
     const amount = avail.half_deposit ? Math.round(deposit / 2) : deposit + Number(unit.monthly_rent || 0);
     const ref = `APP-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
+    const property = await sr.entities.Property.get(unit.property_id);
+    const legacyReservation = b.source === 'browse_units';
     const app = await sr.entities.Application.create({
       application_reference: ref,
       tenant_user_id: user.id,
@@ -58,10 +70,12 @@ export default async function(req: Request): Promise<Response> {
       monthly_rent: unit.monthly_rent,
       proposed_start_date: start,
       message: String(b.message || '').slice(0, 1000),
-      status: schedule ? 'Site Visit Requested' : 'Submitted',
+      documents:[idDoc.file_uri,photoDoc.file_uri],
+      status: legacyReservation ? 'Pending' : schedule ? 'Site Visit Requested' : 'Submitted',
+      ...(legacyReservation ? { reservation_expiry:new Date(Date.now()+3*86400000).toISOString().slice(0,10) } : {}),
       submitted_date: today,
       application_type: 'rental',
-      owner_user_id: unit.owner_user_id || '',
+      owner_user_id: property.owner_user_id || '',
       booked_occupied: avail.occupied,
       visit_skipped: !schedule,
       site_visit_date: schedule ? b.visit_date : undefined,
@@ -71,9 +85,11 @@ export default async function(req: Request): Promise<Response> {
       payment_amount: amount,
     });
 
-    if (unit.owner_user_id) {
+    await syncRecordFiles(sr,user,'Application',app);
+    if (legacyReservation) await sr.entities.Unit.update(unit.id,{status:'Application Pending'});
+    if (property.owner_user_id) {
       await sr.entities.Notification.create({
-        recipient_user_id: unit.owner_user_id,
+        recipient_user_id: property.owner_user_id,
         type: 'Application',
         title: schedule ? 'Site visit requested' : 'New application (visit skipped)',
         message: schedule

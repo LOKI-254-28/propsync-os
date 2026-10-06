@@ -43,36 +43,7 @@ export default function ListingDetail() {
   const applyLabel = "Apply to Rent";
   const appType = "rental";
 
-  const submit = async () => {
-    setSubmitting(true);
-    try {
-      const me = await base44.auth.me();
-      const tenant = await base44.entities.Tenant.filter({ user_id: me.id }).then((r) => r[0]);
-      const ref = genRef("APP");
-      const rec = await base44.entities.Application.create({
-        application_reference: ref, tenant_user_id: me.id, tenant_id: tenant?.id || "",
-        applicant_name: tenant?.full_name || me.full_name || me.email,
-        applicant_email: tenant?.email || me.email, applicant_phone: tenant?.phone || "",
-        id_number: form.id_number || tenant?.id_number || "", occupation: form.occupation || tenant?.occupation || "",
-        monthly_income: Number(form.monthly_income) || tenant?.monthly_income || 0,
-        property_id: listing.property_id, property_name: listing.property_name,
-        unit_id: listing.unit_id || "", unit_number: listing.unit_number || "",
-        monthly_rent: listing.price, proposed_start_date: form.proposed_start_date,
-        message: form.message, status: "Submitted", submitted_date: todayISO(),
-        application_type: appType, listing_id: listing.id, owner_user_id: listing.owner_user_id || "",
-      });
-      await logAudit({ user: me, action: "Application Submitted", entity: "Application", entity_id: rec.id, entity_name: ref });
-      if (listing.owner_user_id) await notify({ recipient_user_id: listing.owner_user_id, type: "Application", title: "New Application", message: `New ${appType} application for ${listing.property_name} ${listing.unit_number || ""}.`, related_entity: "Application", related_id: rec.id, action_link: "/applications" });
-      toast({ title: "Success", description: "Application submitted successfully." });
-      setApplyOpen(false);
-      navigate("/portal/applications");
-    } catch (err) {
-      console.error("[Apply error]", err);
-      toast({ title: "Error", description: "Could not submit application. Please try again.", variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const submit = async () => navigate(`/portal/property/${listing.property_id}?unit=${listing.unit_id || ''}`);
 
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
   if (!listing) return <EmptyState icon={Tag} title="Listing not found" action={<Link to="/portal/listings" className="text-emerald-700 hover:underline">Back to listings</Link>} />;

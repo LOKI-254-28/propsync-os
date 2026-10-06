@@ -42,36 +42,7 @@ export default function PublicListingDetail() {
   const isTenant = isAuthenticated && (user?.account_type === "client" || user?.account_type === "tenant" || (!user?.account_type && user?.role !== "admin"));
   const registerLink = `/register?returnTo=/listings/${id}&listing=${id}&unit=${listing?.unit_id || ""}`;
 
-  const submit = async () => {
-    setSubmitting(true);
-    try {
-      const me = await base44.auth.me();
-      const tenant = await base44.entities.Tenant.filter({ user_id: me.id }).then((r) => r[0]);
-      const ref = genRef("APP");
-      const rec = await base44.entities.Application.create({
-        application_reference: ref, tenant_user_id: me.id, tenant_id: tenant?.id || "",
-        applicant_name: tenant?.full_name || me.full_name || me.email,
-        applicant_email: tenant?.email || me.email, applicant_phone: tenant?.phone || "",
-        id_number: form.id_number || tenant?.id_number || "", occupation: form.occupation || tenant?.occupation || "",
-        monthly_income: Number(form.monthly_income) || tenant?.monthly_income || 0,
-        property_id: listing.property_id, property_name: listing.property_name,
-        unit_id: listing.unit_id || "", unit_number: listing.unit_number || "",
-        monthly_rent: listing.price, proposed_start_date: form.proposed_start_date,
-        message: form.message, status: "Submitted", submitted_date: todayISO(),
-        application_type: "rental", listing_id: listing.id, owner_user_id: listing.owner_user_id || "",
-      });
-      await logAudit({ user: me, action: "Application Submitted", entity: "Application", entity_id: rec.id, entity_name: ref });
-      if (listing.owner_user_id) await notify({ recipient_user_id: listing.owner_user_id, type: "Application", title: "New Application", message: `New rental application for ${listing.property_name} ${listing.unit_number || ""}.`, related_entity: "Application", related_id: rec.id, action_link: "/applications" });
-      toast({ title: "Success", description: "Application submitted." });
-      setApplyOpen(false);
-      navigate("/portal/applications");
-    } catch (err) {
-      console.error("[Apply error]", err);
-      toast({ title: "Error", description: "Could not submit application. Please try again.", variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const submit = async () => navigate(`/browse/${listing.property_id}?unit=${listing.unit_id || ''}`);
 
   if (loading) return <PublicLayout><div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div></PublicLayout>;
   if (!listing) return (

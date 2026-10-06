@@ -84,7 +84,7 @@ export default function MyDocuments() {
                 <div className="flex items-center gap-3">
                   <StatusBadge status={d.status} />
                   <button onClick={() => viewDoc(d)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-emerald-700" title="View"><Eye className="h-4 w-4" /></button>
-                  {d.uploaded_by_role === "tenant" && d.status === "pending" && (
+                  {d.uploaded_by_role === "tenant" && d.status === "pending" && !d.linked && !d.source_entities?.length && (
                     <button onClick={() => del(d)} className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Delete"><Trash2 className="h-4 w-4" /></button>
                   )}
                 </div>

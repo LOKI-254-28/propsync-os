@@ -14,6 +14,7 @@ import FileUploadButton from "@/components/FileUploadButton";
 import { downloadFile } from "@/lib/files";
 import VisitPanel from "@/components/applications/VisitPanel";
 import ApplicationPayment from "@/components/payment/ApplicationPayment";
+import { syncUploadedDocuments } from '@/lib/registerUpload';
 
 export default function MyApplications() {
   const t = useTenantData();
@@ -58,6 +59,7 @@ export default function MyApplications() {
         label = "Payment Proof Submitted";
       }
       await base44.entities.Application.update(actionApp.id, updates);
+      await syncUploadedDocuments('Application',actionApp.id);
       await logAudit({ user: me, action: `Application ${label}`, entity: "Application", entity_id: actionApp.id, entity_name: actionApp.application_reference });
       if (actionApp.owner_user_id) {
         try {
@@ -161,7 +163,7 @@ export default function MyApplications() {
                   <>
                     <Field label="Your response"><Textarea value={form.info} onChange={(e) => setForm({ ...form, info: e.target.value })} rows={4} placeholder="Provide the requested information..." /></Field>
                     <Field label="Supporting documents (optional)">
-                      <FileUploadButton disabled={busy} onBusyChange={setUploading} onUploaded={(file) => setForm(current => ({ ...current, documents: [...current.documents, file.file_uri] }))} label="Upload document" />
+                      <FileUploadButton documentContext={{entity:'Application',record_id:actionApp.id,category:actionType === 'agreement' ? 'Lease Agreement' : actionType === 'payment' ? 'Receipt' : 'Other'}} disabled={busy} onBusyChange={setUploading} onUploaded={(file) => setForm(current => ({ ...current, documents: [...current.documents, file.file_uri] }))} label="Upload document" />
                       {form.documents.length > 0 && <p className="text-xs text-emerald-700">{form.documents.length} document(s) attached</p>}
                     </Field>
                   </>
@@ -188,7 +190,7 @@ export default function MyApplications() {
                 {actionType === "agreement" && (
                   <>
                     {actionApp.agreement_url && <button type="button" onClick={() => downloadFile(actionApp.agreement_url)} className="inline-flex items-center gap-1 text-sm text-amber-700 underline">View original agreement <ExternalLink className="h-3 w-3" /></button>}
-                    <Field label="Upload executed (signed) agreement"><FileUploadButton disabled={busy} onUploaded={(file) => setForm((current) => ({ ...current, agreement_executed_url: file?.file_uri || "" }))} onBusyChange={setUploading} label="Upload signed agreement" /></Field>
+                    <Field label="Upload executed (signed) agreement"><FileUploadButton documentContext={{entity:'Application',record_id:actionApp.id,category:actionType === 'agreement' ? 'Lease Agreement' : actionType === 'payment' ? 'Receipt' : 'Other'}} disabled={busy} onUploaded={(file) => setForm((current) => ({ ...current, agreement_executed_url: file?.file_uri || "" }))} onBusyChange={setUploading} label="Upload signed agreement" /></Field>
                   </>
                 )}
                 {actionType === "payment" && (
@@ -200,7 +202,7 @@ export default function MyApplications() {
                       {actionApp.payment_instructions && <p className="mt-1 text-xs text-emerald-600">{actionApp.payment_instructions}</p>}
                     </div>
                     <Field label="Payment reference (optional)"><Input value={form.payment_reference} onChange={(e) => setForm({ ...form, payment_reference: e.target.value })} placeholder="M-Pesa code, bank ref, etc." /></Field>
-                    <Field label="Upload payment proof"><FileUploadButton disabled={busy} onBusyChange={setUploading} onUploaded={(file) => setForm(current => ({ ...current, payment_proof_url: file.file_uri }))} label="Upload payment receipt/screenshot" /></Field>
+                    <Field label="Upload payment proof"><FileUploadButton documentContext={{entity:'Application',record_id:actionApp.id,category:actionType === 'agreement' ? 'Lease Agreement' : actionType === 'payment' ? 'Receipt' : 'Other'}} disabled={busy} onBusyChange={setUploading} onUploaded={(file) => setForm(current => ({ ...current, payment_proof_url: file.file_uri }))} label="Upload payment receipt/screenshot" /></Field>
                   </>
                 )}
               </div>

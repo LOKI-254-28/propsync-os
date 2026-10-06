@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DoorOpen, Search, MapPin, Bed, Bath, Maximize } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import ApplicationIdentityUploads from '@/components/booking/ApplicationIdentityUploads';
 
 export default function BrowseUnits() {
   const t = useTenantData();
@@ -16,6 +17,9 @@ export default function BrowseUnits() {
   const [apply, setApply] = useState(null);
   const [form, setForm] = useState({ proposed_start_date: todayISO(), message: "", monthly_income: 0, occupation: "", id_number: "" });
   const [busy, setBusy] = useState(false);
+  const [identity,setIdentity] = useState({id:null,photo:null});
+  const [uploads,setUploads] = useState({id:false,photo:false});
+  const uploading = uploads.id || uploads.photo;
 
   const available = useMemo(() => t.units.filter((u) => ["Available", "Vacant"].includes(u.status))
     .filter((u) => !search || u.unit_number?.toLowerCase().includes(search.toLowerCase()) || u.property_name?.toLowerCase().includes(search.toLowerCase()))
@@ -23,27 +27,14 @@ export default function BrowseUnits() {
 
   const [err, setErr] = useState("");
   const submit = async () => {
-    if (!apply) return;
+    if (!apply || busy || uploading || !identity.id || !identity.photo) return;
     setErr("");
     setBusy(true);
     try {
-      const me = t.user;
-      const tn = t.tenant;
-      const ref = genRef("APP");
-      const rec = await base44.entities.Application.create({
-        application_reference: ref, tenant_user_id: me.id, tenant_id: tn?.id || "",
-        applicant_name: tn?.full_name || me.full_name || me.email, applicant_email: tn?.email || me.email, applicant_phone: tn?.phone || "",
-        id_number: form.id_number || tn?.id_number || "", occupation: form.occupation || tn?.occupation || "", monthly_income: Number(form.monthly_income) || tn?.monthly_income || 0,
-        property_id: apply.property_id, property_name: apply.property_name, unit_id: apply.id, unit_number: apply.unit_number, monthly_rent: apply.monthly_rent,
-        proposed_start_date: form.proposed_start_date, message: form.message, status: "Pending", submitted_date: todayISO(),
-        reservation_expiry: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
-        application_type: "rental", owner_user_id: apply.owner_user_id || "",
-      });
-      await base44.entities.Unit.update(apply.id, { status: "Application Pending" });
-      await logAudit({ user: me, action: "Application Submitted", entity: "Application", entity_id: rec.id, entity_name: ref });
-      if (apply.owner_user_id) await notify({ recipient_user_id: apply.owner_user_id, type: "Application", title: "New Application", message: `New application for ${apply.unit_number} from ${tn?.full_name || me.email}.`, related_entity: "Application", related_id: rec.id, action_link: "/applications" });
+      await base44.functions.invoke('bookUnit', {unit_id:apply.id, visit:'skip', source:'browse_units', ...form, id_document_id:identity.id.document_id, photo_document_id:identity.photo.document_id});
       toast({ title: "Success", description: "Application submitted successfully." });
       setApply(null);
+      setIdentity({id:null,photo:null});
       setForm({ proposed_start_date: todayISO(), message: "", monthly_income: 0, occupation: "", id_number: "" });
       t.reload();
     } catch (e) {
@@ -77,21 +68,22 @@ export default function BrowseUnits() {
                   {u.size_sqm > 0 && <span className="flex items-center gap-1"><Maximize className="h-3.5 w-3.5" />{u.size_sqm}m²</span>}
                 </div>
                 {u.amenities?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{u.amenities.slice(0, 4).map((a) => <span key={a} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{a}</span>)}</div>}
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-lg font-bold text-emerald-700">{KES(u.monthly_rent)}<span className="text-xs font-normal text-slate-500">/mo</span></span><Button size="sm" onClick={() => setApply(u)} className="bg-emerald-600 hover:bg-emerald-700">Apply</Button></div>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-lg font-bold text-emerald-700">{KES(u.monthly_rent)}<span className="text-xs font-normal text-slate-500">/mo</span></span><Button size="sm" onClick={() => {setIdentity({id:null,photo:null});setApply(u);}} className="bg-emerald-600 hover:bg-emerald-700">Apply</Button></div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <Dialog open={!!apply} onOpenChange={() => setApply(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!apply} onOpenChange={() => {if (!busy && !uploading) setApply(null);}}>
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           {apply && (
             <>
               <DialogHeader><DialogTitle>Apply for {apply.unit_number}</DialogTitle></DialogHeader>
               <div className="space-y-3 py-2">
                 <div className="rounded-lg bg-slate-50 p-3 text-sm"><p className="font-medium text-slate-800">{apply.unit_number} · {apply.property_name}</p><p className="text-emerald-700 font-semibold">{KES(apply.monthly_rent)}/month</p></div>
                 <Field label="ID number"><Input value={form.id_number} onChange={(e) => setForm({ ...form, id_number: e.target.value })} placeholder={t.tenant?.id_number || ""} /></Field>
+                <ApplicationIdentityUploads unitId={apply.id} files={identity} onChange={setIdentity} disabled={busy || uploading} onBusyChange={(kind,value) => setUploads(current => ({...current,[kind]:value}))} />
                 <Field label="Occupation"><Input value={form.occupation} onChange={(e) => setForm({ ...form, occupation: e.target.value })} placeholder={t.tenant?.occupation || ""} /></Field>
                 <Field label="Monthly income"><Input type="number" value={form.monthly_income} onChange={(e) => setForm({ ...form, monthly_income: Number(e.target.value) })} /></Field>
                 <Field label="Proposed start date"><Input type="date" value={form.proposed_start_date} onChange={(e) => setForm({ ...form, proposed_start_date: e.target.value })} /></Field>
@@ -99,7 +91,7 @@ export default function BrowseUnits() {
                 <p className="text-xs text-slate-400">Submitting will temporarily reserve this unit for 3 days pending landlord review.</p>
                 {err && <p className="text-sm text-red-600">{err}</p>}
               </div>
-              <DialogFooter><Button onClick={submit} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Submitting..." : "Submit Application"}</Button></DialogFooter>
+              <DialogFooter><Button onClick={submit} disabled={busy || uploading || !identity.id || !identity.photo} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Submitting..." : "Submit Application"}</Button></DialogFooter>
             </>
           )}
         </DialogContent>

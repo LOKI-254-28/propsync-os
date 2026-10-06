@@ -9,6 +9,7 @@ import { Loader2, X, Save } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 import FileUploadButton from '@/components/FileUploadButton';
 import { Image } from '@/components/ui/image';
+import { syncUploadedDocuments } from '@/lib/registerUpload';
 
 const UNIT_TYPES = ["Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "Penthouse", "Commercial", "Other"];
 const ROOMS = ["Living room", "Kitchen", "Bedroom", "Bathroom", "Balcony", "Exterior"];
@@ -63,6 +64,7 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
         description: form.description,
         room_photos: form.room_photos,
       });
+      await syncUploadedDocuments('Unit',unit.id);
       toast({ title: "Saved", description: "Unit updated." });
       onClose();
       onSaved?.();
@@ -138,7 +140,7 @@ export default function UnitEditor({ open, unit, onClose, onSaved }) {
                 <div key={room} className="rounded-lg border border-slate-200 p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-xs font-medium text-slate-600">{room}</p>
-                    <FileUploadButton public multiple imageOnly label="Add photo" disabled={busy || uploadingRoom !== null} onBusyChange={value => setUploadingRoom(value ? room : null)} onUploaded={file => setForm(current => ({ ...current, room_photos: [...current.room_photos, { room, url: file.file_url }] }))} />
+                    <FileUploadButton documentContext={{entity:'Unit',record_id:unit.id,category:'Unit Photo'}} public multiple imageOnly label="Add photo" disabled={busy || uploadingRoom !== null} onBusyChange={value => setUploadingRoom(value ? room : null)} onUploaded={file => setForm(current => ({ ...current, room_photos: [...current.room_photos, { room, url: file.file_url }] }))} />
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {photos.map((p) => (

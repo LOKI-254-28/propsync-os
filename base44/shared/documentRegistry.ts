@@ -50,6 +50,7 @@ export async function upsertDocument(sr, user, file, options = {}) {
     if (options.registration && existing.uploaded_by_user_id !== user.id && existing.uploaded_by !== user.email) throw registryError('This file is registered to another uploader.',403);
     if (options.links) {
       if (existing.owner_user_id && options.links.owner_user_id && existing.owner_user_id !== options.links.owner_user_id) throw registryError('This document belongs to a different landlord.',403);
+      if (existing.application_id && options.links.application_id && existing.application_id !== options.links.application_id) throw registryError('This file is linked to another application.',403);
       if (existing.tenant_user_id && options.links.tenant_user_id && existing.tenant_user_id !== options.links.tenant_user_id) throw registryError('This document belongs to another tenant.',403);
       const changes = { ...options.links, linked: true, source_entities: [...new Set([...(existing.source_entities || []), options.source].filter(Boolean))] };
       if (options.category && existing.category === 'Other') changes.category = options.category;
@@ -78,7 +79,13 @@ export async function syncRecordFiles(sr, user, entity, record, historical = fal
   const links = await recordLinks(sr,user,entity,record);
   const result = { linked:0, skipped:[] };
   for (const entry of entries.slice(0,60)) {
-    if (!/^(mp\/private\/|https:\/\/)/.test(entry.uri)) { result.skipped.push({entity,id:record.id,reason:'Unsupported file reference'}); continue; }
+    const privateFile = entry.uri.startsWith('mp/private/');
+    const publicFile = entry.uri.startsWith('https://media.base44.com/') || entry.uri.startsWith('https://static.wixstatic.com/');
+    if (!privateFile && !publicFile) { result.skipped.push({entity,id:record.id,reason:'Cannot verify this is an uploaded file'}); continue; }
+    if (!historical) {
+      const registered = (await sr.entities.Document.filter({file_uri:entry.uri},'-created_date',1))[0];
+      if (registered?.uploaded_by_user_id && registered.uploaded_by_user_id !== user.id && registered.tenant_user_id !== links.tenant_user_id && registered.owner_user_id !== links.owner_user_id) throw registryError('This file belongs to an unrelated uploader.',403);
+    }
     await upsertDocument(sr,user,{file_uri:entry.uri}, {
       links, source:`${entity}:${record.id}`, category:entry.category,
       title:`${entry.category} – ${record.applicant_name || record.tenant_name || record.full_name || record.property_name || record.name || record.unit_number || entity}`,

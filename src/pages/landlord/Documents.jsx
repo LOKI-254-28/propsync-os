@@ -12,7 +12,7 @@ import { FileUploadButton } from "@/components/FileUploadButton";
 import { FolderOpen, Plus, Trash2, CheckCircle2, XCircle, Search, Eye } from "lucide-react";
 import { openDocument } from '@/lib/openDocument';
 
-const CATEGORIES = ["Lease Agreement", "ID/Passport", "KRA PIN", "Proof of Income", "Employer Letter", "Receipt", "Inspection Report", "Insurance/Compliance Certificate", "Title Deed", "Other"];
+const CATEGORIES = ["Lease Agreement", "ID/Passport", "KRA PIN", "Proof of Income", "Employer Letter", "Receipt", "Inspection Report", "Insurance/Compliance Certificate", "Title Deed", "Other", "Applicant Photo", "Property Photo", "Unit Photo", "Maintenance Photo", "Inspection Photo", "Notice Attachment"];
 const STATUSES = ["pending", "verified", "rejected"];
 
 export default function Documents() {
@@ -38,6 +38,9 @@ export default function Documents() {
   }, [data.documents, search, fCat, fStatus]);
 
   const targetLabel = (d) => {
+    if (d.application_id) return data.applications.find(a => a.id === d.application_id)?.application_reference || 'Application';
+    if (d.maintenance_id) return data.maintenance.find(m => m.id === d.maintenance_id)?.ticket_number || 'Maintenance';
+    if (d.inspection_id) return data.inspections.find(i => i.id === d.inspection_id)?.inspection_reference || 'Inspection';
     if (d.tenancy_id) return data.tenancies.find((t) => t.id === d.tenancy_id)?.tenant_name || "—";
     if (d.tenant_id) return data.tenants.find((t) => t.id === d.tenant_id)?.full_name || "—";
     if (d.unit_id) return data.units.find((u) => u.id === d.unit_id)?.unit_number || "—";
@@ -166,7 +169,7 @@ export default function Documents() {
                       <div className="flex justify-end gap-1">
                         <button onClick={() => viewDoc(d)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-emerald-700" title="View"><Eye className="h-4 w-4" /></button>
                         {d.status === "pending" && <button onClick={() => { setReview(d); setReviewNote(d.review_note || ""); }} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-emerald-700" title="Review"><CheckCircle2 className="h-4 w-4" /></button>}
-                        <button onClick={() => del(d)} className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                        <button disabled={d.linked || !!d.source_entities?.length} onClick={() => del(d)} className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Delete"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </td>
                   </tr>

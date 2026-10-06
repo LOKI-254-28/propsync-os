@@ -116,6 +116,16 @@ export default async function(req: Request): Promise<Response> {
     if (ENTITIES_WITH_OWNER.includes(entity)) {
       record.owner_user_id = user.id;
     }
+    if (entity === 'Contractor') {
+      if (user.role !== 'admin' && !isApprovedLandowner) return Response.json({error:'Only approved landowners or admins can add contractors.'},{status:403});
+      delete record.user_id;
+      if (record.property_id) {
+        const property = await base44.asServiceRole.entities.Property.get(record.property_id);
+        if (user.role !== 'admin' && property.owner_user_id !== user.id) return Response.json({error:'This property is not yours.'},{status:403});
+        record.owner_user_id = property.owner_user_id || user.id;
+        delete record.property_id;
+      }
+    }
     if (entity === 'Document') {
       let tenancy = record.tenancy_id ? await base44.asServiceRole.entities.Tenancy.get(record.tenancy_id) : null;
       if (!tenancy && record.tenant_id) {

@@ -74,7 +74,8 @@ import PublicListingDetail from '@/pages/public/PublicListingDetail';
 import Contact from '@/pages/public/Contact';
 import Chat from '@/pages/landlord/Chat';
 import MyChat from '@/pages/tenant/MyChat';
-import HowItWorks from '@/pages/public/HowItWorks';
+import PropWizExperience from '@/pages/public/PropWizExperience';
+import AssignedMaintenance from '@/pages/AssignedMaintenance';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -202,12 +203,14 @@ const AuthenticatedApp = () => {
       <Route path="/listings/:id" element={<ListingRedirect publicView />} />
       <Route path="/browse/:id" element={<PublicPropertyView />} />
       <Route path="/contact" element={<Contact />} />
-      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/the-propwiz-experience" element={<PropWizExperience />} />
+      <Route path="/how-it-works" element={<Navigate to="/the-propwiz-experience" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/assigned-maintenance" element={<AssignedMaintenance />} />
         <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/dashboard" : "/portal"} replace />} />
         <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />
       </Route>

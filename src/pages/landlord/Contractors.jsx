@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { HardHat, Plus, Phone, Mail } from "lucide-react";
+import ContractorAccountAccess from '@/components/maintenance/ContractorAccountAccess';
 
 const SERVICES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "General", "HVAC", "Landscaping"];
 
@@ -58,6 +59,7 @@ export default function Contractors() {
                 <div><p className="text-sm font-semibold text-slate-900">{c.jobsCount}</p><p className="text-[10px] uppercase text-slate-500">Jobs</p></div>
                 <div><p className="text-sm font-semibold text-slate-900">{KES(c.totalCost)}</p><p className="text-[10px] uppercase text-slate-500">Total Cost</p></div>
               </div>
+              <ContractorAccountAccess contractor={c} onChanged={data.reload}/>
             </div>
           ))}
         </div>

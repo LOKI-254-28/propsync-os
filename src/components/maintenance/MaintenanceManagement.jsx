@@ -1,0 +1,16 @@
+import React,{useState} from 'react';
+import {Input} from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
+import {Button} from '@/components/ui/button';
+import {Field} from '@/components/ui-bits';
+import AddMaintenanceContractor from '@/components/maintenance/AddMaintenanceContractor';
+import useMaintenanceAction from '@/hooks/useMaintenanceAction';
+export default function MaintenanceManagement({ticket,contractors,statuses,onSaved,onBusyChange,locked}) {
+  const [form,setForm]=useState({status:ticket.status,contractor_id:ticket.contractor_id || '',estimated_cost:ticket.estimated_cost || 0,approved_cost:ticket.approved_cost || 0,actual_cost:ticket.actual_cost || 0,public_message:'',internal_notes:ticket.internal_notes || '',resolution_notes:ticket.resolution_notes || ''}),[adding,setAdding]=useState(false);
+  const {send,busy,error}=useMaintenanceAction(ticket.id,onSaved);
+  const change=(key,value)=>setForm(previous=>({...previous,[key]:value}));
+  const assign=id=>setForm(previous=>({...previous,contractor_id:id,status:id&&['Submitted','Acknowledged'].includes(previous.status)?'Assigned':previous.status}));
+  const save=async()=>{onBusyChange?.(true);try{await send({action:'update',...form,status:statuses.includes(form.status)?form.status:ticket.status});}finally{onBusyChange?.(false);}};
+  const addBusy=value=>{setAdding(value);onBusyChange?.(value);};
+  return <section className="space-y-3 border-t border-border pt-4"><h3 className="font-heading font-semibold">Assignment & work progress</h3><fieldset disabled={busy||adding||locked} className="space-y-3"><Field label="Status"><select value={statuses.includes(form.status)?form.status:ticket.status} onChange={e=>change('status',e.target.value)} className="w-full rounded-md border border-input bg-background p-2 text-sm">{statuses.map(status=><option key={status} value={status}>{status==='Submitted'?'Reported':status==='Assigned'?'Contractor assigned':status}</option>)}</select></Field><Field label="Assign contractor"><select value={form.contractor_id} onChange={e=>assign(e.target.value)} className="w-full rounded-md border border-input bg-background p-2 text-sm"><option value="">Unassigned</option>{contractors.map(c=><option key={c.id} value={c.id}>{c.name}{c.company?` · ${c.company}`:''}</option>)}</select></Field></fieldset><AddMaintenanceContractor ticket={ticket} onAdded={contractor=>assign(contractor.id)} onBusyChange={addBusy} disabled={busy||locked}/><fieldset disabled={busy||adding||locked} className="space-y-3"><div className="grid grid-cols-1 gap-3 sm:grid-cols-3">{[['estimated_cost','Estimated'],['approved_cost','Approved'],['actual_cost','Actual']].map(([key,label])=><Field key={key} label={label}><Input type="number" min={0} value={form[key]} onChange={e=>change(key,Number(e.target.value))}/></Field>)}</div>{[['public_message','Progress update (shared)'],['resolution_notes','Resolution notes'],['internal_notes','Internal notes (landlord / admin only)']].map(([key,label])=><Field key={key} label={label}><Textarea maxLength={3000} rows={2} value={form[key]} onChange={e=>change(key,e.target.value)}/></Field>)}<Button onClick={save}>{busy?'Saving…':'Save Update'}</Button></fieldset>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}</section>;
+}

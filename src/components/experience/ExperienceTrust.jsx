@@ -1,0 +1,5 @@
+import React from 'react';
+import {LockKeyhole,ClipboardCheck,MessagesSquare} from 'lucide-react';
+export default function ExperienceTrust() {
+  return <div className="grid gap-6 md:grid-cols-3">{[{icon:LockKeyhole,title:'Private where it matters.',text:'Operational documents and conversations are shared with the relevant parties, rather than published as open links.'},{icon:ClipboardCheck,title:'A shared starting point.',text:'Inspection records and tenant review make the property condition part of the tenancy story, not an afterthought.'},{icon:MessagesSquare,title:'Context that stays connected.',text:'Keep feedback, maintenance messages and dated updates attached to the issue they belong to.'}].map(({icon:Icon,title,text})=><div key={title} className="border-l border-contact-soft pl-5"><Icon className="h-5 w-5 text-contact-forest"/><h3 className="mt-4 font-heading text-lg font-semibold text-contact-forest">{title}</h3><p className="mt-2 text-sm leading-relaxed text-contact-forest/70">{text}</p></div>)}</div>;
+}

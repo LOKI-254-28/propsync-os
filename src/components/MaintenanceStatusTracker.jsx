@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const STAGES = ["Pending", "In Progress", "Completed"];
+const STAGES = ["Reported", "Contractor assigned", "In Progress", "Completed", "Closed"];
 
 const BUCKET = {
   Submitted: 0,
   Acknowledged: 0,
   Assigned: 1,
   Scheduled: 1,
-  "In Progress": 1,
-  "Awaiting Parts": 1,
-  Completed: 2,
-  Closed: 2,
+  "In Progress": 2,
+  "Awaiting Parts": 2,
+  Completed: 3,
+  Closed: 4,
 };
 
 export default function MaintenanceStatusTracker({ status, updates = [] }) {
@@ -29,7 +29,7 @@ export default function MaintenanceStatusTracker({ status, updates = [] }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5"
+        className="flex max-w-xs flex-wrap items-center gap-1.5"
         title="Show details"
       >
         {STAGES.map((s, i) => {

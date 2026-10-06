@@ -13,16 +13,16 @@ export default function PublicLayout({ children }) {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
               <Building2 className="h-5 w-5" />
             </div>
             <span className="font-heading text-lg font-semibold text-slate-900">PropWiz</span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex w-full flex-wrap items-center justify-between gap-3 text-sm sm:w-auto sm:justify-end">
             <Link to="/listings" className="text-slate-600 hover:text-emerald-700">Browse</Link>
-            <Link to="/how-it-works" className="hidden text-slate-600 hover:text-emerald-700 sm:inline">How it works</Link>
+            <Link to="/the-propwiz-experience" className="text-muted-foreground hover:text-contact-forest">The PropWiz Experience</Link>
             <Link to="/contact" className="text-slate-600 hover:text-emerald-700">Contact</Link>
             {isAuthenticated ? (
               <Link to={roleHome} className="rounded-md bg-emerald-600 px-3 py-1.5 font-medium text-white hover:bg-emerald-700">
@@ -42,6 +42,7 @@ export default function PublicLayout({ children }) {
       <main className="flex-1">{children}</main>
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-500">
+          <Link to="/the-propwiz-experience" className="mb-3 inline-block hover:underline">The PropWiz Experience</Link>
           <p>© {new Date().getFullYear()} PropWiz. Rentals made simple.</p>
         </div>
       </footer>

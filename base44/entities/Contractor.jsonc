@@ -45,6 +45,10 @@
     "owner_user_id": {
       "type": "string",
       "description": "The landowner who added this contractor"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Explicitly linked existing app account; grants only assigned work and its conversation via the maintenance service."
     }
   },
   "required": [
@@ -64,18 +68,9 @@
       ]
     },
     "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "account_type": "landowner"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "update": {
       "$or": [

@@ -1,0 +1,97 @@
+{
+  "name": "MaintenanceEvent",
+  "type": "object",
+  "properties": {
+    "maintenance_id": {
+      "type": "string"
+    },
+    "tenant_user_id": {
+      "type": "string"
+    },
+    "owner_user_id": {
+      "type": "string"
+    },
+    "operation_id": {
+      "type": "string"
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "actor_role": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "Message",
+        "Update"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 3000
+    },
+    "status": {
+      "type": "string"
+    },
+    "previous_status": {
+      "type": "string"
+    },
+    "contractor_name": {
+      "type": "string"
+    },
+    "previous_contractor_name": {
+      "type": "string"
+    },
+    "resolution_notes": {
+      "type": "string"
+    },
+    "previous_resolution": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "maintenance_id",
+    "operation_id",
+    "kind"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.tenant_user_id": "{{user.id}}"
+        },
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

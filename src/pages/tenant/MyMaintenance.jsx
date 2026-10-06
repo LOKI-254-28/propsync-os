@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { useTenantData } from "@/lib/useTenantData";
 import { base44 } from "@/api/base44Client";
-import { genRef, logAudit, notify, todayISO } from "@/lib/finance";
-import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
+import { genRef } from "@/lib/finance";
+import { PageHeader, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import { Wrench, Plus, Eye } from "lucide-react";
 import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 import { toast } from "@/components/ui/use-toast";
 import MaintenancePhotoUpload from '@/components/maintenance/MaintenancePhotoUpload';
-import MaintenancePhotos from '@/components/maintenance/MaintenancePhotos';
+import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog';
 
 const CATEGORIES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "Other"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
@@ -26,7 +26,9 @@ export default function MyMaintenance() {
   const [uploading, setUploading] = useState(false);
   const [submissionRef, setSubmissionRef] = useState(() => genRef('MNT'));
 
-  const activeTenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
+  const [tenancyId,setTenancyId]=useState('');
+  const activeTenancies=t.tenancies.filter(x=>['Active','Expiring Soon','Notice Given'].includes(x.status));
+  const activeTenancy=activeTenancies.find(x=>x.id===tenancyId) || activeTenancies[0];
   const list = useMemo(() => [...t.maintenance].sort((a, b) => new Date(b.date_reported || b.created_date) - new Date(a.date_reported || a.created_date)), [t.maintenance]);
 
   const create = async () => {
@@ -54,7 +56,7 @@ export default function MyMaintenance() {
   return (
     <div>
       <PageHeader title="Maintenance / Repairs" description="Report and track repair requests." actions={activeTenancy && <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Report Issue</Button>} />
-      {!activeTenancy ? <EmptyState icon={Wrench} title="No active tenancy" description="You need an active tenancy to report maintenance." /> : list.length === 0 ? <EmptyState icon={Wrench} title="No maintenance requests" /> : (
+      {list.length === 0 ? <EmptyState icon={Wrench} title={activeTenancy?'No maintenance requests':'No active tenancy'} description={!activeTenancy?'You need an active tenancy to report new maintenance.':undefined}/> : (
         <div className="space-y-3">
           {list.map((m) => (
             <div key={m.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -72,6 +74,7 @@ export default function MyMaintenance() {
         <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain">
           <DialogHeader><DialogTitle>Report Maintenance Issue</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
+            <Field label="Property / tenancy"><select disabled={busy||uploading} value={activeTenancy?.id || ''} onChange={e=>setTenancyId(e.target.value)} className="w-full rounded-md border border-input bg-background p-2 text-sm">{activeTenancies.map(x=><option key={x.id} value={x.id}>{x.property_name} · {x.unit_number}</option>)}</select></Field>
             <Field label="Title"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Leaking kitchen tap" /></Field>
             <Field label="Description"><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} /></Field>
             <Field label="Category"><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
@@ -82,28 +85,7 @@ export default function MyMaintenance() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!view} onOpenChange={() => setView(null)}>
-        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain">
-          {view && (
-            <>
-              <DialogHeader><DialogTitle>{view.title}</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3 py-2 text-sm">
-                <Info label="Ticket" value={view.ticket_number} /><Info label="Category" value={view.category} /><Info label="Priority" value={view.priority} /><Info label="Status" value={<StatusBadge status={view.status} />} /><Info label="Reported" value={view.date_reported} />{view.contractor_name && <Info label="Contractor" value={view.contractor_name} />}
-              </div>
-              <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{view.description}</div>
-              <MaintenancePhotos images={view.images || []} />
-              <div className="mt-3">
-                <p className="mb-1.5 text-xs font-medium uppercase text-slate-500">Progress Updates</p>
-                {(view.public_updates || []).length === 0 ? <p className="text-sm text-slate-400">No updates yet.</p> : (
-                  <div className="space-y-2">{view.public_updates.map((u, i) => <div key={i} className="rounded-lg border border-slate-100 px-3 py-2"><p className="text-xs text-slate-500">{u.date} · {u.status}</p><p className="text-sm text-slate-700">{u.message}</p></div>)}</div>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {view&&<MaintenanceDialog maintenanceId={view.id} onClose={()=>setView(null)}/>}
     </div>
   );
 }
-
-function Info({ label, value }) { return <div><p className="text-xs text-slate-500">{label}</p><p className="font-medium text-slate-800">{value}</p></div>; }

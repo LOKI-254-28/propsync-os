@@ -3,6 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { loadDocuments } from '@/lib/documentList';
 
+async function loadMaintenance() {
+  const items=[]; let cursor;
+  do { const {data}=await base44.functions.invoke('maintenanceOps',{action:'mine',cursor});items.push(...data.items);cursor=data.has_more?data.next_cursor:null; } while(cursor);
+  return items;
+}
 // Loads the current tenant's own records only (RLS enforces isolation server-side too).
 // On first login, calls the linkTenant backend function to auto-link by email.
 export function useTenantData() {
@@ -35,7 +40,7 @@ export function useTenantData() {
         base44.entities.RentCharge.filter({ tenant_user_id: me.id }),
         base44.entities.Payment.filter({ tenant_user_id: me.id }),
         base44.entities.Application.filter({ tenant_user_id: me.id }),
-        base44.entities.Maintenance.filter({ tenant_user_id: me.id }),
+        loadMaintenance(),
         base44.entities.Inspection.filter({ tenant_user_id: me.id }),
         base44.entities.Notice.filter({ tenant_user_id: me.id }),
         loadDocuments(),

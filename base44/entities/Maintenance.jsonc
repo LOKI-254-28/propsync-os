@@ -133,6 +133,16 @@
     },
     "owner_user_id": {
       "type": "string"
+    },
+    "operation_token": {
+      "type": "string"
+    },
+    "operation_started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pending_event": {
+      "type": "object"
     }
   },
   "required": [
@@ -143,9 +153,6 @@
     "read": {
       "$or": [
         {
-          "data.tenant_user_id": "{{user.id}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -155,18 +162,15 @@
         }
       ]
     },
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "data.owner_user_id": "{{user.id}}"
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {

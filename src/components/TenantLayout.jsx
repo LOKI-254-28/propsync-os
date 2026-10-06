@@ -13,6 +13,7 @@ import { normalizeUser } from "@/lib/normalizeUser";
 import { signOut } from "@/lib/signOut";
 import useSectionAlerts from '@/components/alerts/useSectionAlerts';
 import AlertBadge from '@/components/alerts/AlertBadge';
+import AssignedWorkLink from '@/components/maintenance/AssignedWorkLink';
 
 const ICONS = {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
@@ -76,6 +77,7 @@ export default function TenantLayout({ children }) {
         </div>
         <nav className="flex h-[calc(100vh-180px)] flex-col gap-0.5 overflow-y-auto pr-1">
           {TENANT_NAV.map((item) => <NavItem key={item.path} item={item} />)}
+          <AssignedWorkLink onNavigate={()=>setMobileOpen(false)}/>
         </nav>
         <div className="absolute bottom-0 left-0 right-0 border-t border-emerald-700/50 px-3 py-3">
           <div className="flex items-center gap-2.5">

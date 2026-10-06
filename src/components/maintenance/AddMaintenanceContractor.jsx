@@ -1,0 +1,11 @@
+import React,{useState} from 'react';
+import {useQueryClient} from '@tanstack/react-query';
+import {base44} from '@/api/base44Client';
+import {Input} from '@/components/ui/input';
+import {Button} from '@/components/ui/button';
+import {Field} from '@/components/ui-bits';
+export default function AddMaintenanceContractor({ticket,onAdded,onBusyChange,disabled}) {
+  const [open,setOpen]=useState(false),[form,setForm]=useState({name:'',company:'',phone:'',email:''}),[busy,setBusy]=useState(false),[error,setError]=useState(''),client=useQueryClient();
+  const create=async()=>{setBusy(true);onBusyChange?.(true);setError('');try{const {data}=await base44.functions.invoke('createOwnedRecord',{entity:'Contractor',data:{...form,name:form.name.trim(),property_id:ticket.property_id,services:[ticket.category],status:'Active'}});await client.invalidateQueries({queryKey:['maintenance-ticket',ticket.id]});onAdded(data.record);setOpen(false);setForm({name:'',company:'',phone:'',email:''});}catch(e){setError(e.response?.data?.error || e.message);}finally{setBusy(false);onBusyChange?.(false);}};
+  return <div>{!open?<Button type="button" size="sm" variant="outline" disabled={disabled} onClick={()=>setOpen(true)}>Add New Contractor</Button>:<div className="space-y-3 rounded-lg border border-border p-3"><fieldset disabled={busy} className="space-y-2">{[['name','Name'],['company','Company'],['phone','Phone'],['email','Email']].map(([key,label])=><Field key={key} label={label}><Input type={key==='email'?'email':'text'} maxLength={key==='email'?254:120} value={form[key]} onChange={e=>setForm(previous=>({...previous,[key]:e.target.value}))}/></Field>)}</fieldset><div className="flex gap-2"><Button type="button" size="sm" disabled={busy||!form.name.trim()} onClick={create}>{busy?'Adding…':'Add & Select'}</Button><Button type="button" size="sm" variant="ghost" disabled={busy} onClick={()=>setOpen(false)}>Cancel</Button></div>{error&&<p role="alert" className="text-xs text-destructive">{error}</p>}</div>}</div>;
+}

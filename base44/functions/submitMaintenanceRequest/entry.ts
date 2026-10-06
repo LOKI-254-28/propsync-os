@@ -11,7 +11,7 @@ export default async function(req: Request): Promise<Response> {
     const tenancy = await b.entities.Tenancy.get(body.tenancy_id);
     if (tenancy.tenant_user_id !== user.id || !['Active','Expiring Soon','Notice Given'].includes(tenancy.status)) return Response.json({ error: 'Choose your own active tenancy.' }, { status: 403 });
     const sr = b.asServiceRole, property = await sr.entities.Property.get(tenancy.property_id);
-    const existing = await b.entities.Maintenance.filter({ tenant_user_id: user.id, tenancy_id: tenancy.id, ticket_number: body.ticket_number }, '-created_date', 1);
+    const existing = await sr.entities.Maintenance.filter({ tenant_user_id: user.id, tenancy_id: tenancy.id, ticket_number: body.ticket_number }, '-created_date', 1);
     const created = !existing.length;
     const ticket = existing[0] || await sr.entities.Maintenance.create({ ticket_number: body.ticket_number, title: body.title.trim(), description: body.description || '', category: body.category, priority: body.priority, date_reported: nairobiToday(), property_id: tenancy.property_id, property_name: tenancy.property_name || property.name, unit_id: tenancy.unit_id, unit_number: tenancy.unit_number || '', tenant_id: tenancy.tenant_id, tenant_user_id: user.id, tenant_name: tenancy.tenant_name || user.full_name || user.email, tenancy_id: tenancy.id, owner_user_id: property.owner_user_id || tenancy.owner_user_id || '', status: 'Submitted', public_updates: [], images: [...new Set(images)] });
     await syncRecordFiles(sr,user,'Maintenance',ticket);

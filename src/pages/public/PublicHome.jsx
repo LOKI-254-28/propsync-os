@@ -91,14 +91,14 @@ export default function PublicHome() {
         )}
       </section>
 
-      {/* How it works */}
+      {/* The PropWiz Experience */}
       <section className="bg-slate-50">
         <div className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="font-heading text-2xl font-semibold text-slate-900">How it works</h2>
+          <h2 className="font-heading text-2xl font-semibold text-slate-900"><Link to="/the-propwiz-experience" className="hover:underline">The PropWiz Experience</Link></h2>
           <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <Step icon={Search} title="Browse" desc="Explore verified rental listings across properties and units." />
-            <Step icon={Home} title="Apply" desc="Submit your application online and track it through approval." />
-            <Step icon={ShieldCheck} title="Move in" desc="Sign your agreement, pay securely, and manage your tenancy." />
+            <Step icon={Search} title="See more of the picture" desc="Explore available homes with property photos, location details and reviews." />
+            <Step icon={Home} title="Keep your rental life connected" desc="Bring agreements, rent records and repair conversations together in your portal." />
+            <Step icon={ShieldCheck} title="Make clearer decisions" desc="Review documented inspections and tenancy records before the next chapter begins." />
           </div>
         </div>
       </section>

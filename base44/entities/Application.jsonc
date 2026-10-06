@@ -201,6 +201,19 @@
       ],
       "default": ""
     },
+    "payment_received_amount": {
+      "type": "number"
+    },
+    "payment_approved_amount": {
+      "type": "number"
+    },
+    "payment_approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payment_receipt_number": {
+      "type": "string"
+    },
     "inspection_id": {
       "type": "string"
     },

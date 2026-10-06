@@ -49,7 +49,8 @@ export async function patchApplication(sr,user,context,updates) {
   if (updates.site_visit_status === 'Confirmed' && (!app.site_visit_date || app.site_visit_proposed_by === (staff ? 'landlord' : 'tenant'))) throw registryError('Only the other party can confirm the proposed visit.',409);
   if (updates.site_visit_date && !/^\d{4}-\d{2}-\d{2}$/.test(updates.site_visit_date)) throw registryError('Choose a valid visit date.');
   if (updates.site_visit_time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(updates.site_visit_time)) throw registryError('Choose a valid visit time.');
-  const updated = await sr.entities.Application.update(app.id,updates);
+  const receiptFields = target === 'Payment Verified' ? {payment_approved_amount:Number(app.payment_received_amount || updates.payment_amount || app.payment_amount),payment_approved_at:new Date().toISOString(),payment_receipt_number:app.payment_receipt_number||`RCP-APP-${app.id.toUpperCase()}`} : {};
+  const updated = await sr.entities.Application.update(app.id,{...updates,...receiptFields});
   await syncRecordFiles(sr,user,'Application',updated);
   return {application:updated};
 }

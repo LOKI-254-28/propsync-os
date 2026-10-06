@@ -37,6 +37,8 @@ export default async function(req: Request): Promise<Response> {
     await sr.entities.Application.update(app.id, {
       payment_method: 'M-Pesa',
       payment_reference: receipt,
+      payment_received_amount: paid,
+      ...(full ? {payment_approved_amount:paid,payment_approved_at:new Date().toISOString(),payment_receipt_number:app.payment_receipt_number||`RCP-APP-${app.id.toUpperCase()}`} : {}),
       payment_status: full ? 'Verified' : 'Proof Submitted',
       status: full ? 'Payment Verified' : 'Payment Proof Submitted',
     });

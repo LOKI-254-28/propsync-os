@@ -33,6 +33,23 @@
       "type": "string",
       "format": "date"
     },
+    "charge_type": {
+      "type": "string",
+      "enum": [
+        "Rent",
+        "Garbage Collection",
+        "Water",
+        "Electricity",
+        "Internet",
+        "Parking",
+        "Security",
+        "Other"
+      ]
+    },
+    "bill_name": {
+      "type": "string",
+      "maxLength": 120
+    },
     "amount": {
       "type": "number",
       "default": 0

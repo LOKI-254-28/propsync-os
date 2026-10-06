@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { useTenantData } from "@/lib/useTenantData";
 import { base44 } from "@/api/base44Client";
-import { KES, recordPayment, genRef, todayISO, monthKey, monthLabel } from "@/lib/finance";
+import { recordPayment, genRef, todayISO, monthKey, monthLabel } from "@/lib/finance";
+import PaymentReceipt from '@/components/payment/PaymentReceipt';
+import {approvedReceipts,receiptMoney as KES} from '@/components/payment/receiptData';
 import { PageHeader, SectionCard, StatusBadge, EmptyState, StatCard, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +20,7 @@ export default function MyRent() {
 
   const activeTenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
   const charges = useMemo(() => [...t.charges].sort((a, b) => new Date(a.due_date) - new Date(b.due_date)), [t.charges]);
-  const payments = useMemo(() => [...t.payments].filter((p) => p.status === "Successful").sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)), [t.payments]);
+  const payments = useMemo(() => approvedReceipts(t.payments,t.applications), [t.payments,t.applications]);
   const outstanding = charges.filter((c) => c.status !== "Void" && c.status !== "Paid").reduce((s, c) => s + Number(c.outstanding || 0), 0);
   const paid = charges.reduce((s, c) => s + Number(c.amount_paid || 0), 0);
 
@@ -49,11 +51,12 @@ export default function MyRent() {
         {charges.length === 0 ? <EmptyState icon={Wallet} title="No charges yet" /> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500"><th className="pb-2 font-medium">Period</th><th className="pb-2 font-medium">Due</th><th className="pb-2 text-right font-medium">Amount</th><th className="pb-2 text-right font-medium">Paid</th><th className="pb-2 text-right font-medium">Outstanding</th><th className="pb-2 text-right font-medium">Status</th></tr></thead>
+              <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500"><th className="pb-2 font-medium">Period</th><th className="pb-2 font-medium">Bill</th><th className="pb-2 font-medium">Due</th><th className="pb-2 text-right font-medium">Amount</th><th className="pb-2 text-right font-medium">Paid</th><th className="pb-2 text-right font-medium">Outstanding</th><th className="pb-2 text-right font-medium">Status</th></tr></thead>
               <tbody>
                 {charges.map((c) => (
                   <tr key={c.id} className="border-b border-slate-50">
                     <td className="py-2.5 text-slate-700">{monthLabel(c.billing_period)}</td>
+                    <td className="py-2.5 text-slate-600">{c.bill_name||c.charge_type||'Rent & Service Charge'}</td>
                     <td className="py-2.5 text-slate-600">{c.due_date}</td>
                     <td className="py-2.5 text-right text-slate-900">{KES(c.amount)}</td>
                     <td className="py-2.5 text-right text-emerald-700">{KES(c.amount_paid)}</td>
@@ -103,22 +106,7 @@ export default function MyRent() {
 
       <Dialog open={!!receipt} onOpenChange={() => setReceipt(null)}>
         <DialogContent className="max-w-md">
-          {receipt && (
-            <>
-              <DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5 text-emerald-600" />Receipt</DialogTitle></DialogHeader>
-              <div className="rounded-xl border border-slate-200 p-5">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-3"><div><p className="font-heading font-semibold text-slate-900">PropWiz</p><p className="text-xs text-slate-500">Property Management</p></div><div className="text-right"><p className="text-xs text-slate-500">Receipt No.</p><p className="font-mono text-sm font-medium">{receipt.receipt_number}</p></div></div>
-                <div className="grid grid-cols-2 gap-2 py-3 text-sm">
-                  <div><p className="text-xs text-slate-500">Tenant</p><p className="font-medium">{receipt.tenant_name}</p></div>
-                  <div><p className="text-xs text-slate-500">Unit</p><p className="font-medium">{receipt.unit_number}</p></div>
-                  <div><p className="text-xs text-slate-500">Date</p><p className="font-medium">{receipt.payment_date}</p></div>
-                  <div><p className="text-xs text-slate-500">Method</p><p className="font-medium">{receipt.method}</p></div>
-                </div>
-                <div className="border-t border-slate-200 pt-3 flex justify-between"><span className="text-sm text-slate-500">Amount Paid</span><span className="text-xl font-bold text-emerald-700">{KES(receipt.amount)}</span></div>
-              </div>
-              <DialogFooter><Button variant="outline" onClick={() => window.print()}><Download className="mr-1.5 h-4 w-4" />Print</Button></DialogFooter>
-            </>
-          )}
+          {receipt && <PaymentReceipt payment={receipt} charges={charges} />}
         </DialogContent>
       </Dialog>
     </div>

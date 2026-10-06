@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.49';
+import { addTenancyBill } from '../../shared/tenancyBills.ts';
 
 // Generates monthly rent charges for a landowner's tenancies.
 // Runs as service role — validates the user is an approved landowner (or admin),
@@ -17,6 +18,7 @@ export default async function(req: Request): Promise<Response> {
     }
 
     const body = await req.json();
+    if (body.action === 'add_bill') return await addTenancyBill(base44.asServiceRole,user,body);
     const { billingPeriod, dueDay = 1, tenancyIds } = body;
     if (typeof billingPeriod!=='string'||!/^\d{4}-(0[1-9]|1[0-2])$/.test(billingPeriod)||!Number.isInteger(dueDay)||dueDay<1||dueDay>28) return Response.json({error:'Choose a billing month and a due day from 1 to 28.'},{status:400});
     if (tenancyIds!=null&&(!Array.isArray(tenancyIds)||tenancyIds.length>500||tenancyIds.some(id=>typeof id!=='string'||id.length>100))) return Response.json({error:'Choose up to 500 valid tenancy references.'},{status:400});
@@ -41,7 +43,7 @@ export default async function(req: Request): Promise<Response> {
 
     // Load existing charges for this billing period to skip duplicates
     const existingCharges = await base44.asServiceRole.entities.RentCharge.filter({ billing_period: billingPeriod }, '-created_date', 1000);
-    const existing = new Set(existingCharges.map((c) => c.tenancy_id));
+    const existing = new Set(existingCharges.filter(c=>!c.charge_type||c.charge_type==='Rent').map((c) => c.tenancy_id));
 
     // Build charges
     const [y, m] = billingPeriod.split('-').map(Number);
@@ -60,6 +62,8 @@ export default async function(req: Request): Promise<Response> {
         unit_id: t.unit_id,
         unit_number: t.unit_number,
         billing_period: billingPeriod,
+        charge_type: 'Rent',
+        bill_name: 'Rent & Service Charge',
         due_date: dueDate,
         amount: amt,
         amount_paid: 0,

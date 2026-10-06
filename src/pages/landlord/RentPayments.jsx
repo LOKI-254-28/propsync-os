@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import {
-  KES, monthKey, monthLabel, addMonths, generateMonthlyCharges, recordPayment,
+  monthKey, monthLabel, addMonths, generateMonthlyCharges, recordPayment,
   chargeStatus, genRef, logAudit, notify, todayISO,
 } from "@/lib/finance";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, StatCard, Field } from "@/components/ui-bits";
@@ -10,7 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Wallet, Zap, Search, Download, Receipt, CheckCircle2 } from "lucide-react";
+import { Wallet, Zap, Search, Receipt, CheckCircle2, Plus } from "lucide-react";
+import BillForm from '@/components/payment/BillForm';
+import PaymentReceipt from '@/components/payment/PaymentReceipt';
+import ApprovedPayments from '@/components/payment/ApprovedPayments';
+import {approvedReceipts,receiptMoney as KES} from '@/components/payment/receiptData';
 
 export default function RentPayments() {
   const data = usePortfolioData();
@@ -28,6 +32,8 @@ export default function RentPayments() {
   const [payDate, setPayDate] = useState(todayISO());
   const [receipt, setReceipt] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [billOpen,setBillOpen] = useState(false);
+  const approvedPayments = useMemo(()=>approvedReceipts(data.payments,data.applications).filter(p=>!search||`${p.tenant_name} ${p.unit_number}`.toLowerCase().includes(search.toLowerCase())),[data.payments,data.applications,search]);
 
   const charges = useMemo(() => data.charges
     .filter((c) => c.billing_period === period)
@@ -80,7 +86,7 @@ export default function RentPayments() {
   return (
     <div>
       <PageHeader title="Rent & Payments" description="The rent ledger — generate monthly charges, record payments, and track allocation."
-        actions={<Button onClick={() => { setGenResult(null); setGenOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700"><Zap className="mr-1.5 h-4 w-4" />Generate Charges</Button>} />
+        actions={<><Button variant="outline" onClick={()=>setBillOpen(true)}><Plus className="h-4 w-4" />Add Other Bill</Button><Button onClick={() => { setGenResult(null); setGenOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700"><Zap className="mr-1.5 h-4 w-4" />Generate Charges</Button></>} />
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <Field label="Billing period">
@@ -109,13 +115,14 @@ export default function RentPayments() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500">
-                <th className="pb-2 font-medium">Tenant</th><th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Due</th><th className="pb-2 text-right font-medium">Amount</th><th className="pb-2 text-right font-medium">Paid</th><th className="pb-2 text-right font-medium">Outstanding</th><th className="pb-2 text-right font-medium">Status</th><th className="pb-2"></th>
+                <th className="pb-2 font-medium">Tenant</th><th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Bill</th><th className="pb-2 font-medium">Due</th><th className="pb-2 text-right font-medium">Amount</th><th className="pb-2 text-right font-medium">Paid</th><th className="pb-2 text-right font-medium">Outstanding</th><th className="pb-2 text-right font-medium">Status</th><th className="pb-2"></th>
               </tr></thead>
               <tbody>
                 {charges.map((c) => (
                   <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                     <td className="py-2.5 font-medium text-slate-800">{c.tenant_name}</td>
                     <td className="py-2.5 text-slate-600">{c.unit_number}</td>
+                    <td className="py-2.5 text-slate-600">{c.bill_name||c.charge_type||'Rent & Service Charge'}</td>
                     <td className="py-2.5 text-slate-600">{c.due_date}</td>
                     <td className="py-2.5 text-right text-slate-900">{KES(c.amount)}</td>
                     <td className="py-2.5 text-right text-emerald-700">{KES(c.amount_paid)}</td>
@@ -130,6 +137,8 @@ export default function RentPayments() {
         </SectionCard>
       )}
 
+      <ApprovedPayments payments={approvedPayments} onReceipt={setReceipt} />
+      {billOpen&&<BillForm tenancies={data.tenancies} period={period} onClose={()=>setBillOpen(false)} onSaved={data.reload} />}
       {/* Generate charges dialog */}
       <Dialog open={genOpen} onOpenChange={setGenOpen}>
         <DialogContent className="max-w-md">
@@ -199,38 +208,9 @@ export default function RentPayments() {
       {/* Receipt dialog */}
       <Dialog open={!!receipt} onOpenChange={() => setReceipt(null)}>
         <DialogContent className="max-w-md">
-          {receipt && <ReceiptView payment={receipt} />}
+          {receipt && <PaymentReceipt payment={receipt} charges={data.charges} />}
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function ReceiptView({ payment }) {
-  const print = () => window.print();
-  return (
-    <div>
-      <DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5 text-emerald-600" />Payment Receipt</DialogTitle></DialogHeader>
-      <div className="rounded-xl border border-slate-200 p-5">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-          <div className="flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white text-sm font-bold">P</div><div><p className="font-heading font-semibold text-slate-900">PropWiz</p><p className="text-xs text-slate-500">Property Management</p></div></div>
-          <div className="text-right"><p className="text-xs text-slate-500">Receipt No.</p><p className="font-mono text-sm font-medium text-slate-800">{payment.receipt_number}</p></div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 py-3 text-sm">
-          <div><p className="text-xs text-slate-500">Tenant</p><p className="font-medium text-slate-800">{payment.tenant_name}</p></div>
-          <div><p className="text-xs text-slate-500">Unit</p><p className="font-medium text-slate-800">{payment.unit_number}</p></div>
-          <div><p className="text-xs text-slate-500">Property</p><p className="font-medium text-slate-800">{payment.property_name}</p></div>
-          <div><p className="text-xs text-slate-500">Date</p><p className="font-medium text-slate-800">{payment.payment_date}</p></div>
-          <div><p className="text-xs text-slate-500">Method</p><p className="font-medium text-slate-800">{payment.method}</p></div>
-          <div><p className="text-xs text-slate-500">Reference</p><p className="font-mono text-xs text-slate-700">{payment.payment_reference}</p></div>
-        </div>
-        <div className="border-t border-slate-200 pt-3">
-          <div className="flex items-center justify-between"><span className="text-sm text-slate-500">Amount Paid</span><span className="text-xl font-bold text-emerald-700">{KES(payment.amount)}</span></div>
-          <div className="mt-2 text-xs text-slate-500">Allocated across {payment.allocations?.length || 0} charge(s).</div>
-        </div>
-        <div className="mt-3 border-t border-slate-200 pt-2 text-center text-[10px] text-slate-400">This is a system-generated receipt. Sandbox mode — no real funds transferred.</div>
-      </div>
-      <DialogFooter><Button variant="outline" onClick={print}><Download className="mr-1.5 h-4 w-4" />Print / Save PDF</Button></DialogFooter>
     </div>
   );
 }

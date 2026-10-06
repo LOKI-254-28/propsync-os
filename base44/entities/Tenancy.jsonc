@@ -114,6 +114,13 @@
     "notice_creation_started_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "feedback_creation_token": {
+      "type": "string"
+    },
+    "feedback_creation_started_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

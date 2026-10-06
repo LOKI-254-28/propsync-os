@@ -1,0 +1,19 @@
+import React,{useState} from 'react';
+import {useInfiniteQuery} from '@tanstack/react-query';
+import {base44} from '@/api/base44Client';
+import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {Textarea} from '@/components/ui/textarea';
+import {Field,StatusBadge} from '@/components/ui-bits';
+import FeedbackHistory from '@/components/feedback/FeedbackHistory';
+import useFeedbackAction from '@/hooks/useFeedbackAction';
+const transitions={Open:['Under Review','Responded','Resolved','Closed'],'Under Review':['Responded','Resolved','Closed'],Responded:['Under Review','Resolved','Closed'],Resolved:['Under Review','Closed'],Closed:['Under Review']};
+export default function FeedbackDialog({feedback,onClose,onSaved}) {
+  const [message,setMessage]=useState(''),[resolution,setResolution]=useState(feedback.resolution || ''),[status,setStatus]=useState(feedback.status);
+  const history=useInfiniteQuery({queryKey:['feedback-history',feedback.id],initialPageParam:null,queryFn:async({pageParam})=>(await base44.functions.invoke('feedbackOps',{action:'history',feedback_id:feedback.id,cursor:pageParam})).data,getNextPageParam:page=>page.has_more?page.next_cursor:undefined,refetchInterval:30000});
+  const record=history.data?.pages[0]?.feedback || feedback,manager=!!history.data?.pages[0]?.can_manage;
+  const {send,busy,error}=useFeedbackAction(onSaved);
+  const effectiveStatus=[record.status,...(transitions[record.status] || [])].includes(status)?status:record.status;
+  const reply=async action=>{if(await send({action,feedback_id:record.id,message,...(action==='manage'?{status:effectiveStatus,resolution}:{})}))setMessage('');};
+  return <Dialog open onOpenChange={value=>{if(!value&&!busy)onClose();}}><DialogContent className="max-h-[90dvh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{record.type} · {record.tenant_name || 'Tenant feedback'}</DialogTitle></DialogHeader><div className="space-y-2 text-sm"><StatusBadge status={record.status}/><p className="text-xs text-muted-foreground">{record.property_name || 'Historical feedback'} · {record.unit_number || '—'} · {record.tenancy_reference || 'Original property link'} · {record.date_submitted} · {record.category || 'General'}</p><p className="whitespace-pre-wrap rounded-lg bg-muted p-3">{record.description}</p>{record.staff_response&&<p className="whitespace-pre-wrap"><strong>Latest staff response: </strong>{record.staff_response}</p>}{record.resolution&&<p className="whitespace-pre-wrap"><strong>Last recorded resolution: </strong>{record.resolution}</p>}{record.closed_date&&<p className="text-xs text-muted-foreground">Last resolved / closed: {record.closed_date}</p>}</div><FeedbackHistory query={history}/><fieldset disabled={busy||history.isLoading||!!history.error} className="space-y-3"><Field label="Your reply"><Textarea aria-label="Feedback reply" rows={3} maxLength={3000} value={message} onChange={e=>setMessage(e.target.value)}/></Field><Button disabled={!message.trim()} onClick={()=>reply('reply')}>{busy?'Saving…':'Send Reply'}</Button>{!manager&&<p className="text-xs text-muted-foreground">Your reply reopens this feedback for review without deleting any earlier response or resolution.</p>}{manager&&<><Field label="Status"><select value={effectiveStatus} onChange={e=>setStatus(e.target.value)} className="w-full rounded-md border border-input bg-background p-2 text-sm">{[record.status,...(transitions[record.status] || [])].map(value=><option key={value}>{value}</option>)}</select></Field><Field label="Resolution"><Textarea rows={2} maxLength={3000} value={resolution} onChange={e=>setResolution(e.target.value)}/></Field><Button variant="outline" onClick={()=>reply('manage')}>Save Status & Resolution</Button></>}</fieldset>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}</DialogContent></Dialog>;
+}

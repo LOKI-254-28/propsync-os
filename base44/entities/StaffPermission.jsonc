@@ -27,6 +27,13 @@
     "active": {
       "type": "boolean",
       "default": true
+    },
+    "feedback_property_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Properties explicitly authorized by an admin for private feedback review."
     }
   },
   "required": [

@@ -21,6 +21,7 @@ export async function recordLinks(sr, user, entity, record) {
   if (entity === 'NextOfKin' || (entity === 'Inspection' && record.application_id)) {
     if (!record.application_id) throw registryError('This record has no application.');
     context = await sr.entities.Application.get(record.application_id); links.application_id = context.id;
+    if (entity === 'Inspection' && record.tenancy_id) context = {...context,tenancy_id:record.tenancy_id};
   }
   let tenancy = entity === 'Tenancy' ? record : context.tenancy_id ? await sr.entities.Tenancy.get(context.tenancy_id) : null;
   if (tenancy) { links.tenancy_id = tenancy.id; context = { ...context, property_id: tenancy.property_id, unit_id: tenancy.unit_id, tenant_id: tenancy.tenant_id, tenant_user_id: tenancy.tenant_user_id }; }

@@ -2,6 +2,8 @@ import React, { useMemo } from "react";
 import { useTenantData } from "@/lib/useTenantData";
 import { PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { ClipboardCheck } from "lucide-react";
+import MoveInInspectionPanel from '@/components/inspections/MoveInInspectionPanel';
+import InspectionDetails from '@/components/inspections/InspectionDetails';
 
 export default function MyInspections() {
   const t = useTenantData();
@@ -17,6 +19,7 @@ export default function MyInspections() {
               <div key={i.id} className="flex flex-wrap items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
                 <div><p className="font-medium text-slate-900">{i.type} Inspection</p><p className="text-xs text-slate-500">{i.unit_number} · Scheduled {i.scheduled_date}</p>{i.status === "Completed" && i.condition_rating && <p className="text-xs text-slate-600">Condition: {i.condition_rating}</p>}</div>
                 <StatusBadge status={i.status} />
+                {i.application_id && <div className="w-full">{t.applications.some(a => a.id === i.application_id && a.inspection_id === i.id) ? <MoveInInspectionPanel app={t.applications.find(a => a.id === i.application_id)} role="tenant" onUpdated={t.reload}/> : <InspectionDetails inspection={i}/>}</div>}
               </div>
             ))}
           </div>

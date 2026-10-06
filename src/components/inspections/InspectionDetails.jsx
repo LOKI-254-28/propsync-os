@@ -1,0 +1,7 @@
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { downloadFile } from '@/lib/files';
+import InspectionPhotoGrid from '@/components/inspections/InspectionPhotoGrid';
+export default function InspectionDetails({inspection}) {
+  return <div className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium">{inspection.inspection_reference} · Revision {inspection.revision || 1}</p><span className="text-xs text-muted-foreground">Tenant decision: {inspection.tenant_approval_status || 'Pending'}</span></div>{inspection.report_uri&&<Button size="sm" variant="outline" onClick={()=>downloadFile(inspection.report_uri)}>View inspection record</Button>}<div className="space-y-2">{(inspection.checklist||[]).map(row=><div key={row.area} className="rounded-md border border-border p-2 text-sm"><p className="font-medium">{row.area}: {row.condition}</p>{row.notes&&<p className="whitespace-pre-wrap text-muted-foreground">{row.notes}</p>}</div>)}</div><InspectionPhotoGrid images={inspection.images||[]}/>{inspection.tenant_comment&&<div className="rounded-md bg-muted p-3 text-sm"><p className="font-medium">Tenant response</p><p className="whitespace-pre-wrap">{inspection.tenant_comment}</p></div>}{(inspection.supporting_documents||[]).map((uri,i)=><Button key={uri} size="sm" variant="outline" onClick={()=>downloadFile(uri)}>View supporting file {i+1}</Button>)}</div>;
+}

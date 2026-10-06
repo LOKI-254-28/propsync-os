@@ -31,9 +31,11 @@ export async function completeApplication(sr,user,context,body) {
       start_date:app.proposed_start_date || nairobiToday(),expected_end_date:'',monthly_rent:app.monthly_rent || unit.monthly_rent,security_deposit:unit.security_deposit,service_charge:unit.service_charge,
       payment_due_day:1,grace_period_days:7,notice_period_days:30,status:'Active',owner_user_id:property.owner_user_id,agreement_document_url:app.agreement_executed_url,
     });
+    const linkedApp = await sr.entities.Application.update(app.id,{tenancy_id:tenancy.id,tenant_id:tenant.id});
     await sr.entities.Inspection.update(inspection.id,{tenancy_id:tenancy.id,tenant_id:tenant.id});
     await syncRecordFiles(sr,user,'Inspection',{...inspection,tenancy_id:tenancy.id,tenant_id:tenant.id});
     await syncRecordFiles(sr,user,'Tenancy',tenancy);
+    await syncRecordFiles(sr,user,'Application',linkedApp);
     await sr.entities.Unit.update(unit.id,{status:'Occupied',current_tenancy_id:tenancy.id,current_tenant_name:tenant.full_name});
     if (app.listing_id) {
       const listing = await sr.entities.Listing.get(app.listing_id);

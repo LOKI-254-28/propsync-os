@@ -192,7 +192,7 @@ const AuthenticatedApp = () => {
     }
   }
 
-  const isAdmin = user?.account_type === 'admin' || (!user?.account_type && user?.role === 'admin');
+  const isAdmin = user?.role === 'admin';
   const isLandlord = user?.account_type === 'landowner';
   const roleHome = isAdmin ? "/admin" : isLandlord ? "/dashboard" : "/portal";
 

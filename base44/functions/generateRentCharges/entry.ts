@@ -9,7 +9,7 @@ export default async function(req: Request): Promise<Response> {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
-    const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
+    const isAdmin = user.role === 'admin';
     const isApprovedLandowner = (user.account_type === 'landowner' || user.data?.account_type === 'landowner')
       && (user.approval_status === 'approved' || user.data?.approval_status === 'approved');
     if (!isAdmin && !isApprovedLandowner) {
@@ -18,7 +18,8 @@ export default async function(req: Request): Promise<Response> {
 
     const body = await req.json();
     const { billingPeriod, dueDay = 1, tenancyIds } = body;
-    if (!billingPeriod) return Response.json({ error: 'billingPeriod is required' }, { status: 400 });
+    if (typeof billingPeriod!=='string'||!/^\d{4}-(0[1-9]|1[0-2])$/.test(billingPeriod)||!Number.isInteger(dueDay)||dueDay<1||dueDay>28) return Response.json({error:'Choose a billing month and a due day from 1 to 28.'},{status:400});
+    if (tenancyIds!=null&&(!Array.isArray(tenancyIds)||tenancyIds.length>500||tenancyIds.some(id=>typeof id!=='string'||id.length>100))) return Response.json({error:'Choose up to 500 valid tenancy references.'},{status:400});
 
     // Load tenancies — either the specified IDs or all for this owner
     let tenancies = [];

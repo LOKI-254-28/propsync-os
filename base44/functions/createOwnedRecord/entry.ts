@@ -17,7 +17,7 @@ const ENTITIES_WITH_OWNER = [
 // Validate that child-entity references belong to the authenticated landowner.
 // Admins skip this check.
 async function validateParentOwnership(base44, user, entity, data) {
-  const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
+  const isAdmin = user.role === 'admin';
   if (isAdmin) return null;
 
   if (data.property_id && entity !== 'Property' && entity !== 'Tenant') {
@@ -50,7 +50,7 @@ export default async function(req: Request): Promise<Response> {
     if (!entity) return Response.json({ error: 'Entity is required' }, { status: 400 });
     if (!PROVIDER_ENTITIES.includes(entity)) return Response.json({ error: 'Entity type not supported by this function' }, { status: 400 });
 
-    const isAdmin = user.role === 'admin' || user.account_type === 'admin' || user.data?.account_type === 'admin';
+    const isAdmin = user.role === 'admin';
     const isApprovedLandowner = (user.account_type === 'landowner' || user.data?.account_type === 'landowner')
       && (user.approval_status === 'approved' || user.data?.approval_status === 'approved');
 
@@ -63,6 +63,7 @@ export default async function(req: Request): Promise<Response> {
 
     // ---- Bulk unit creation (bulk unit-registration wizard) ----
     if (bulk && entity === 'Unit' && Array.isArray(records) && records.length > 0) {
+      if (records.length > 500 || records.some(r=>!r || typeof r!=='object' || Array.isArray(r) || typeof r.property_id!=='string' || !r.property_id)) return Response.json({error:'Choose one to 500 units with valid property links.'},{status:400});
       // Validate ownership of every distinct property referenced
       const propIds = [...new Set(records.map((r) => r.property_id).filter(Boolean))];
       for (const pid of propIds) {
@@ -99,12 +100,9 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ ok: true, records: created });
     }
 
-    // Application-linked inspection and tenancy actions must use the approval flow.
+    // All new tenancies must pass payment, agreement and tenant inspection approval.
+    if (entity === 'Tenancy') return Response.json({error:'Start tenancies through the approved application and tenant inspection workflow.'},{status:409});
     if (data?.application_id && ['Inspection','Tenancy'].includes(entity)) return Response.json({error:'Use the application approval workflow for this record.'},{status:409});
-    if (entity === 'Tenancy' && data?.unit_id) {
-      const pending = await base44.asServiceRole.entities.Application.filter({unit_id:data.unit_id,status:{$nin:['Completed','Rejected','Withdrawn','Cancelled','Expired']}},'-created_date',1);
-      if (pending.length) return Response.json({error:'Complete the pending application and inspection approvals before creating this tenancy.'},{status:409});
-    }
 
     // ---- Single record creation ----
     if (!data) return Response.json({ error: 'Data is required' }, { status: 400 });

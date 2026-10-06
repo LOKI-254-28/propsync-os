@@ -12,7 +12,7 @@ import { secureCreate } from "@/lib/secureCreate";
 import TenantStats from "@/components/tenants/TenantStats";
 import TenantDirectoryCard from '@/components/tenants/TenantDirectoryCard';
 import TenantProfile from '@/components/tenants/TenantProfile';
-import Tenancies from '@/pages/landlord/Tenancies';
+import TenancyRecords from '@/components/tenants/TenancyRecords';
 import { buildTenantDirectory } from '@/lib/tenantDirectory';
 
 export default function Tenants() {
@@ -46,7 +46,7 @@ export default function Tenants() {
 
       <TenantStats tenants={tenantsWithStats} tenancies={data.tenancies} charges={data.charges} />
       <div className="mb-4 flex gap-2" role="tablist" aria-label="Tenant management"><Button role="tab" aria-selected={tab==='directory'} variant={tab==='directory'?'default':'outline'} onClick={()=>setTab('directory')}>Tenant directory</Button><Button role="tab" aria-selected={tab==='tenancies'} variant={tab==='tenancies'?'default':'outline'} onClick={()=>setTab('tenancies')}>Tenancy records</Button></div>
-      {tab==='tenancies'?<Tenancies portfolioData={data}/>:<>
+      {tab==='tenancies'?<TenancyRecords portfolioData={data}/>:<>
 
       <div className="mb-4 relative max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

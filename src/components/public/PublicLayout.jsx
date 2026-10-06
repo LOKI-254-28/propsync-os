@@ -5,7 +5,7 @@ import { Building2 } from "lucide-react";
 
 export default function PublicLayout({ children }) {
   const { isAuthenticated, user } = useAuth();
-  const isAdmin = user?.account_type === "admin" || (!user?.account_type && user?.role === "admin");
+  const isAdmin = user?.role === "admin";
   const roleHome = isAdmin ? "/admin"
     : user?.account_type === "landowner" ? "/dashboard"
     : "/portal";

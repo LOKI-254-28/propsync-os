@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Save, Trash2 } from "lucide-react";
 import RatingPanel from '@/components/reviews/RatingPanel';
+import {saveOwnTenantProfile} from '@/lib/tenantAccess';
 import {
   AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
   AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -14,6 +15,7 @@ import {
 export default function MyProfile() {
   const [tenant, setTenant] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [saveError,setSaveError]=useState('');
   const [user, setUser] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -27,11 +29,11 @@ export default function MyProfile() {
   useEffect(() => { load(); }, []);
 
   const save = async () => {
-    setBusy(true);
-    if (tenant.id) await base44.entities.Tenant.update(tenant.id, tenant);
-    else await base44.entities.Tenant.create({ ...tenant, user_id: user.id, status: "Active" });
-    setBusy(false);
-    load();
+    if(busy)return;
+    setBusy(true);setSaveError('');
+    try {setTenant(await saveOwnTenantProfile(tenant));}
+    catch(error){setSaveError(error.response?.data?.error || error.message);}
+    finally{setBusy(false);}
   };
 
   const handleDeleteAccount = async () => {
@@ -55,6 +57,7 @@ export default function MyProfile() {
   return (
     <div>
       <PageHeader title="My Profile" description="Keep your details up to date." actions={<Button onClick={save} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700"><Save className="mr-1.5 h-4 w-4" />{busy ? "Saving..." : "Save"}</Button>} />
+      {saveError&&<p role="alert" className="mb-4 text-sm text-destructive">{saveError}</p>}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">

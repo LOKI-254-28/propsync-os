@@ -8,7 +8,7 @@ export default async function(req: Request): Promise<Response> {
     const caller = await base44.auth.me();
     if (!caller) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
-    const isAdmin = caller.role === 'admin' || caller.account_type === 'admin' || caller.data?.account_type === 'admin';
+    const isAdmin = caller.role === 'admin';
     if (!isAdmin) return Response.json({ error: 'Admin access required' }, { status: 403 });
 
     const body = await req.json();

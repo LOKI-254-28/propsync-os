@@ -15,7 +15,7 @@ export default function Dashboard() {
   const data = usePortfolioData();
   const stats = useMemo(() => portfolioStats(data), [data]);
   const [user, setUser] = useState(null);
-  const isAdmin = user?.role === "admin" || user?.account_type === "admin";
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 

@@ -16,7 +16,7 @@ export default async function(req: Request): Promise<Response> {
 
     // Path 1: existing admin
     const caller = await base44.auth.me();
-    const callerIsAdmin = caller && (caller.role === 'admin' || caller.account_type === 'admin' || caller.data?.account_type === 'admin');
+    const callerIsAdmin = caller?.role === 'admin';
 
     if (callerIsAdmin) {
       return await doPromote(base44, caller, email);
@@ -31,8 +31,8 @@ export default async function(req: Request): Promise<Response> {
     }
 
     // Verify no admin exists yet
-    const users = await base44.asServiceRole.entities.User.list('-created_date', 500);
-    const hasAdmin = users.some((u) => u.role === 'admin' || u.account_type === 'admin' || u.data?.account_type === 'admin');
+    const admins = await base44.asServiceRole.entities.User.filter({role:'admin'},'-created_date',1);
+    const hasAdmin = admins.length > 0;
     if (hasAdmin) {
       return Response.json({ error: 'An admin already exists. Bootstrap is closed — ask an existing admin to promote you.' }, { status: 403 });
     }

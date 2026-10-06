@@ -6,7 +6,7 @@ export function normalizeUser(rawUser) {
   if (!rawUser) return rawUser;
   return {
     ...rawUser,
-    account_type: rawUser.account_type || rawUser.data?.account_type,
+    account_type: rawUser.role === 'admin' ? 'admin' : (rawUser.account_type || rawUser.data?.account_type) === 'admin' ? 'client' : rawUser.account_type || rawUser.data?.account_type,
     approval_status: rawUser.approval_status || rawUser.data?.approval_status,
   };
 }

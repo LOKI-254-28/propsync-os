@@ -22,7 +22,7 @@ export default function PublicHome() {
     return <div className="flex h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
   }
   if (isAuthenticated && user) {
-    const isAdmin = user.account_type === "admin" || (!user.account_type && user.role === "admin");
+    const isAdmin = user.role === "admin";
     const home = isAdmin ? "/admin"
       : user.account_type === "landowner" ? "/dashboard"
       : "/portal";

@@ -20,6 +20,7 @@ export default async function(req: Request): Promise<Response> {
       (t) => t.email && user.email && t.email.toLowerCase() === user.email.toLowerCase()
     );
     if (!match) return Response.json({ linked: false, notFound: true });
+    if (match.user_id && match.user_id !== user.id) return Response.json({error:'This tenant profile is already linked to another account.'},{status:403});
 
     // Link the tenant record
     await base44.asServiceRole.entities.Tenant.update(match.id, { user_id: user.id });

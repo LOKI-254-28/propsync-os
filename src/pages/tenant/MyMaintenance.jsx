@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Wrench, Plus, Eye } from "lucide-react";
 import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 import { toast } from "@/components/ui/use-toast";
-import MaintenancePhotoUpload from '@/components/maintenance/MaintenancePhotoUpload';
+import MaintenanceRequestForm from '@/components/maintenance/MaintenanceRequestForm';
 import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog.jsx';
 
 const CATEGORIES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "Other"];
@@ -70,20 +70,7 @@ export default function MyMaintenance() {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={value => !busy && !uploading && setOpen(value)}>
-        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain">
-          <DialogHeader><DialogTitle>Report Maintenance Issue</DialogTitle></DialogHeader>
-          <div className="space-y-3 py-2">
-            <Field label="Property / tenancy"><select disabled={busy||uploading} value={activeTenancy?.id || ''} onChange={e=>setTenancyId(e.target.value)} className="w-full rounded-md border border-input bg-background p-2 text-sm">{activeTenancies.map(x=><option key={x.id} value={x.id}>{x.property_name} · {x.unit_number}</option>)}</select></Field>
-            <Field label="Title"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Leaking kitchen tap" /></Field>
-            <Field label="Description"><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} /></Field>
-            <Field label="Category"><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
-            <Field label="Priority"><select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{PRIORITIES.map((p) => <option key={p}>{p}</option>)}</select></Field>
-          </div>
-          <MaintenancePhotoUpload images={images} onChange={setImages} onBusyChange={setUploading} />
-          <DialogFooter><Button onClick={create} disabled={busy || uploading} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Submitting..." : "Submit Request"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {open&&<MaintenanceRequestForm onClose={()=>setOpen(false)} form={form} setForm={setForm} busy={busy} uploading={uploading} setUploading={setUploading} images={images} setImages={setImages} tenancies={activeTenancies} tenancyId={activeTenancy?.id || ''} setTenancyId={setTenancyId} onSubmit={create}/>}
 
       {view&&<MaintenanceDialog maintenanceId={view.id} onClose={()=>setView(null)}/>}
     </div>

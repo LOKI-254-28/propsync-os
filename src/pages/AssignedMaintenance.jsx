@@ -6,7 +6,7 @@ import {useAuth} from '@/lib/AuthContext';
 import {PageHeader,EmptyState,StatusBadge} from '@/components/ui-bits';
 import {Button} from '@/components/ui/button';
 import {Wrench} from 'lucide-react';
-import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog.jsx';
+import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog';
 export default function AssignedMaintenance() {
   const {user}=useAuth(),[selected,setSelected]=useState(null);
   const home=user?.role==='admin'?'/admin':user?.account_type==='landowner'?'/dashboard':'/portal';

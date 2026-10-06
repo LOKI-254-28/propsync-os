@@ -11,7 +11,7 @@ import { Wrench, Plus, Eye } from "lucide-react";
 import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 import { toast } from "@/components/ui/use-toast";
 import MaintenanceRequestForm from '@/components/maintenance/MaintenanceRequestForm';
-import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog.jsx';
+import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog';
 
 const CATEGORIES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "Other"];
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];

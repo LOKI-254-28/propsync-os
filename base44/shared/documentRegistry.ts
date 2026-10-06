@@ -53,6 +53,7 @@ export async function upsertDocument(sr, user, file, options = {}) {
       if (existing.application_id && options.links.application_id && existing.application_id !== options.links.application_id) throw registryError('This file is linked to another application.',403);
       if (existing.tenant_user_id && options.links.tenant_user_id && existing.tenant_user_id !== options.links.tenant_user_id) throw registryError('This document belongs to another tenant.',403);
       const changes = { ...options.links, linked: true, source_entities: [...new Set([...(existing.source_entities || []), options.source].filter(Boolean))] };
+      if (options.visibility && !options.historical) changes.visibility = options.visibility;
       if (options.category && existing.category === 'Other') changes.category = options.category;
       if (options.title && !existing.linked && existing.category === 'Other') changes.title = options.title;
       return await sr.entities.Document.update(existing.id, changes);
@@ -84,7 +85,7 @@ export async function syncRecordFiles(sr, user, entity, record, historical = fal
     if (!privateFile && !publicFile) { result.skipped.push({entity,id:record.id,reason:'Cannot verify this is an uploaded file'}); continue; }
     if (!historical) {
       const registered = (await sr.entities.Document.filter({file_uri:entry.uri},'-created_date',1))[0];
-      if (registered?.uploaded_by_user_id && registered.uploaded_by_user_id !== user.id && registered.tenant_user_id !== links.tenant_user_id && registered.owner_user_id !== links.owner_user_id) throw registryError('This file belongs to an unrelated uploader.',403);
+      if (registered?.uploaded_by_user_id && registered.uploaded_by_user_id !== user.id && !(links.tenant_user_id && registered.tenant_user_id === links.tenant_user_id) && !(links.owner_user_id && registered.owner_user_id === links.owner_user_id)) throw registryError('This file belongs to an unrelated uploader.',403);
     }
     await upsertDocument(sr,user,{file_uri:entry.uri}, {
       links, source:`${entity}:${record.id}`, category:entry.category,

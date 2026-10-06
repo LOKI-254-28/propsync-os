@@ -29,7 +29,9 @@ export async function documentAction(base44, user, body) {
   if ((!privateFile && !publicFile) || uri.length > 2048) throw registryError('Use a file uploaded by this app.');
   if (publicFile && !isStaff(user)) throw registryError('Tenant documents must be private.',403);
   const types = ['application/pdf','image/jpeg','image/png','image/webp'];
-  if (!types.includes(file.mime_type) || !Number.isFinite(file.size) || file.size <= 0 || file.size > 10*1024*1024 || typeof file.file_name !== 'string' || file.file_name.length > 255) throw registryError('Choose PDF, JPG, PNG or WebP files up to 10 MB.');
+  const extensions = {'application/pdf':['pdf'],'image/jpeg':['jpg','jpeg'],'image/png':['png'],'image/webp':['webp']};
+  const extension = typeof file.file_name === 'string' ? file.file_name.split('.').pop().toLowerCase() : '';
+  if (!types.includes(file.mime_type) || !extensions[file.mime_type]?.includes(extension) || !Number.isFinite(file.size) || file.size <= 0 || file.size > 10*1024*1024 || typeof file.file_name !== 'string' || file.file_name.length > 255) throw registryError('Choose PDF, JPG, PNG or WebP files up to 10 MB.');
   let category = publicFile ? 'Property Photo' : 'Other', title, links;
   if (context.purpose === 'application_id') { category = 'ID/Passport'; title = `Copy of ID – ${user.full_name || user.email}`; }
   if (context.purpose === 'application_photo') {

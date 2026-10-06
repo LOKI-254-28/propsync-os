@@ -200,6 +200,31 @@
         "Rejected"
       ],
       "default": ""
+    },
+    "inspection_id": {
+      "type": "string"
+    },
+    "inspection_approval_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Approved",
+        "Rejected"
+      ]
+    },
+    "tenancy_id": {
+      "type": "string"
+    },
+    "landlord_approved": {
+      "type": "boolean",
+      "default": false
+    },
+    "completion_token": {
+      "type": "string"
+    },
+    "completion_started_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
@@ -228,19 +253,9 @@
       }
     },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "data.owner_user_id": "{{user.id}}"
-        },
-        {
-          "data.tenant_user_id": "{{user.id}}"
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {

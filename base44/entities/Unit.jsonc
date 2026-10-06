@@ -110,6 +110,13 @@
     "owner_user_id": {
       "type": "string",
       "description": "Inherited from property \u2014 the landowner who owns this unit"
+    },
+    "activation_token": {
+      "type": "string"
+    },
+    "activation_started_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

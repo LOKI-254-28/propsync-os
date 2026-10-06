@@ -88,6 +88,12 @@
     "owner_user_id": {
       "type": "string",
       "description": "The landowner who owns this tenancy"
+    },
+    "application_id": {
+      "type": "string"
+    },
+    "inspection_id": {
+      "type": "string"
     }
   },
   "required": [
@@ -111,18 +117,9 @@
       ]
     },
     "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "account_type": "landowner"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "update": {
       "$or": [

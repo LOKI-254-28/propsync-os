@@ -90,6 +90,72 @@
     },
     "owner_user_id": {
       "type": "string"
+    },
+    "application_id": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "integer"
+    },
+    "report_uri": {
+      "type": "string"
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string",
+            "enum": [
+              "Excellent",
+              "Good",
+              "Fair",
+              "Poor"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "area",
+          "condition"
+        ]
+      }
+    },
+    "tenant_approval_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Approved",
+        "Rejected"
+      ]
+    },
+    "tenant_comment": {
+      "type": "string"
+    },
+    "supporting_documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "responded_by": {
+      "type": "string"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "response_token": {
+      "type": "string"
+    },
+    "submission_token": {
+      "type": "string"
     }
   },
   "required": [
@@ -112,7 +178,11 @@
         }
       ]
     },
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "update": {
       "$or": [
         {
@@ -121,7 +191,19 @@
           }
         },
         {
-          "data.owner_user_id": "{{user.id}}"
+          "$and": [
+            {
+              "data.owner_user_id": "{{user.id}}"
+            },
+            {
+              "data.application_id": {
+                "$in": [
+                  "",
+                  null
+                ]
+              }
+            }
+          ]
         }
       ]
     },

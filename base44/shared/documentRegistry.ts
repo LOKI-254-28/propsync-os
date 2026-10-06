@@ -4,7 +4,7 @@ export const fileFields = {
   Listing: [['images','Property Photo']], Tenant: [['profile_image','Applicant Photo']],
   Application: [['documents','Other'],['agreement_url','Lease Agreement'],['agreement_executed_url','Lease Agreement'],['payment_proof_url','Receipt']],
   Tenancy: [['agreement_document_url','Lease Agreement']], NextOfKin: [['id_document_uri','ID/Passport']],
-  Maintenance: [['images','Maintenance Photo']], Inspection: [['images','Inspection Photo']],
+  Maintenance: [['images','Maintenance Photo']], Inspection: [['images','Inspection Photo'],['report_uri','Inspection Report'],['supporting_documents','Other']],
   Notice: [['attachment_url','Notice Attachment']], Expense: [['supporting_document_url','Receipt']],
   VacationRequest: [['attachments','Notice Attachment'],['attachment_url','Notice Attachment']], Payment: [['receipt_url','Receipt'],['proof_url','Receipt']],
 };
@@ -18,8 +18,8 @@ export async function recordLinks(sr, user, entity, record) {
   if (!fileFields[entity]) throw registryError('Unsupported document source.');
   const links = { [linkNames[entity]]: record.id };
   let context = record;
-  if (entity === 'NextOfKin') {
-    if (!record.application_id) throw registryError('Next of kin has no application.');
+  if (entity === 'NextOfKin' || (entity === 'Inspection' && record.application_id)) {
+    if (!record.application_id) throw registryError('This record has no application.');
     context = await sr.entities.Application.get(record.application_id); links.application_id = context.id;
   }
   let tenancy = entity === 'Tenancy' ? record : context.tenancy_id ? await sr.entities.Tenancy.get(context.tenancy_id) : null;

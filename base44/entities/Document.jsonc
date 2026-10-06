@@ -17,7 +17,13 @@
         "Inspection Report",
         "Insurance/Compliance Certificate",
         "Title Deed",
-        "Other"
+        "Other",
+        "Applicant Photo",
+        "Property Photo",
+        "Unit Photo",
+        "Maintenance Photo",
+        "Inspection Photo",
+        "Notice Attachment"
       ],
       "default": "Other"
     },
@@ -64,7 +70,22 @@
     "payment_id": {
       "type": "string"
     },
+    "next_of_kin_id": {
+      "type": "string"
+    },
+    "expense_id": {
+      "type": "string"
+    },
+    "listing_id": {
+      "type": "string"
+    },
+    "vacation_request_id": {
+      "type": "string"
+    },
     "uploaded_by": {
+      "type": "string"
+    },
+    "uploaded_by_user_id": {
       "type": "string"
     },
     "uploaded_by_role": {
@@ -82,6 +103,23 @@
         "staff_only"
       ],
       "default": "staff_only"
+    },
+    "storage_type": {
+      "type": "string",
+      "enum": [
+        "private",
+        "public"
+      ]
+    },
+    "linked": {
+      "type": "boolean",
+      "default": false
+    },
+    "source_entities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "status": {
       "type": "string",
@@ -118,6 +156,9 @@
     "read": {
       "$or": [
         {
+          "data.uploaded_by_user_id": "{{user.id}}"
+        },
+        {
           "$and": [
             {
               "data.tenant_user_id": "{{user.id}}"
@@ -138,30 +179,14 @@
       ]
     },
     "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "account_type": "landowner"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "data.owner_user_id": "{{user.id}}"
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {

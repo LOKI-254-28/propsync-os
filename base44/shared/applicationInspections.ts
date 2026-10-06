@@ -5,6 +5,7 @@ export async function inspectionAction(sr,user,context,body) {
   const {app,unit,property,staff} = context;
   requirePayment(app);
   const current = app.inspection_id ? await sr.entities.Inspection.get(app.inspection_id) : null;
+  if (current && current.application_id !== app.id) throw registryError('This inspection does not belong to the application.',409);
   if (body.action === 'inspection_get') return {inspection:current};
   if (app.status === 'Completed' || app.completion_token) throw registryError('This application has already completed or is being completed.',409);
   if (body.action === 'inspection_submit') {

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Wrench, Search, Eye } from "lucide-react";
 import MaintenanceStatusTracker from "@/components/MaintenanceStatusTracker";
 
-import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog';
+import MaintenanceDialog from '@/components/maintenance/MaintenanceDialog.jsx';
 
 const STATUSES = ["Submitted", "Acknowledged", "Assigned", "Scheduled", "In Progress", "Awaiting Parts", "Completed", "Closed", "Rejected"];
 

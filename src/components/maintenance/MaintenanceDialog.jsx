@@ -6,7 +6,7 @@ import {StatusBadge} from '@/components/ui-bits';
 import MaintenancePhotos from '@/components/maintenance/MaintenancePhotos';
 import MaintenanceConversation from '@/components/maintenance/MaintenanceConversation';
 import MaintenanceManagement from '@/components/maintenance/MaintenanceManagement';
-export default function MaintenanceDialog({maintenanceId,onClose,onUpdated}) {
+export default function MaintenanceDialog({ maintenanceId, onClose, onUpdated }) {
   const [busy,setBusy]=useState(false);
   const query=useQuery({queryKey:['maintenance-ticket',maintenanceId],queryFn:async()=>(await base44.functions.invoke('maintenanceOps',{action:'details',maintenance_id:maintenanceId})).data,refetchInterval:20000});
   const ticket=query.data?.ticket;

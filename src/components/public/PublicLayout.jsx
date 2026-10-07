@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { Building2 } from "lucide-react";
+import { Building2, Home } from "lucide-react";
 
-export default function PublicLayout({ children }) {
+export default function PublicLayout({ children, home = false }) {
   const { isAuthenticated, user } = useAuth();
   const isAdmin = user?.role === "admin";
   const roleHome = isAdmin ? "/admin"
@@ -11,12 +11,12 @@ export default function PublicLayout({ children }) {
     : "/portal";
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className={home ? "urban-home" : "flex min-h-screen flex-col bg-white"}>
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <Building2 className="h-5 w-5" />
+              {home ? <Home className="h-5 w-5" strokeWidth={1.8} /> : <Building2 className="h-5 w-5" />}
             </div>
             <span className="font-heading text-lg font-semibold text-slate-900">PropWiz</span>
           </Link>

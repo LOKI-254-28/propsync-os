@@ -98,3 +98,10 @@
     @apply bg-background text-foreground font-body;
   }
 }
+
+:root, .dark {
+  --urban-surface: #ffffff;
+  --urban-tint: #f3eef8;
+  --urban-primary: #58285f;
+  --urban-ink: #292232;
+}

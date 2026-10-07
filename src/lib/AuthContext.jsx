@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
+import {normalizeUser} from '@/lib/normalizeUser';
 
 const AuthContext = createContext();
 
@@ -105,13 +106,7 @@ export const AuthProvider = ({ children }) => {
       // Normalize custom fields: SDK versions differ on whether custom user fields
       // are returned at the top level or nested under `data`. Flatten so the rest
       // of the app can always read account_type / approval_status directly.
-      const currentUser = rawUser
-        ? {
-            ...rawUser,
-            account_type: rawUser.account_type || rawUser.data?.account_type,
-            approval_status: rawUser.approval_status || rawUser.data?.approval_status,
-          }
-        : rawUser;
+      const currentUser = normalizeUser(rawUser);
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
@@ -131,6 +126,13 @@ export const AuthProvider = ({ children }) => {
       }
     }
   };
+
+  useEffect(()=>{
+    if(!isAuthenticated)return;
+    const refresh=async()=>setUser(normalizeUser(await base44.auth.me()));
+    window.addEventListener('profile-changed',refresh);
+    return ()=>window.removeEventListener('profile-changed',refresh);
+  },[isAuthenticated]);
 
   const logout = (shouldRedirect = true) => {
     setUser(null);

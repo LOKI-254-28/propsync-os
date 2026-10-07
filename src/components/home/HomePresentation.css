@@ -6,10 +6,10 @@
 .urban-home>header>div>a>div{width:34px;height:34px;border-radius:10px;background:var(--urban-primary);display:grid;place-items:center;color:var(--urban-surface)}
 .urban-home>header>div>a>span{font-family:inherit;font-weight:750;font-size:20px;color:var(--urban-ink)}
 .urban-home nav{display:flex;align-items:center;gap:24px;font-size:12px;font-weight:600;width:auto;flex-wrap:nowrap}
-.urban-home nav a,.urban-home .browse,.urban-home footer a{color:#51475a;text-decoration:none;position:relative;transition:color .2s}
-.urban-home nav a:after,.urban-home .browse:after,.urban-home footer a:after{content:"";position:absolute;height:1px;left:0;right:100%;bottom:-4px;background:#8c5593;transition:right .25s ease}
-.urban-home nav a:hover:after,.urban-home .browse:hover:after,.urban-home footer a:hover:after{right:0}
-.urban-home nav a:hover,.urban-home .browse:hover,.urban-home footer a:hover{color:var(--urban-primary)}
+.urban-home nav a,.urban-home .browse{color:#51475a;text-decoration:none;position:relative;transition:color .2s}
+.urban-home nav a:after,.urban-home .browse:after{content:"";position:absolute;height:1px;left:0;right:100%;bottom:-4px;background:#8c5593;transition:right .25s ease}
+.urban-home nav a:hover:after,.urban-home .browse:hover:after{right:0}
+.urban-home nav a:hover,.urban-home .browse:hover{color:var(--urban-primary)}
 .urban-home nav a[href="/register"],.urban-home nav a[href="/dashboard"],.urban-home nav a[href="/admin"],.urban-home nav a[href="/portal"]{background:var(--urban-primary);color:var(--urban-surface);padding:10px 16px;border-radius:8px;box-shadow:0 5px 14px #58285f26}
 .urban-home nav a[href="/register"]:hover,.urban-home nav a[href="/dashboard"]:hover,.urban-home nav a[href="/admin"]:hover,.urban-home nav a[href="/portal"]:hover{background:#71387a;color:var(--urban-surface)}
 .urban-home>main{flex:initial}
@@ -61,10 +61,7 @@
 .urban-home .owner a{white-space:nowrap;display:inline-block;background:var(--urban-surface);color:var(--urban-primary);text-decoration:none;font-size:12px;font-weight:750;padding:13px 18px;border-radius:8px;transition:background .2s,box-shadow .2s}
 .urban-home .owner a:hover{background:var(--urban-tint);box-shadow:0 5px 13px #25122a40}
 .urban-home .owner a:active{background:#e4d8e9}
-.urban-home footer{padding:19px 48px 24px;border-top:1px solid #eee8f0;background:#faf9fb;color:#776f7d;font-size:11px}
-.urban-home footer>div{padding:0;margin:0;max-width:none;font-size:inherit;color:inherit}
-.urban-home footer a{display:inline-block;margin-bottom:8px;color:var(--urban-primary);font-size:12px;font-weight:650}
-.urban-home footer p{margin:0}
+
 .urban-home .rental-detail,.urban-home .rental-facts{font-size:11px;color:#807684;margin-top:4px;display:flex;align-items:center;gap:4px}
 .urban-home .rental-facts{gap:12px;flex-wrap:wrap}
 .urban-home .rental-facts span{display:flex;gap:4px;align-items:center}
@@ -72,5 +69,5 @@
 .urban-home .listing-empty{border:1px dashed #c9afd0;border-radius:14px;padding:40px;text-align:center;color:#746b79;background:#f8f6fa}
 .urban-home .listing-loading{height:160px;display:grid;place-items:center;color:var(--urban-primary)}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:767px){.urban-home{min-height:100vh}.urban-home>header{height:auto;padding:20px 22px}.urban-home>header>div{flex-wrap:wrap;gap:18px}.urban-home nav{width:100%;flex-wrap:wrap;gap:16px}.urban-home .hero,.urban-home .band,.urban-home .experience{padding:28px 22px}.urban-home .hero-frame{grid-template-columns:1fr}.urban-home .hero-image{height:260px;min-height:260px}.urban-home .hero-copy{padding:28px 24px}.urban-home .hero h1{font-size:36px}.urban-home .listing{grid-template-columns:1fr}.urban-home .owner-wrap{padding:24px 22px}.urban-home .owner{align-items:flex-start;flex-direction:column;padding:26px 24px}.urban-home footer{padding:19px 22px 24px}}
+@media(max-width:767px){.urban-home{min-height:100vh}.urban-home>header{height:auto;padding:20px 22px}.urban-home>header>div{flex-wrap:wrap;gap:18px}.urban-home nav{width:100%;flex-wrap:wrap;gap:16px}.urban-home .hero,.urban-home .band,.urban-home .experience{padding:28px 22px}.urban-home .hero-frame{grid-template-columns:1fr}.urban-home .hero-image{height:260px;min-height:260px}.urban-home .hero-copy{padding:28px 24px}.urban-home .hero h1{font-size:36px}.urban-home .listing{grid-template-columns:1fr}.urban-home .owner-wrap{padding:24px 22px}.urban-home .owner{align-items:flex-start;flex-direction:column;padding:26px 24px}}
 @media(prefers-reduced-motion:reduce){.urban-home *,.urban-home *:before,.urban-home *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}

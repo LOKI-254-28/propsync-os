@@ -2,6 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { Building2, Home } from "lucide-react";
+import PublicFooter from '@/components/public/PublicFooter';
+import '@/components/public/PublicFooter.css';
 
 export default function PublicLayout({ children, home = false }) {
   const { isAuthenticated, user } = useAuth();
@@ -40,12 +42,7 @@ export default function PublicLayout({ children, home = false }) {
         </div>
       </header>
       <main className="flex-1">{children}</main>
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-500">
-          <Link to="/the-propwiz-experience" className="mb-3 inline-block hover:underline">The PropWiz Experience</Link>
-          <p>© {new Date().toLocaleDateString('en-KE',{timeZone:'Africa/Nairobi',year:'numeric'})} PropWiz. Rentals made simple.</p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

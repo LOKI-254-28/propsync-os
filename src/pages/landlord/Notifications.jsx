@@ -2,15 +2,21 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { PageHeader, SectionCard, EmptyState } from "@/components/ui-bits";
 import { Bell, Check } from "lucide-react";
+import {useQueryClient} from '@tanstack/react-query';
+import {useAuth} from '@/lib/AuthContext';
 
 export default function Notifications() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error,setError]=useState('');
+  const client=useQueryClient(),{user}=useAuth();
 
   const load = async () => {
     setLoading(true);
     try {
       const me = await base44.auth.me();
+      await base44.functions.invoke('getSectionAlerts',{visited_path:'/notifications'});
+      client.invalidateQueries({queryKey:['section-alerts',me.id]});
       const n = await base44.entities.Notification.filter({ recipient_user_id: me.id });
       n.sort((a, b) => new Date(b.date) - new Date(a.date));
       setItems(n);
@@ -19,8 +25,16 @@ export default function Notifications() {
 
   useEffect(() => { load(); }, []);
 
-  const markRead = async (id) => { await base44.entities.Notification.update(id, { read: true }); load(); };
-  const markAll = async () => { for (const n of items.filter((x) => !x.read)) await base44.entities.Notification.update(n.id, { read: true }); load(); };
+  const markRead = async id => {
+    setError('');
+    try {const {data}=await base44.functions.invoke('getSectionAlerts',{notification_id:id});client.setQueryData(['section-alerts',user.id],data);await load();}
+    catch(e){setError(e.response?.data?.error||e.message);}
+  };
+  const markAll = async () => {
+    setError('');
+    try {await base44.functions.invoke('getSectionAlerts',{visited_path:'/notifications'});await load();}
+    catch(e){setError(e.response?.data?.error||e.message);}
+  };
 
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
@@ -28,6 +42,7 @@ export default function Notifications() {
     <div>
       <PageHeader title="Notifications" description="Your activity and alert notifications."
         actions={items.some((n) => !n.read) && <button onClick={markAll} className="text-sm font-medium text-emerald-700 hover:underline">Mark all read</button>} />
+      {error&&<p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
       {items.length === 0 ? <EmptyState icon={Bell} title="No notifications" /> : (
         <SectionCard>
           <div className="space-y-2">

@@ -1,4 +1,6 @@
 {
+  "name": "User",
+  "type": "object",
   "properties": {
     "role": {
       "type": "string",
@@ -49,12 +51,26 @@
     },
     "profile_image": {
       "type": "string",
-      "description": "Profile photo URL"
+      "description": "Private file reference or existing profile photo URL"
+    },
+    "display_name": {
+      "type": "string",
+      "maxLength": 254
+    },
+    "section_alert_seen": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "alert_item_seen": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
   "required": [
     "role"
-  ],
-  "name": "User",
-  "type": "object"
+  ]
 }

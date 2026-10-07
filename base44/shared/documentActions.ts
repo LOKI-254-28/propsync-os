@@ -34,7 +34,7 @@ export async function documentAction(base44, user, body) {
   if (!types.includes(file.mime_type) || !extensions[file.mime_type]?.includes(extension) || !Number.isFinite(file.size) || file.size <= 0 || file.size > 10*1024*1024 || typeof file.file_name !== 'string' || file.file_name.length > 255) throw registryError('Choose PDF, JPG, PNG or WebP files up to 10 MB.');
   let category = publicFile ? 'Property Photo' : 'Other', title, links;
   if (context.purpose === 'application_id') { category = 'ID/Passport'; title = `Copy of ID – ${user.full_name || user.email}`; }
-  if (context.purpose === 'application_photo') {
+  if (['application_photo','profile_photo'].includes(context.purpose)) {
     if (!file.mime_type.startsWith('image/')) throw registryError('Your recent photograph must be an image.');
     category = 'Applicant Photo'; title = `Recent photograph – ${user.full_name || user.email}`;
   }

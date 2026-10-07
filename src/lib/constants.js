@@ -21,6 +21,7 @@ export const LANDLORD_NAV = [
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Staff & Permissions", path: "/staff", icon: "ShieldCheck" },
   { label: "Settings", path: "/settings", icon: "Settings" },
+  { label: "My Profile", path: "/profile", icon: "UserCog" },
 ];
 
 export const ADMIN_NAV = [
@@ -45,6 +46,7 @@ export const ADMIN_NAV = [
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Contact us page", path: "/admin/contact-page", icon: "MessageSquare" },
   { label: "Settings", path: "/settings", icon: "Settings" },
+  { label: "My Profile", path: "/profile", icon: "UserCog" },
 ];
 
 export const TENANT_NAV = [

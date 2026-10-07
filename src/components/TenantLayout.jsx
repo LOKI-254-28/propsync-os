@@ -14,6 +14,8 @@ import { signOut } from "@/lib/signOut";
 import useSectionAlerts from '@/components/alerts/useSectionAlerts';
 import AlertBadge from '@/components/alerts/AlertBadge';
 import AssignedWorkLink from '@/components/maintenance/AssignedWorkLink';
+import AccountIdentity from '@/components/profile/AccountIdentity';
+import useAccountProfile from '@/hooks/useAccountProfile';
 
 const ICONS = {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
@@ -26,6 +28,7 @@ export default function TenantLayout({ children }) {
   const [tenant, setTenant] = useState(null);
   const [notLinked, setNotLinked] = useState(false);
   const { counts } = useSectionAlerts();
+  const {profile}=useAccountProfile();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -81,11 +84,7 @@ export default function TenantLayout({ children }) {
         </nav>
         <div className="absolute bottom-0 left-0 right-0 border-t border-emerald-700/50 px-3 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">{tenant?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "T"}</div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-white">{tenant?.full_name || user?.email || "Tenant"}</p>
-              <p className="text-[10px] text-emerald-200/70">Tenant</p>
-            </div>
+            <AccountIdentity to="/portal/profile" role="Tenant" fallbackName={tenant?.full_name||user?.full_name||user?.email}/>
             <button onClick={handleLogout} className="rounded-md p-1.5 text-emerald-200/70 hover:bg-emerald-700 hover:text-white" title="Sign out"><LogOut className="h-4 w-4" /></button>
           </div>
         </div>
@@ -94,7 +93,7 @@ export default function TenantLayout({ children }) {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:px-8">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
-          <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {tenant?.full_name?.split(" ")[0] || "Tenant"}</div>
+          <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {(profile?.display_name||tenant?.full_name)?.split(" ")[0] || "Tenant"}</div>
           <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Tenant</span>
         </header>
         <main className="px-4 py-6 lg:px-8">

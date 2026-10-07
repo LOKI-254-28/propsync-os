@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { User, Save, Trash2 } from "lucide-react";
 import RatingPanel from '@/components/reviews/RatingPanel';
 import {saveOwnTenantProfile} from '@/lib/tenantAccess';
+import AccountProfileEditor from '@/components/profile/AccountProfileEditor';
 import {
   AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
   AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -31,7 +32,7 @@ export default function MyProfile() {
   const save = async () => {
     if(busy)return;
     setBusy(true);setSaveError('');
-    try {setTenant(await saveOwnTenantProfile(tenant));}
+    try {setTenant(await saveOwnTenantProfile(tenant));window.dispatchEvent(new Event('profile-changed'));}
     catch(error){setSaveError(error.response?.data?.error || error.message);}
     finally{setBusy(false);}
   };
@@ -60,11 +61,7 @@ export default function MyProfile() {
       {saveError&&<p role="alert" className="mb-4 text-sm text-destructive">{saveError}</p>}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-2xl font-semibold text-emerald-700">{tenant.full_name?.[0]?.toUpperCase() || "T"}</div>
-            <p className="mt-3 font-semibold text-slate-900">{tenant.full_name}</p>
-            <p className="text-sm text-slate-500">{tenant.email}</p>
-          </div>
+          <AccountProfileEditor onSaved={profile=>setTenant(current=>({...current,full_name:profile.display_name,profile_image:profile.profile_image}))}/>
         </div>
         <div className="lg:col-span-2">
           <SectionCard title="Personal Information">

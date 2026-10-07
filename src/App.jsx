@@ -76,6 +76,7 @@ import Chat from '@/pages/landlord/Chat';
 import MyChat from '@/pages/tenant/MyChat';
 import PropWizExperience from '@/pages/public/PropWizExperience';
 import AssignedMaintenance from '@/pages/AssignedMaintenance';
+import AccountProfile from '@/pages/AccountProfile';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -103,6 +104,7 @@ const LandlordRoutes = () => (
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/staff" element={<StaffPermissions />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/profile" element={<AccountProfile />} />
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
       <Route path="/my-listings" element={<Listings />} />
@@ -138,6 +140,7 @@ const AdminRoutes = () => (
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/staff" element={<StaffPermissions />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/profile" element={<AccountProfile />} />
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
       <Route path="/my-listings" element={<Listings />} />

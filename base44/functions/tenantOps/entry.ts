@@ -1,20 +1,23 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
 import {waitUntil} from 'base44:runtime';
 import {allRelated} from '../../shared/documentAccess.ts';
+import {accountProfile,decorateTenantProfiles} from '../../shared/accountProfile.ts';
 const profileFields=['full_name','email','phone','id_number','occupation','employer','monthly_income','emergency_contact_name','emergency_contact_phone','current_address'];
 export default async function(req:Request):Promise<Response> {
   try {
     const b=createClientFromRequest(req),user=await b.auth.me();
     if(!user)return Response.json({error:'Please sign in.'},{status:401});
     const sr=b.asServiceRole,body=await req.json();
+    if(['account_profile','save_account_profile'].includes(body.action))return Response.json(await accountProfile(b,user,body));
     if(body.action==='directory') {
       if(body.cursor!=null&&(typeof body.cursor!=='string'||body.cursor.length>2000))return Response.json({error:'Invalid page cursor.'},{status:400});
-      if(user.role==='admin')return Response.json(await sr.entities.Tenant.list({sort:'-created_date',limit:100,cursor:body.cursor || undefined}));
+      if(user.role==='admin'){const page=await sr.entities.Tenant.list({sort:'-created_date',limit:100,cursor:body.cursor||undefined});return Response.json({...page,items:await decorateTenantProfiles(sr,page.items)});}
       if((user.account_type || user.data?.account_type)!=='landowner')return Response.json({error:'Landlord access required.'},{status:403});
       const properties=await allRelated(sr.entities.Property,{owner_user_id:user.id});
       const tenancies=await allRelated(sr.entities.Tenancy,{owner_user_id:user.id,property_id:{$in:properties.map(p=>p.id)}});
       const query={$or:[{owner_user_id:user.id},{id:{$in:[...new Set(tenancies.map(t=>t.tenant_id).filter(Boolean))]}},{user_id:{$in:[...new Set(tenancies.map(t=>t.tenant_user_id).filter(Boolean))]}}]};
-      return Response.json(await sr.entities.Tenant.filter(query,{sort:'-created_date',limit:100,cursor:body.cursor || undefined}));
+      const page=await sr.entities.Tenant.filter(query,{sort:'-created_date',limit:100,cursor:body.cursor||undefined});
+      return Response.json({...page,items:await decorateTenantProfiles(sr,page.items)});
     }
     if(body.action!=='save_profile'||!body.profile||typeof body.profile!=='object'||Array.isArray(body.profile))return Response.json({error:'Choose a valid profile action.'},{status:400});
     const profile=Object.fromEntries(profileFields.filter(key=>key in body.profile).map(key=>[key,body.profile[key]]));
@@ -31,6 +34,7 @@ export default async function(req:Request):Promise<Response> {
       if(existing.user_id!==user.id)return Response.json({error:'You can only update your own tenant profile.'},{status:403});
     }else existing=(await sr.entities.Tenant.filter({user_id:user.id},'-created_date',1))[0];
     const tenant=existing?await sr.entities.Tenant.update(existing.id,profile):await sr.entities.Tenant.create({...profile,full_name:profile.full_name.trim(),email:profile.email || user.email,user_id:user.id,status:'Active',profile_type:'tenant'});
+    await b.auth.updateMe({display_name:profile.full_name.trim()});
     waitUntil(sr.entities.AuditLog.create({user_id:user.id,user_role:user.role,action:'Tenant Profile Saved',entity:'Tenant',entity_id:tenant.id,timestamp:new Date().toISOString()}));
     return Response.json({tenant});
   }catch(error){return Response.json({error:error.message},{status:error.status || 500});}

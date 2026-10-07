@@ -15,11 +15,12 @@ import { normalizeUser } from "@/lib/normalizeUser";
 import { signOut } from "@/lib/signOut";
 import useSectionAlerts from '@/components/alerts/useSectionAlerts';
 import AlertBadge from '@/components/alerts/AlertBadge';
+import AccountIdentity from '@/components/profile/AccountIdentity';
 
 const ICONS = {
   LogOut, LayoutDashboard, Building2, DoorOpen, Users, FileText, ScrollText, Wallet,
   AlertTriangle, Wrench, ClipboardCheck, Bell, FolderOpen, Receipt, BarChart3,
-  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote, CalendarClock, MessageSquare,
+  Columns3, BellRing, ShieldCheck, Settings: SettingsIcon, Circle, Tag, FileSignature, Banknote, CalendarClock, MessageSquare, UserCog: Users,
 };
 
 export default function Layout({ children }) {
@@ -79,11 +80,7 @@ export default function Layout({ children }) {
         </nav>
         <div className="absolute bottom-0 left-0 right-0 border-t border-emerald-700/50 px-3 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">{user?.email?.[0]?.toUpperCase() || "A"}</div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-white">{user?.email || "Administrator"}</p>
-              <p className="text-[10px] text-emerald-200/70">{user?.account_type === 'admin' ? 'Administrator' : 'Landowner'}</p>
-            </div>
+            <AccountIdentity to="/profile" role="Landowner" fallbackName={user?.full_name||user?.email}/>
             <button onClick={handleLogout} className="rounded-md p-1.5 text-emerald-200/70 hover:bg-emerald-700 hover:text-white" title="Sign out"><LogOut className="h-4 w-4" /></button>
           </div>
         </div>

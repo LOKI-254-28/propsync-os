@@ -138,7 +138,7 @@ export default function RentPayments() {
       )}
 
       <ApprovedPayments payments={approvedPayments} onReceipt={setReceipt} />
-      {billOpen&&<BillForm tenancies={data.tenancies} period={period} onClose={()=>setBillOpen(false)} onSaved={data.reload} />}
+      {billOpen&&<BillForm tenancies={data.tenancies} period={period} onClose={()=>setBillOpen(false)} onSaved={async billingPeriod=>{setPeriod(billingPeriod);await data.reload();}} />}
       {/* Generate charges dialog */}
       <Dialog open={genOpen} onOpenChange={setGenOpen}>
         <DialogContent className="max-w-md">

@@ -1,3 +1,4 @@
+import {reconcileInitialRent} from './initialRent.ts';
 export async function addTenancyBill(sr,user,body) {
   const {tenancyId,billingPeriod,dueDate,chargeType,billName,amount}=body;
   const types=['Garbage Collection','Water','Electricity','Internet','Parking','Security','Other'];
@@ -9,6 +10,7 @@ export async function addTenancyBill(sr,user,body) {
   if(!['Active','Expiring Soon','Notice Given'].includes(tenancy.status)) return Response.json({error:'Choose an active tenancy.'},{status:400});
   const rounded=Math.round(amount*100)/100;
   if(rounded<=0) return Response.json({error:'The amount must be at least KES 0.01.'},{status:400});
+  await reconcileInitialRent(sr,tenancy);
   const charge=await sr.entities.RentCharge.create({tenancy_id:tenancy.id,tenant_id:tenancy.tenant_id,tenant_user_id:tenancy.tenant_user_id,tenant_name:tenancy.tenant_name,property_id:tenancy.property_id,property_name:tenancy.property_name,unit_id:tenancy.unit_id,unit_number:tenancy.unit_number,billing_period:billingPeriod,due_date:dueDate,charge_type:chargeType,bill_name:billName.trim(),amount:rounded,amount_paid:0,outstanding:rounded,status:'Unpaid',owner_user_id:tenancy.owner_user_id||user.id});
   return Response.json({charge});
 }

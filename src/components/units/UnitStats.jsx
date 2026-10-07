@@ -7,10 +7,10 @@ import {occupancySummary} from '@/lib/occupancy';
 
 // Unit statistics computed from real units and active tenancies (not the unit status flag alone).
 export default function UnitStats({ units, tenancies }) {
-  const {live,occupied,held,maintenance:maint,vacant:vacantUnits,rate}=occupancySummary(units,tenancies);
+  const {live,occupied,held,maintenance:maint,vacant:vacantUnits,rate,tenancies:activeTenancies}=occupancySummary(units,tenancies);
   const vacant=vacantUnits.length;
   const potential = live.reduce((s, u) => s + Number(u.monthly_rent || 0), 0);
-  const actual = occupied.reduce((s, u) => s + Number(u.monthly_rent || 0), 0);
+  const actual = activeTenancies.reduce((s, t) => s + Number(t.monthly_rent || 0), 0);
 
   return (
     <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">

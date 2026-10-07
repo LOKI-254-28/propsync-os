@@ -45,7 +45,7 @@ export default function Properties() {
                 {p.address && <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500"><MapPin className="h-3.5 w-3.5" />{p.address}</p>}
                 <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 text-center">
                   <div><p className="text-lg font-semibold text-slate-900">{s.units}</p><p className="text-[10px] uppercase text-slate-500">Units</p></div>
-                  <div><p className="text-lg font-semibold text-emerald-700">{s.occupancyRate}%</p><p className="text-[10px] uppercase text-slate-500">Occupied</p></div>
+                  <div><p className="text-lg font-semibold text-emerald-700">{s.occupancyRate}%</p><p className="text-[10px] uppercase text-slate-500">{s.occupied} / {s.units} occupied</p></div>
                   <div><p className="text-sm font-semibold text-slate-900">{KES(s.expectedRent)}</p><p className="text-[10px] uppercase text-slate-500">Rent/mo</p></div>
                 </div>
               </Link>

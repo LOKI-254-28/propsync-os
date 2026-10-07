@@ -39,7 +39,7 @@ export default function MyRent() {
 
   return (
     <div>
-      <PageHeader title="Rent & Payments" description="Your rent ledger and payment history." actions={<Button disabled={!activeTenancy} onClick={() => { setPayAmount(outstanding || Number(activeTenancy?.monthly_rent || 0)); setPayOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700"><Wallet className="mr-1.5 h-4 w-4" />Pay Rent Now</Button>} />
+      <PageHeader title="Rent & Payments" description="Your rent ledger and payment history." actions={<Button disabled={!activeTenancy || outstanding<=0} onClick={() => { setPayAmount(outstanding); setPayOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700"><Wallet className="mr-1.5 h-4 w-4" />Pay Outstanding Charges</Button>} />
 
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Total Charged" value={KES(charges.reduce((s, c) => s + Number(c.amount || 0), 0))} icon={Receipt} accent="slate" />

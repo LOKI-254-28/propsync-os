@@ -18,5 +18,5 @@ export function occupancySummary(units,tenancies,date=nairobiToday()) {
   const held=live.filter(u=>!byUnit.has(u.id)&&['Reserved','Application Pending'].includes(u.status));
   const maintenance=live.filter(u=>!byUnit.has(u.id)&&u.status==='Under Maintenance');
   const vacant=live.filter(u=>!byUnit.has(u.id)&&!['Reserved','Application Pending','Under Maintenance'].includes(u.status));
-  return {units:reconciled,live,occupied,held,maintenance,vacant,available:vacant.filter(u=>['Available','Vacant'].includes(u.status)),tenancies:[...byUnit.values()],rate:live.length?Math.round(occupied.length/live.length*100):0};
+  return {units:reconciled,live,occupied,held,maintenance,vacant,available:vacant.filter(u=>['Available','Vacant'].includes(u.status)),tenancies:[...byUnit.values()],rate:live.length?Math.round(occupied.length/live.length*1000)/10:0};
 }

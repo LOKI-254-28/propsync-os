@@ -34,7 +34,7 @@ export default function Units() {
     (u.unit_number?.toLowerCase().includes(search.toLowerCase()) || u.current_tenant_name?.toLowerCase().includes(search.toLowerCase()))
   ), [data.units, search, filterProp, filterStatus]);
 
-  const tenancyFor = (u) => (data.tenancies || []).find((t) => t.unit_id === u.id && ["Active", "Expiring Soon", "Notice Given"].includes(t.status));
+  const tenancyFor = (u) => (data.tenancies || []).find((t) => t.id === u.current_tenancy_id);
   const remainingLabel = (t) => {
     if (!t) return "";
     if (!t.expected_end_date) return "Active";

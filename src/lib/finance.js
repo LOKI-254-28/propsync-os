@@ -99,7 +99,7 @@ export function portfolioStats({ properties, units, tenancies, charges, payments
 
 // Per-property stats
 export function propertyStats(property, { units, tenancies, charges, payments, expenses, maintenance }) {
-  const occupancy = occupancySummary(units.filter((u) => u.property_id === property.id), tenancies.filter((t) => t.property_id === property.id));
+  const occupancy = occupancySummary(units.filter((u) => u.property_id === property.id), tenancies);
   const pUnits = occupancy.live;
   const pTenancies = occupancy.tenancies;
   const pCharges = charges.filter((c) => c.property_id === property.id);
@@ -114,7 +114,7 @@ export function propertyStats(property, { units, tenancies, charges, payments, e
     units: pUnits.length,
     occupied,
     vacant: occupancy.vacant.length,
-    occupancyRate: pUnits.length ? Math.round((occupied / pUnits.length) * 100) : 0,
+    occupancyRate: occupancy.rate,
     tenants: pTenancies.length,
     expectedRent,
     collected,

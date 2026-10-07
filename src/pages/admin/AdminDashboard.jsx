@@ -7,6 +7,7 @@ import AdminApprovalSection from "@/components/AdminApprovalSection";
 import DashboardAlerts from '@/components/alerts/DashboardAlerts';
 import TenantDataWipe from '@/components/admin/TenantDataWipe';
 import {occupancySummary} from '@/lib/occupancy';
+import loadAllRecords from '@/lib/loadAllRecords';
 import {
   Building2, DoorOpen, Users, Wallet, AlertTriangle, Wrench, TrendingUp,
   Receipt, ArrowRight, FileText, ScrollText, Clock, Trash2,
@@ -27,9 +28,9 @@ export default function AdminDashboard() {
     try {
       const [u, p, un, t, pay, m, a] = await Promise.all([
         base44.entities.User.list('-created_date', 500),
-        base44.entities.Property.list('-created_date', 500),
-        base44.entities.Unit.list('-created_date', 500),
-        base44.entities.Tenancy.list('-created_date', 500),
+        loadAllRecords('Property'),
+        loadAllRecords('Unit'),
+        loadAllRecords('Tenancy'),
         base44.entities.Payment.list('-created_date', 500),
         base44.entities.Maintenance.list('-created_date', 500),
         base44.entities.Application.list('-created_date', 500),
@@ -38,7 +39,12 @@ export default function AdminDashboard() {
       setPayments(pay); setMaintenance(m); setApplications(a);
     } finally { setLoading(false); }
   };
-  useEffect(() => { loadDashboard(); }, []);
+  useEffect(() => {
+    loadDashboard();let timer;
+    const refresh=()=>{clearTimeout(timer);timer=setTimeout(loadDashboard,250);};
+    const unsubscribers=['Property','Unit','Tenancy'].map(entity=>base44.entities[entity].subscribe(refresh));
+    return ()=>{clearTimeout(timer);unsubscribers.forEach(unsubscribe=>unsubscribe());};
+  }, []);
 
   const stats = useMemo(() => {
       const occupancy=occupancySummary(units,tenancies);
@@ -55,7 +61,7 @@ export default function AdminDashboard() {
       return {
         totalUsers: users.length, pendingUsers, landowners, clients, admins,
         properties: properties.length, units: occupancy.live.length, occupiedCount, availableCount, vacantCount,
-        activeTenancies: activeTenancies.length, openMaintenance,
+        activeTenancies: activeTenancies.length, occupancyRate:occupancy.rate, openMaintenance,
         expectedThisMonth, collectedThisMonth,
         applications: applications.length,
       };
@@ -92,6 +98,7 @@ export default function AdminDashboard() {
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Applications" value={stats.applications} icon={FileText} accent="blue" />
+        <StatCard label="Occupancy Rate" value={`${stats.occupancyRate}%`} sub={`${stats.occupiedCount} occupied out of ${stats.units} units`} icon={DoorOpen} accent="emerald" />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { loadDocuments } from '@/lib/documentList';
+import reconcileInitialRent from '@/lib/reconcileInitialRent';
+import loadAllRecords from '@/lib/loadAllRecords';
 
 async function loadMaintenance() {
   const items=[]; let cursor;
@@ -36,7 +38,7 @@ export function useTenantData() {
       const t = await base44.entities.Tenant.filter({ user_id: me.id }).then((r) => r[0]);
       setTenant(t);
       const [tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units, listings] = await Promise.all([
-        base44.entities.Tenancy.filter({ tenant_user_id: me.id }),
+        loadAllRecords('Tenancy',{ tenant_user_id: me.id }),
         base44.entities.RentCharge.filter({ tenant_user_id: me.id }),
         base44.entities.Payment.filter({ tenant_user_id: me.id }),
         base44.entities.Application.filter({ tenant_user_id: me.id }),
@@ -49,7 +51,8 @@ export function useTenantData() {
         base44.entities.Unit.list("-created_date", 500),
         base44.entities.Listing.filter({ status: { $in: ["Published", "Active"] } }, "-created_date", 500),
       ]);
-      setData({ tenancies, charges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units, listings });
+      const reconciledCharges=await reconcileInitialRent(tenancies)?await loadAllRecords('RentCharge',{tenant_user_id:me.id},'-due_date'):charges;
+      setData({ tenancies, charges:reconciledCharges, payments, applications, maintenance, inspections, notices, documents, feedback, vacationRequests, units, listings });
     } finally {
       setLoading(false);
     }

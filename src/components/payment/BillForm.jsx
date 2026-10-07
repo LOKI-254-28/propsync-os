@@ -12,7 +12,7 @@ export default function BillForm({tenancies,period,onClose,onSaved}) {
   const update=(key,value)=>setForm(f=>({...f,[key]:value}));
   const submit=async e=>{
     e.preventDefault();setBusy(true);setError('');
-    try {await base44.functions.invoke('generateRentCharges',{action:'add_bill',...form,amount:Number(form.amount)});onSaved();onClose();}
+    try {await base44.functions.invoke('generateRentCharges',{action:'add_bill',...form,amount:Number(form.amount)});await onSaved(form.billingPeriod);onClose();}
     catch(e){setError(e.response?.data?.error||e.message);}
     finally {setBusy(false);}
   };
@@ -23,7 +23,7 @@ export default function BillForm({tenancies,period,onClose,onSaved}) {
       <Field label="Bill name"><Input required maxLength={120} disabled={busy} value={form.billName} onChange={e=>update('billName',e.target.value)} placeholder="e.g. Water bill or shared cleaning" /></Field>
       <Field label="Amount (KES)"><Input required type="number" min="0.01" max="100000000" step="0.01" disabled={busy} value={form.amount} onChange={e=>update('amount',e.target.value)} /></Field>
       <div className="grid grid-cols-2 gap-3"><Field label="Billing month"><Input required type="month" disabled={busy} value={form.billingPeriod} onChange={e=>update('billingPeriod',e.target.value)} /></Field><Field label="Due date"><Input required type="date" disabled={busy} value={form.dueDate} onChange={e=>update('dueDate',e.target.value)} /></Field></div>
-      <p className="text-xs text-muted-foreground">This bill is added separately to the tenant's ledger and included in their outstanding balance.</p>
+      <p className="text-xs text-muted-foreground">Only the amount entered above is added. Rent already paid stays paid and is not charged again.</p>
       {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
       <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button><Button disabled={busy}>{busy?'Saving...':'Add Bill'}</Button></DialogFooter>
     </form>

@@ -1,6 +1,7 @@
 import { requirePayment } from './applicationAccess.ts';
 import { registryError, syncRecordFiles } from './documentRegistry.ts';
 import { nairobiToday } from './nairobiDates.ts';
+import {reconcileInitialRent} from './initialRent.ts';
 export async function completeApplication(sr,user,context,body) {
   const {app,unit,property,staff} = context;
   if (!staff) throw registryError('Only the landlord can start a tenancy.',403);
@@ -31,6 +32,7 @@ export async function completeApplication(sr,user,context,body) {
       start_date:app.proposed_start_date || nairobiToday(),expected_end_date:'',monthly_rent:app.monthly_rent || unit.monthly_rent,security_deposit:unit.security_deposit,service_charge:unit.service_charge,
       payment_due_day:1,grace_period_days:7,notice_period_days:30,status:'Active',owner_user_id:property.owner_user_id,agreement_document_url:app.agreement_executed_url,
     });
+    await reconcileInitialRent(sr,tenancy,true);
     const linkedApp = await sr.entities.Application.update(app.id,{tenancy_id:tenancy.id,tenant_id:tenant.id});
     await sr.entities.Inspection.update(inspection.id,{tenancy_id:tenancy.id,tenant_id:tenant.id});
     await syncRecordFiles(sr,user,'Inspection',{...inspection,tenancy_id:tenancy.id,tenant_id:tenant.id});

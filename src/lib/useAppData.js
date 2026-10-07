@@ -3,6 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { normalizeUser } from "@/lib/normalizeUser";
 import { loadDocuments } from '@/lib/documentList';
 import { loadTenantDirectory } from '@/lib/tenantAccess';
+import loadAllRecords from '@/lib/loadAllRecords';
+import reconcileInitialRent from '@/lib/reconcileInitialRent';
+import {occupancySummary} from '@/lib/occupancy';
 
 // Loads portfolio records for admin/landowner dashboards.
 // Landowners see only their own records (filtered by owner_user_id).
@@ -25,9 +28,7 @@ export function usePortfolioData({enabled=true}={}) {
       const isLandowner = !isAdmin && me?.account_type === 'landowner';
       const f = isAdmin ? {} : { owner_user_id: me.id };
       // Helper: filter by owner for landowners, list all for admins
-      const owned = (entity, sort, limit) => !isAdmin
-        ? base44.entities[entity].filter(f, sort, limit)
-        : base44.entities[entity].list(sort, limit);
+      const owned = (entity, sort) => loadAllRecords(entity, f, sort);
 
       const [
         properties, units, tenants, tenancies, charges, payments,
@@ -51,13 +52,21 @@ export function usePortfolioData({enabled=true}={}) {
         loadDocuments(),
         owned('Listing', '-created_date', 200),
       ]);
-      const visibleTenants = tenants;
-      setData({ properties, units, tenants:visibleTenants, tenancies, charges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings });
+      const reconciledCharges = await reconcileInitialRent(tenancies) ? await owned('RentCharge','-due_date') : charges;
+      const reconciledUnits = occupancySummary(units,tenancies).units;
+      setData({ properties, units:reconciledUnits, tenants, tenancies, charges:reconciledCharges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { if(enabled) load(); }, [enabled]);
+  useEffect(() => {
+    if(!enabled)return;
+    load();
+    let timer;
+    const refresh=()=>{clearTimeout(timer);timer=setTimeout(load,250);};
+    const unsubscribers=['Property','Unit','Tenancy'].map(entity=>base44.entities[entity].subscribe(refresh));
+    return ()=>{clearTimeout(timer);unsubscribers.forEach(unsubscribe=>unsubscribe());};
+  }, [enabled]);
   return { ...data, loading, reload: load };
 }

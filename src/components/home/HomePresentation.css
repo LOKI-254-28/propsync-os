@@ -1,72 +1,76 @@
-.urban-home{box-sizing:border-box;width:100%;max-width:1004px;min-height:1785px;margin:0 auto;background:var(--urban-surface);overflow:hidden;border:1px solid #e6deea;font-family:ui-sans-serif,system-ui,sans-serif;color:var(--urban-ink);line-height:normal}
+.urban-home{box-sizing:border-box;display:flex;flex-direction:column;width:100%;min-height:100vh;background:var(--urban-tint);overflow:hidden;font-family:var(--font-body);color:var(--urban-ink);line-height:normal}
 .urban-home *{box-sizing:border-box}
-.urban-home>header{height:72px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ece6ef;background:rgba(255,255,255,.96);position:static;backdrop-filter:none}
+.urban-home>header{height:72px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--urban-border);background:var(--urban-surface);position:static;backdrop-filter:none}
 .urban-home>header>div{width:100%;max-width:none;margin:0;padding:0;flex-wrap:nowrap;gap:0}
 .urban-home>header>div>a{display:flex;align-items:center;gap:10px;color:var(--urban-ink);text-decoration:none;font-weight:750;font-size:20px;letter-spacing:-.6px}
 .urban-home>header>div>a>div{width:34px;height:34px;border-radius:10px;background:var(--urban-primary);display:grid;place-items:center;color:var(--urban-surface)}
 .urban-home>header>div>a>span{font-family:inherit;font-weight:750;font-size:20px;color:var(--urban-ink)}
 .urban-home nav{display:flex;align-items:center;gap:24px;font-size:12px;font-weight:600;width:auto;flex-wrap:nowrap}
-.urban-home nav a,.urban-home .browse{color:#51475a;text-decoration:none;position:relative;transition:color .2s}
-.urban-home nav a:after,.urban-home .browse:after{content:"";position:absolute;height:1px;left:0;right:100%;bottom:-4px;background:#8c5593;transition:right .25s ease}
+.urban-home nav a,.urban-home .browse{color:var(--urban-muted);text-decoration:none;position:relative;transition:color .2s}
+.urban-home nav a:after,.urban-home .browse:after{content:"";position:absolute;height:1px;left:0;right:100%;bottom:-4px;background:var(--urban-primary);transition:right .25s ease}
 .urban-home nav a:hover:after,.urban-home .browse:hover:after{right:0}
 .urban-home nav a:hover,.urban-home .browse:hover{color:var(--urban-primary)}
-.urban-home nav a[href="/register"],.urban-home nav a[href="/dashboard"],.urban-home nav a[href="/admin"],.urban-home nav a[href="/portal"]{background:var(--urban-primary);color:var(--urban-surface);padding:10px 16px;border-radius:8px;box-shadow:0 5px 14px #58285f26}
-.urban-home nav a[href="/register"]:hover,.urban-home nav a[href="/dashboard"]:hover,.urban-home nav a[href="/admin"]:hover,.urban-home nav a[href="/portal"]:hover{background:#71387a;color:var(--urban-surface)}
-.urban-home>main{flex:initial}
-.urban-home .hero{padding:28px 48px 42px;background:var(--urban-tint)}
-.urban-home .hero-frame{display:grid;grid-template-columns:42% 58%;min-height:390px;background:var(--urban-surface);border:1px solid #e5dce9;border-radius:19px;overflow:hidden;box-shadow:0 18px 45px #39213a12}
+.urban-home nav a[href="/register"],.urban-home nav a[href="/dashboard"],.urban-home nav a[href="/admin"],.urban-home nav a[href="/portal"]{background:var(--urban-primary);color:var(--urban-surface);padding:10px 16px;border-radius:8px;box-shadow:0 5px 14px var(--urban-shadow-strong)}
+.urban-home nav a[href="/register"]:hover,.urban-home nav a[href="/dashboard"]:hover,.urban-home nav a[href="/admin"]:hover,.urban-home nav a[href="/portal"]:hover{background:var(--urban-primary-hover);color:var(--urban-surface)}
+.urban-home>main{flex:1}
+.urban-home>header>div,.urban-home .hero-frame,.urban-home .owner{max-width:1152px;margin-left:auto;margin-right:auto}
+.urban-home .band{max-width:1216px;margin-left:auto;margin-right:auto;width:100%}
+.urban-home .experience>*{max-width:1152px;margin-left:auto;margin-right:auto}
+.urban-home .hero{padding:28px 32px 42px;background:var(--urban-tint)}
+.urban-home .hero-frame{display:grid;grid-template-columns:42% 58%;min-height:390px;background:var(--urban-surface);border:1px solid var(--urban-border);border-radius:19px;overflow:hidden;box-shadow:0 18px 45px var(--urban-shadow)}
 .urban-home .hero-image{width:100%;height:100%;min-height:390px;object-fit:cover;animation:rise .75s ease both}
 .urban-home .hero-copy{padding:38px 34px 34px;display:flex;flex-direction:column;justify-content:center;animation:rise .7s .12s ease both}
-.urban-home .eyebrow{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1.8px;color:#8a6390;margin:0 0 14px}
+.urban-home .eyebrow{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1.8px;color:var(--urban-primary);margin:0 0 14px}
 .urban-home .hero h1{font-size:42px;line-height:1.02;letter-spacing:-1.9px;margin:0;color:var(--urban-ink);font-weight:850;max-width:440px}
-.urban-home .hero-desc{font-size:14px;line-height:1.65;color:#6d6471;margin:16px 0 22px;max-width:390px}
-.urban-home .searchbox{display:grid;grid-template-columns:1fr 1fr;gap:9px;background:var(--urban-surface);padding:10px;border:1px solid #e9e2ec;border-radius:13px;box-shadow:0 8px 22px #33213a0c;animation:rise .7s .25s ease both}
-.urban-home .searchbox input,.urban-home .searchbox select{width:100%;min-width:0;height:42px;border:1px solid #eee8f0;background:#f8f6fa;border-radius:8px;padding:0 12px;color:#51475a;font:12px ui-sans-serif,system-ui;outline:none}
-.urban-home .searchbox input:focus,.urban-home .searchbox select:focus{border-color:#a77bad;box-shadow:0 0 0 3px #a77bad20}
+.urban-home .hero-desc{font-size:14px;line-height:1.65;color:var(--urban-muted);margin:16px 0 22px;max-width:390px}
+.urban-home .searchbox{display:grid;grid-template-columns:1fr 1fr;gap:9px;background:var(--urban-surface);padding:10px;border:1px solid var(--urban-border);border-radius:13px;box-shadow:0 8px 22px var(--urban-shadow);animation:rise .7s .25s ease both}
+.urban-home .searchbox input,.urban-home .searchbox select{width:100%;min-width:0;height:42px;border:1px solid var(--urban-border);background:var(--urban-tint);border-radius:8px;padding:0 12px;color:var(--urban-muted);font:12px ui-sans-serif,system-ui;outline:none}
+.urban-home .searchbox input:focus,.urban-home .searchbox select:focus{border-color:var(--urban-primary);box-shadow:0 0 0 3px var(--urban-focus)}
 .urban-home .searchbox input::placeholder{color:#757575;opacity:1}
 .urban-home nav a[href="/register"]{font-weight:600}
-.urban-home .searchbox button{height:42px;border:0;border-radius:8px;background:var(--urban-primary);color:var(--urban-surface);font-family:Arial,sans-serif;font-size:13.3333px;font-weight:700;cursor:pointer;transition:background .2s,box-shadow .2s}
-.urban-home .searchbox button:hover{background:#71387a;box-shadow:0 5px 12px #58285f2e}
-.urban-home .searchbox button:active{background:#431d4a}
-.urban-home .searchbox button:focus-visible,.urban-home nav a:focus-visible,.urban-home .browse:focus-visible,.urban-home .owner a:focus-visible{outline:3px solid #b68aba;outline-offset:3px}
-.urban-home .band{padding:38px 48px 42px;background:var(--urban-surface)}
+.urban-home .searchbox button{height:42px;border:0;border-radius:8px;background:var(--urban-primary);color:var(--urban-surface);font-family:var(--font-body);font-size:13.3333px;font-weight:700;cursor:pointer;transition:background .2s,box-shadow .2s}
+.urban-home .searchbox button:hover{background:var(--urban-primary-hover);box-shadow:0 5px 12px var(--urban-shadow-strong)}
+.urban-home .searchbox button:active{background:var(--urban-primary-hover)}
+.urban-home .searchbox button:focus-visible,.urban-home nav a:focus-visible,.urban-home .browse:focus-visible,.urban-home .owner a:focus-visible{outline:3px solid var(--urban-primary);outline-offset:3px}
+.urban-home .band{padding:38px 32px 42px;background:var(--urban-surface)}
 .urban-home .sectionhead{display:flex;align-items:end;justify-content:space-between;margin-bottom:19px}
 .urban-home .sectionhead h2,.urban-home .experience h2{font-size:27px;line-height:1.15;letter-spacing:-.8px;margin:0;color:var(--urban-ink);font-weight:800}
 .urban-home .browse{font-size:12px;font-weight:700;color:var(--urban-primary)}
 .urban-home .listing{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.urban-home .card{display:grid;grid-template-columns:43% 57%;min-height:186px;overflow:hidden;border:1px solid #e9e3ec;border-radius:14px;background:var(--urban-surface);box-shadow:0 7px 20px #3825420b;transition:box-shadow .25s,border-color .25s,transform .25s;text-decoration:none}
-.urban-home .card:hover{border-color:#c9afd0;box-shadow:0 14px 30px #38254218;transform:translateY(-2px)}
+.urban-home .card{display:grid;grid-template-columns:43% 57%;min-height:186px;overflow:hidden;border:1px solid var(--urban-border);border-radius:14px;background:var(--urban-surface);box-shadow:0 7px 20px var(--urban-shadow);transition:box-shadow .25s,border-color .25s,transform .25s;text-decoration:none}
+.urban-home .card:hover{border-color:hsl(var(--contact-soft));box-shadow:0 14px 30px var(--urban-shadow-strong);transform:translateY(-2px)}
 .urban-home .listing-img{width:100%;height:100%;min-height:186px;object-fit:cover}
 .urban-home .cardbody{padding:19px 18px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
 .urban-home .cardbody h3{margin:0;color:var(--urban-ink);font-size:15px;letter-spacing:.15px;font-weight:700;line-height:normal}
-.urban-home .cardbottom{border-top:1px solid #eee9f0;padding-top:13px;display:flex;align-items:center;justify-content:space-between}
+.urban-home .cardbottom{border-top:1px solid var(--urban-border);padding-top:13px;display:flex;align-items:center;justify-content:space-between}
 .urban-home .price{color:var(--urban-primary);font-size:17px;font-weight:800}
-.urban-home .price small{font-size:11px;font-weight:500;color:#807684}
+.urban-home .price small{font-size:11px;font-weight:500;color:var(--urban-muted)}
 .urban-home .view{font-size:12px;color:var(--urban-primary);font-weight:700;text-decoration:none}
 .urban-home .view:hover{text-decoration:underline}
-.urban-home .experience{background:var(--urban-tint);padding:38px 48px 40px}
+.urban-home .experience{background:var(--urban-tint);padding:38px 32px 40px}
 .urban-home .experience h2{margin-bottom:19px}
 .urban-home .experience h2 a{color:inherit;text-decoration:none}
-.urban-home .row{min-height:83px;padding:15px 18px;display:grid;grid-template-columns:46px 1fr;align-items:center;gap:14px;background:var(--urban-surface);border:1px solid #e6ddea;border-radius:12px;margin-top:10px;box-shadow:0 5px 14px #35223b08;animation:rise .6s ease both}
+.urban-home .experience>h2,.urban-home .experience>.eyebrow{margin-left:auto;margin-right:auto}
+.urban-home .row{min-height:83px;padding:15px 18px;display:grid;grid-template-columns:46px 1fr;align-items:center;gap:14px;background:var(--urban-surface);border:1px solid var(--urban-border);border-radius:12px;margin-top:10px;box-shadow:0 5px 14px var(--urban-shadow);animation:rise .6s ease both}
 .urban-home .row:nth-child(3){animation-delay:.08s}
 .urban-home .row:nth-child(4){animation-delay:.16s}
-.urban-home .row-icon{width:40px;height:40px;border-radius:11px;background:var(--urban-tint);color:#71387a;display:grid;place-items:center}
+.urban-home .row-icon{width:40px;height:40px;border-radius:11px;background:var(--urban-tint);color:var(--urban-primary-hover);display:grid;place-items:center}
 .urban-home .row-icon svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .urban-home .row h3{margin:0 0 4px;font-size:14px;font-weight:750;color:var(--urban-ink)}
-.urban-home .row p{margin:0;color:#746b79;font-size:12px;line-height:1.45}
-.urban-home .owner-wrap{padding:28px 48px 32px;background:var(--urban-surface)}
-.urban-home .owner{min-height:144px;border-radius:16px;background:var(--urban-primary);color:var(--urban-surface);padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:22px;box-shadow:0 12px 28px #58285f24}
+.urban-home .row p{margin:0;color:var(--urban-muted);font-size:12px;line-height:1.45}
+.urban-home .owner-wrap{padding:28px 32px 32px;background:var(--urban-surface)}
+.urban-home .owner{min-height:144px;border-radius:16px;background:var(--urban-primary);color:var(--urban-surface);padding:26px 30px;display:flex;align-items:center;justify-content:space-between;gap:22px;box-shadow:0 12px 28px var(--urban-shadow-strong)}
 .urban-home .owner h2{font-size:24px;line-height:1.1;letter-spacing:-.6px;margin:0 0 8px;font-weight:700}
-.urban-home .owner p{font-size:12px;line-height:1.55;color:#e9ddec;margin:0;max-width:490px}
+.urban-home .owner p{font-size:12px;line-height:1.55;color:hsl(var(--contact-cream) / .85);margin:0;max-width:490px}
 .urban-home .owner a{white-space:nowrap;display:inline-block;background:var(--urban-surface);color:var(--urban-primary);text-decoration:none;font-size:12px;font-weight:750;padding:13px 18px;border-radius:8px;transition:background .2s,box-shadow .2s}
-.urban-home .owner a:hover{background:var(--urban-tint);box-shadow:0 5px 13px #25122a40}
-.urban-home .owner a:active{background:#e4d8e9}
+.urban-home .owner a:hover{background:var(--urban-tint);box-shadow:0 5px 13px var(--urban-shadow-strong)}
+.urban-home .owner a:active{background:var(--urban-tint)}
 
-.urban-home .rental-detail,.urban-home .rental-facts{font-size:11px;color:#807684;margin-top:4px;display:flex;align-items:center;gap:4px}
+.urban-home .rental-detail,.urban-home .rental-facts{font-size:11px;color:var(--urban-muted);margin-top:4px;display:flex;align-items:center;gap:4px}
 .urban-home .rental-facts{gap:12px;flex-wrap:wrap}
 .urban-home .rental-facts span{display:flex;gap:4px;align-items:center}
 .urban-home .listing-placeholder{display:grid;place-items:center;background:var(--urban-tint);color:var(--urban-primary);min-height:186px}
-.urban-home .listing-empty{border:1px dashed #c9afd0;border-radius:14px;padding:40px;text-align:center;color:#746b79;background:#f8f6fa}
+.urban-home .listing-empty{border:1px dashed hsl(var(--contact-soft));border-radius:14px;padding:40px;text-align:center;color:var(--urban-muted);background:var(--urban-tint)}
 .urban-home .listing-loading{height:160px;display:grid;place-items:center;color:var(--urban-primary)}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:767px){.urban-home{min-height:100vh}.urban-home>header{height:auto;padding:20px 22px}.urban-home>header>div{flex-wrap:wrap;gap:18px}.urban-home nav{width:100%;flex-wrap:wrap;gap:16px}.urban-home .hero,.urban-home .band,.urban-home .experience{padding:28px 22px}.urban-home .hero-frame{grid-template-columns:1fr}.urban-home .hero-image{height:260px;min-height:260px}.urban-home .hero-copy{padding:28px 24px}.urban-home .hero h1{font-size:36px}.urban-home .listing{grid-template-columns:1fr}.urban-home .owner-wrap{padding:24px 22px}.urban-home .owner{align-items:flex-start;flex-direction:column;padding:26px 24px}}

@@ -16,7 +16,7 @@
 .public-footer-contact svg{flex-shrink:0;margin-top:3px}
 .public-footer-contact>p[role="status"]{margin-bottom:10px}
 .public-footer-bottom{margin-top:30px;padding-top:18px;border-top:1px solid var(--urban-primary);border-top-color:color-mix(in srgb,var(--urban-primary) 15%,transparent);font-size:11px;line-height:1.6;color:var(--urban-muted)}
-.urban-home .public-footer-inner{padding-left:48px;padding-right:48px}
+.urban-home .public-footer-inner{padding-left:32px;padding-right:32px}
 @media(max-width:767px){.public-footer-inner,.urban-home .public-footer-inner{padding:32px 22px 22px}.public-footer-grid{grid-template-columns:1fr 1fr;gap:28px}.public-footer-brand{grid-column:1/-1}}
 @media(max-width:479px){.public-footer-grid{grid-template-columns:1fr}.public-footer-brand{grid-column:auto}}
 @media(prefers-reduced-motion:reduce){.public-footer a{transition:none}}

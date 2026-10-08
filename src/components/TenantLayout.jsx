@@ -91,12 +91,12 @@ export default function TenantLayout({ children }) {
       </aside>
       {mobileOpen && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:px-8">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 page-gutters py-3 backdrop-blur">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {(profile?.display_name||tenant?.full_name)?.split(" ")[0] || "Tenant"}</div>
           <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Tenant</span>
         </header>
-        <main className="px-4 py-6 lg:px-8">
+        <main className="page-container py-6">
           {notLinked && (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               <strong>No tenancy linked yet.</strong> Browse available listings and apply to join a property to get started.

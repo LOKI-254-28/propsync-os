@@ -81,7 +81,7 @@ export default function AdminLayout({ children }) {
       </aside>
       {mobileOpen && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:px-8">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 page-gutters py-3 backdrop-blur">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden items-center gap-3 lg:flex">
             <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">Admin</span>
@@ -89,7 +89,7 @@ export default function AdminLayout({ children }) {
           </div>
           <Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" /><span className="absolute -right-1 -top-1"><AlertBadge count={unread} /></span></Link>
         </header>
-        <main className="px-4 py-6 lg:px-8">{children}</main>
+        <main className="page-container py-6">{children}</main>
       </div>
     </div>
   );

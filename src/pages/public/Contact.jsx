@@ -20,7 +20,7 @@ export default function Contact() {
     <PublicLayout>
       <div className="bg-contact-cream font-body">
         <OrcaAbout />
-        <section id="contact-options" className="mx-auto max-w-6xl scroll-mt-24 px-5 pb-14 sm:px-8 sm:pb-20">
+        <section id="contact-options" className="page-container scroll-mt-24 pb-14 sm:pb-20">
           <div className="grid items-start gap-6 md:grid-cols-2 lg:gap-10">
             <div className="min-w-0 space-y-7">
               <div>

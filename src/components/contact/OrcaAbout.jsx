@@ -15,7 +15,7 @@ export default function OrcaAbout() {
   return (
     <>
       <section className="bg-contact-forest text-contact-cream">
-        <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+        <div className="page-container py-12 sm:py-16">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-contact-soft/25 pb-6">
             <p className="font-heading text-xl font-semibold tracking-tight">Orca Fuso <span className="ml-2 text-sm font-normal text-contact-soft">Consultancy</span></p>
             <p className="text-xs text-contact-soft">PropWiz is a product of Orca Fuso Consultancy</p>
@@ -27,7 +27,7 @@ export default function OrcaAbout() {
           <Button asChild className="mt-8 h-auto whitespace-normal bg-contact-gold px-6 py-3 text-contact-forest hover:bg-contact-gold/90"><a href="#contact-options">Let’s talk about your business <ArrowUpRight className="h-4 w-4" /></a></Button>
         </div>
       </section>
-      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-14">
+      <section className="page-container py-12 sm:py-14">
         <h2 className="font-heading text-2xl font-semibold tracking-tight text-foreground">How we help your business grow</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map(s => <div key={s.title} className="rounded-xl border border-border bg-card p-6 text-card-foreground">

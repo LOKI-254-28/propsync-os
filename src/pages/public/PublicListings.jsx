@@ -42,7 +42,7 @@ export default function PublicListings() {
   return (
     <PublicLayout>
       <section className="border-b border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="page-container py-8">
           <h1 className="font-heading text-2xl font-semibold text-slate-900">Browse rentals</h1>
           <div className="mt-4 flex flex-wrap gap-2">
             <div className="relative flex-1 min-w-[200px]">
@@ -58,7 +58,7 @@ export default function PublicListings() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <section className="page-container py-10">
         <h2 className="mb-4 font-medium text-slate-800">{filtered.length} listing{filtered.length !== 1 ? "s" : ""}</h2>
         {loading ? (
           <div className="flex h-40 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>
@@ -78,7 +78,7 @@ export default function PublicListings() {
       </section>
 
       {comingSoon.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pb-14">
+        <section className="page-container pb-14">
           <h2 className="mb-4 flex items-center gap-2 font-medium text-slate-800"><DoorOpen className="h-5 w-5 text-emerald-600" />Coming soon</h2>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {comingSoon.map((u) => {

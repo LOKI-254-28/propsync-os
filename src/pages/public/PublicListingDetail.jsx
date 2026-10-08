@@ -47,7 +47,7 @@ export default function PublicListingDetail() {
   if (loading) return <PublicLayout><div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div></PublicLayout>;
   if (!listing) return (
     <PublicLayout>
-      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+      <div className="page-container py-16 text-center">
         <Tag className="mx-auto mb-3 h-10 w-10 text-slate-300" />
         <p className="font-medium text-slate-700">Listing not found</p>
         <Link to="/listings" className="mt-4 inline-block text-emerald-700 hover:underline">Back to listings</Link>
@@ -57,7 +57,7 @@ export default function PublicListingDetail() {
 
   return (
     <PublicLayout>
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="page-container py-8">
         <Link to="/listings" className="mb-3 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-700"><ArrowLeft className="h-4 w-4" />All listings</Link>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

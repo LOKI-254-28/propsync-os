@@ -136,3 +136,19 @@
   --urban-shadow: hsl(215 28% 20% / .08);
   --urban-shadow-strong: hsl(215 28% 20% / .16);
 }
+
+:root, .dark {
+  --page-max-width: 76rem;
+  --page-gutter: 1rem;
+}
+@media (min-width: 768px) {
+  :root, .dark { --page-gutter: 2rem; }
+}
+.page-container {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+}
+.page-gutters { padding-inline: var(--page-gutter); }

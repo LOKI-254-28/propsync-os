@@ -15,7 +15,7 @@ export default function PublicLayout({ children, home = false }) {
   return (
     <div className={`public-site font-body ${home ? "urban-home" : "flex min-h-screen flex-col bg-background text-foreground"}`}>
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
+        <div className="page-container flex flex-wrap items-center justify-between gap-3 py-3">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               {home ? <Home className="h-5 w-5" strokeWidth={1.8} /> : <Building2 className="h-5 w-5" />}

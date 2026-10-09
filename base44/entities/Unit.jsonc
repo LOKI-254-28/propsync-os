@@ -80,9 +80,9 @@
           "url": {
             "type": "string"
           }
-        },
-        "description": "Per-room public photo URLs (Living room, Kitchen, etc.)"
-      }
+        }
+      },
+      "description": "Per-room public photo URLs (Living room, Kitchen, etc.)"
     },
     "description": {
       "type": "string"
@@ -125,17 +125,35 @@
   ],
   "rls": {
     "read": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "user"
+              }
+            }
+          ]
         },
         {
-          "data.owner_user_id": "{{user.id}}"
-        },
-        {
-          "data.status": "Available"
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "data.owner_user_id": "{{user.id}}"
+            },
+            {
+              "data.status": "Available"
+            }
+          ]
         }
       ]
     },

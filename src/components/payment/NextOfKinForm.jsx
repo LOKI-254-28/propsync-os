@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { syncUploadedDocuments } from '@/lib/registerUpload';
-import { patchApplication } from '@/lib/applicationActions';
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui-bits";
@@ -23,12 +22,11 @@ export default function NextOfKinForm({ app, onSaved, onBusyChange }) {
     setErr("");
     setBusy(true);
     try {
-      const rec = await base44.entities.NextOfKin.create({ ...f, application_id: app.id, tenant_user_id: app.tenant_user_id, owner_user_id: app.owner_user_id });
-      await patchApplication(app.id, { next_of_kin_id: rec.id });
-      await syncUploadedDocuments('NextOfKin',rec.id);
-      onSaved(rec);
+      const {data} = await base44.functions.invoke('applicationOps', {action:'submit_next_of_kin',application_id:app.id,details:f});
+      window.dispatchEvent(new Event('documents-changed'));
+      onSaved(data.next_of_kin);
     } catch (e) {
-      setErr("Could not save next of kin. Please try again.");
+      setErr(e.response?.data?.error || "Could not save next of kin. Please try again.");
     } finally {
       setBusy(false);
     }

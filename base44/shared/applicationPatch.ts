@@ -42,7 +42,7 @@ export async function patchApplication(sr,user,context,updates) {
     await ownedUploads(sr,user,refs,{appId:app.id});
     if (updates.next_of_kin_id) {
       const kin = await sr.entities.NextOfKin.get(updates.next_of_kin_id);
-      if (kin.application_id !== app.id || kin.tenant_user_id !== user.id) throw registryError('Choose your own next-of-kin record.',403);
+      if (kin.application_id !== app.id || kin.tenant_user_id !== user.id || kin.owner_user_id !== app.owner_user_id) throw registryError('Choose your own next-of-kin record for this landlord.',403);
     }
   }
   if ('site_visit_proposed_by' in updates && updates.site_visit_proposed_by !== (staff ? 'landlord' : 'tenant')) throw registryError('The visit proposer is invalid.');

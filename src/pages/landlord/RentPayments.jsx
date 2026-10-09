@@ -34,6 +34,7 @@ export default function RentPayments() {
   const [receipt, setReceipt] = useState(null);
   const [busy, setBusy] = useState(false);
   const [billOpen,setBillOpen] = useState(false);
+  const [paymentError,setPaymentError]=useState('');
   const approvedPayments = useMemo(()=>approvedReceipts(data.payments,data.applications).filter(p=>!search||`${p.tenant_name} ${p.unit_number}`.toLowerCase().includes(search.toLowerCase())),[data.payments,data.applications,search]);
 
   const charges = useMemo(() => data.charges
@@ -69,17 +70,17 @@ export default function RentPayments() {
 
   const submitPayment = async () => {
     if (!payCharge || payAmount <= 0) return;
-    setBusy(true);
-    const tenant = data.tenants.find((t) => t.id === payCharge.tenant_id);
-    const tenancy = data.tenancies.find((t) => t.id === payCharge.tenancy_id);
-    const me = await base44.auth.me();
-    const result = await recordPayment({ tenant, tenancy, amount: payAmount, method: payMethod, paymentDate: payDate, recordedBy: me?.email });
-    await logAudit({ user: me, action: "Payment Recorded", entity: "Payment", entity_id: result.payment.id, entity_name: result.payment.payment_reference, new_value: { amount: payAmount, method: payMethod } });
-    if (tenant?.user_id) await notify({ recipient_user_id: tenant.user_id, type: "Payment", title: "Payment Received", message: `Your payment of ${KES(payAmount)} has been recorded.`, related_entity: "Payment", related_id: result.payment.id, action_link: "/portal/rent" });
-    setReceipt(result.payment);
-    setPayOpen(false);
-    setBusy(false);
-    data.reload();
+    setBusy(true);setPaymentError('');
+    try {
+      const tenant = data.tenants.find((t) => t.id === payCharge.tenant_id);
+      const tenancy = data.tenancies.find((t) => t.id === payCharge.tenancy_id);
+      const me = await base44.auth.me();
+      const result = await recordPayment({tenancy,amount:payAmount,method:payMethod,paymentDate:payDate});
+      await logAudit({user:me,action:'Payment Recorded',entity:'Payment',entity_id:result.payment.id,entity_name:result.payment.payment_reference,new_value:{amount:payAmount,method:payMethod}});
+      if(tenant?.user_id)await notify({recipient_user_id:tenant.user_id,type:'Payment',title:'Payment Received',message:`Your payment of ${KES(payAmount)} has been recorded.`,related_entity:'Payment',related_id:result.payment.id,action_link:'/portal/rent'});
+      setReceipt(result.payment);setPayOpen(false);await data.reload();
+    } catch(e){setPaymentError(e.response?.data?.error||'Could not record this payment. Please try again.');}
+    finally{setBusy(false);}
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -201,6 +202,7 @@ export default function RentPayments() {
                 <Field label="Payment date"><Input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} /></Field>
                 <div className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-800">Payment is allocated to the oldest outstanding charge first. Partial payments are supported. Sandbox mode — no real money moves.</div>
               </div>
+              {paymentError&&<p role="alert" className="text-sm text-destructive">{paymentError}</p>}
               <DialogFooter><Button onClick={submitPayment} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Recording..." : "Record Payment"}</Button></DialogFooter>
             </>
           )}

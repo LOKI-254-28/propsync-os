@@ -3,6 +3,7 @@ import { useTenantData } from "@/lib/useTenantData";
 import { base44 } from "@/api/base44Client";
 import { recordPayment, genRef, todayISO, monthKey, monthLabel } from "@/lib/finance";
 import PaymentReceipt from '@/components/payment/PaymentReceipt';
+import PendingPayments from '@/components/payment/PendingPayments';
 import {approvedReceipts,receiptMoney as KES} from '@/components/payment/receiptData';
 import { PageHeader, SectionCard, StatusBadge, EmptyState, StatCard, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ export default function MyRent() {
         )}
       </SectionCard>
 
+      <PendingPayments readOnly/>
       <SectionCard title="Payment History" className="mt-6">
         {payments.length === 0 ? <EmptyState icon={Receipt} title="No payments yet" /> : (
           <div className="overflow-x-auto">

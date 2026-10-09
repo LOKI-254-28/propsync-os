@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import {Link} from 'react-router-dom';
 import { base44 } from "@/api/base44Client";
 import { logAudit } from "@/lib/finance";
 import { PageHeader, SectionCard, Field } from "@/components/ui-bits";
@@ -54,10 +55,8 @@ export default function Settings() {
             <Field label="Contact phone"><Input value={settings.contact_phone || ""} onChange={(e) => setSettings({ ...settings, contact_phone: e.target.value })} /></Field>
             <Field label="Contact email"><Input value={settings.contact_email || ""} onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })} /></Field>
             <Field label="Address"><Textarea value={settings.address || ""} onChange={(e) => setSettings({ ...settings, address: e.target.value })} rows={2} /></Field>
-            <Field label="M-Pesa paybill number" hint="Shown to tenants for manual payment"><Input value={settings.mpesa_paybill || ""} onChange={(e) => setSettings({ ...settings, mpesa_paybill: e.target.value })} /></Field>
-            <Field label="Bank name"><Input value={settings.bank_name || ""} onChange={(e) => setSettings({ ...settings, bank_name: e.target.value })} /></Field>
-            <Field label="Bank account name"><Input value={settings.bank_account_name || ""} onChange={(e) => setSettings({ ...settings, bank_account_name: e.target.value })} /></Field>
-            <Field label="Bank account number"><Input value={settings.bank_account_number || ""} onChange={(e) => setSettings({ ...settings, bank_account_number: e.target.value })} /></Field>
+            <p className="text-sm text-muted-foreground">M-Pesa and bank instructions are now managed separately for each property owner.</p>
+            <Button asChild variant="outline"><Link to="/payment-details">Manage payment details</Link></Button>
           </div>
         </SectionCard>
 

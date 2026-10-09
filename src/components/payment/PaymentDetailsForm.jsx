@@ -1,0 +1,13 @@
+import React, {useState} from 'react';
+import {Field,SectionCard} from '@/components/ui-bits';
+import {Input} from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
+import {Button} from '@/components/ui/button';
+import {base44} from '@/api/base44Client';
+const fields=[['payee_name','Payee / landlord name',120],['mpesa_paybill','M-Pesa paybill number',10],['bank_name','Bank name',120],['bank_account_name','Bank account name',120],['bank_account_number','Bank account number',40],['bank_branch','Bank branch (optional)',120]];
+export default function PaymentDetailsForm({details,propertyId,onSaved}){
+  const [values,setValues]=useState(details),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
+  const change=(key,value)=>{setValues(v=>({...v,[key]:value}));setMessage('');};
+  const save=async event=>{event.preventDefault();setBusy(true);setError('');setMessage('');try{const {data}=await base44.functions.invoke('paymentDetails',{action:'save',property_id:propertyId||undefined,details:values});setValues(data.details);setMessage('Payment details saved. Tenants linked to this owner will see these instructions.');onSaved(data);}catch(e){setError(e.response?.data?.error||'Could not save payment details.');}finally{setBusy(false);}};
+  return <SectionCard title="Payment destinations"><form onSubmit={save} className="space-y-4"><div className="grid gap-4 sm:grid-cols-2">{fields.map(([key,label,max])=><Field key={key} label={label}><Input disabled={busy} maxLength={max} inputMode={key==='mpesa_paybill'?'numeric':undefined} pattern={key==='mpesa_paybill'?'[0-9]{5,10}':undefined} value={values[key]||''} onChange={e=>change(key,e.target.value)}/></Field>)}</div><Field label="Payment instructions (optional)"><Textarea rows={3} maxLength={1000} disabled={busy} value={values.payment_instructions||''} onChange={e=>change('payment_instructions',e.target.value)}/></Field><p className="text-xs text-muted-foreground">Leave a payment method blank if you do not accept it. Bank details must include all three required bank fields. Saving these details does not connect an instant-payment service.</p>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}{message&&<p role="status" className="text-sm text-primary">{message}</p>}<Button type="submit" disabled={busy}>{busy?'Saving…':'Save payment details'}</Button></form></SectionCard>;
+}

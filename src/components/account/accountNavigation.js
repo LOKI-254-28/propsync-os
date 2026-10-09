@@ -5,7 +5,7 @@ export function isAccountPathActive(path, pathname) {
 const groups = [
   { label: 'Overview', paths: ['/dashboard', '/admin', '/portal', '/notifications'] },
   { label: 'Portfolio & leasing', paths: ['/properties', '/units', '/tenants', '/my-listings', '/applications', '/site-visits'] },
-  { label: 'Finance', paths: ['/rent', '/arrears', '/expenses', '/reports', '/comparison'] },
+  { label: 'Finance', paths: ['/rent', '/arrears', '/payment-details', '/expenses', '/reports', '/comparison'] },
   { label: 'Property care', paths: ['/maintenance', '/inspections', '/contractors'] },
   { label: 'Communication', paths: ['/chat', '/notices', '/vacation-requests', '/feedback', '/documents'] },
   { label: 'Administration', paths: ['/admin/users', '/admin/contact-page', '/staff', '/settings', '/profile'] },

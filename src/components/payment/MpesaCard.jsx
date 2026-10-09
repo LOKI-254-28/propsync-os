@@ -45,11 +45,12 @@ export default function MpesaCard({ app, settings, onDone, onBusyChange, disable
       <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Smartphone className="h-5 w-5 text-emerald-600" />Pay with M-Pesa</h4>
       <div className="flex gap-2">
         <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="M-Pesa number, e.g. 0712345678" />
-        <Button onClick={send} disabled={busy || waiting || disabled || !phone} className="shrink-0 bg-emerald-600 hover:bg-emerald-700">{(busy || waiting) && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{waiting ? "Waiting for PIN…" : "Send prompt"}</Button>
+        <Button onClick={send} disabled={busy || waiting || disabled || !phone || !settings?.mpesa_paybill} className="shrink-0 bg-emerald-600 hover:bg-emerald-700">{(busy || waiting) && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{waiting ? "Waiting for PIN…" : "Send prompt"}</Button>
       </div>
       {msg && <p className="text-sm text-slate-600">{msg}</p>}
       <div className="rounded-lg bg-slate-50 p-3 text-sm">
         <p className="mb-2 font-medium text-slate-800">Or pay manually with paybill</p>
+        {!settings?.mpesa_paybill&&<p className="mb-2 text-muted-foreground">M-Pesa instructions are not configured. Contact your landlord before sending money.</p>}
         <ol className="list-decimal space-y-1 pl-5 text-slate-600">
           <li>Open M-Pesa → Lipa na M-Pesa → Pay Bill</li>
           <li>Business number: <b>{paybill}</b></li>

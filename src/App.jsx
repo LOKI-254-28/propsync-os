@@ -37,6 +37,7 @@ import PropertyComparison from '@/pages/landlord/PropertyComparison';
 import Notifications from '@/pages/landlord/Notifications';
 import StaffPermissions from '@/pages/landlord/StaffPermissions';
 import Settings from '@/pages/landlord/Settings';
+import PaymentDetails from '@/pages/landlord/PaymentDetails';
 import Feedback from '@/pages/landlord/Feedback';
 import VacationRequests from '@/pages/landlord/VacationRequests';
 import Listings from '@/pages/landlord/Listings';
@@ -106,6 +107,7 @@ const LandlordRoutes = () => (
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/staff" element={<StaffPermissions />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/payment-details" element={<PaymentDetails />} />
       <Route path="/profile" element={<AccountProfile />} />
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />
@@ -142,6 +144,7 @@ const AdminRoutes = () => (
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/staff" element={<StaffPermissions />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/payment-details" element={<PaymentDetails />} />
       <Route path="/profile" element={<AccountProfile />} />
       <Route path="/feedback" element={<Feedback />} />
       <Route path="/vacation-requests" element={<VacationRequests />} />

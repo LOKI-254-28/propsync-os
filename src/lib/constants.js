@@ -21,6 +21,7 @@ export const LANDLORD_NAV = [
   { label: "Listings", path: "/my-listings", icon: "Tag" },
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Staff & Permissions", path: "/staff", icon: "ShieldCheck" },
+  { label: "Payment Details", path: "/payment-details", icon: "Wallet" },
   { label: "Settings", path: "/settings", icon: "Settings" },
   { label: "My Profile", path: "/profile", icon: "UserCog" },
 ];
@@ -49,6 +50,7 @@ export const ADMIN_NAV = [
   { label: "Contact us page", path: "/admin/contact-page", icon: "MessageSquare" },
   { label: "Staff & Permissions", path: "/staff", icon: "ShieldCheck" },
   { label: "Property Comparison", path: "/comparison", icon: "Columns3" },
+  { label: "Payment Details", path: "/payment-details", icon: "Wallet" },
   { label: "Settings", path: "/settings", icon: "Settings" },
   { label: "My Profile", path: "/profile", icon: "UserCog" },
 ];

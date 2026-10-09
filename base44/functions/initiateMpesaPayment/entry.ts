@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { DARAJA_BASE, getDarajaConfig, getDarajaToken, stkCredentials } from '../../shared/daraja.ts';
+import {paymentInstructionContext,getOwnerPaymentDetails} from '../../shared/ownerPaymentDetails.ts';
 
 function normalizePhone(raw) {
   const d = String(raw || '').replace(/\D/g, '');
@@ -15,8 +16,9 @@ export default async function(req: Request): Promise<Response> {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { application_id, phone } = await req.json();
-    const app = await base44.asServiceRole.entities.Application.get(application_id).catch(() => null);
-    if (!app || app.tenant_user_id !== user.id) return Response.json({ error: 'Application not found' }, { status: 404 });
+    const context=await paymentInstructionContext(base44.asServiceRole,user,{application_id});
+    const app=context.record;
+    if(app.tenant_user_id!==user.id)return Response.json({error:'Application not found'},{status:404});
     if (app.status !== 'Payment Requested') return Response.json({ error: 'This application is not awaiting payment.' }, { status: 409 });
 
     const msisdn = normalizePhone(phone);
@@ -27,6 +29,8 @@ export default async function(req: Request): Promise<Response> {
       return Response.json({ unavailable: true, message: 'Instant M-Pesa prompt is not available yet. Please use the manual paybill or bank option.' });
     }
 
+    const details=await getOwnerPaymentDetails(base44.asServiceRole,context.property.owner_user_id);
+    if(!details.mpesa_paybill||String(cfg.paybill)!==details.mpesa_paybill||String(cfg.shortcode)!==details.mpesa_paybill)return Response.json({unavailable:true,message:'Instant M-Pesa is not connected to this landlord\'s paybill. Use their manual payment instructions instead.'});
     const token = await getDarajaToken(cfg);
     const { timestamp, password } = stkCredentials(cfg);
     const res = await fetch(`${DARAJA_BASE}/mpesa/stkpush/v1/processrequest`, {
@@ -58,6 +62,6 @@ export default async function(req: Request): Promise<Response> {
     });
     return Response.json({ ok: true, message: 'Prompt sent. Enter your M-Pesa PIN on your phone.' });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: error.status || 500 });
   }
 }

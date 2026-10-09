@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { recordPayment, genRef, todayISO, monthKey, monthLabel } from "@/lib/finance";
 import PaymentReceipt from '@/components/payment/PaymentReceipt';
 import PendingPayments from '@/components/payment/PendingPayments';
+import TenancyPaymentInstructions from '@/components/payment/TenancyPaymentInstructions';
 import {approvedReceipts,receiptMoney as KES} from '@/components/payment/receiptData';
 import { PageHeader, SectionCard, StatusBadge, EmptyState, StatCard, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -107,6 +108,7 @@ export default function MyRent() {
             <div className="rounded-lg bg-slate-50 p-3 text-sm"><p className="text-slate-500">Outstanding balance</p><p className="text-xl font-bold text-rose-600">{KES(outstanding)}</p></div>
             <Field label="Amount paying now (KES)" hint="Edit this amount to pay in instalments. Only the verified amount will reduce your balance."><Input type="number" inputMode="decimal" min="0.01" max="1000000000" step="0.01" required disabled={busy} value={payAmount} onFocus={e=>e.target.select()} onChange={e=>{setPayAmount(e.target.value);setPaymentError('');}} /></Field>
             <Field label="Payment method"><select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{["M-Pesa", "Bank Transfer", "Card", "Cash"].map((m) => <option key={m}>{m}</option>)}</select></Field>
+            {payOpen&&activeTenancy&&<TenancyPaymentInstructions tenancyId={activeTenancy.id} method={payMethod}/>}
             <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">Submitting does not move money. Your landlord must confirm receipt of funds before the payment is allocated and a receipt is issued.</div>
           </div>
           {paymentError&&<p role="alert" className="text-sm text-destructive">{paymentError}</p>}

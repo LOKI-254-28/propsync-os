@@ -27,7 +27,7 @@ export default async function(req: Request): Promise<Response> {
       if(typeof notification_id!=='string'||notification_id.length>100)return Response.json({error:'Choose a valid notification.'},{status:400});
       const notification=(await b.entities.Notification.filter({id:notification_id,recipient_user_id:user.id},'-created_date',1))[0];
       if(!notification)return Response.json({error:'This notification does not belong to your account.'},{status:403});
-      if(!notification.read)await b.entities.Notification.update(notification.id,{read:true});
+      if(!notification.read)await b.asServiceRole.entities.Notification.update(notification.id,{read:true});
       if(notification.related_entity&&notification.related_id)tracker.remember(`${notification.related_entity}:${notification.related_id}`);
     }
     const scan = async (entity, query, handle, client = b, fields = ['id','updated_date','created_date']) => {
@@ -43,7 +43,7 @@ export default async function(req: Request): Promise<Response> {
     await scan('Notification', { recipient_user_id: user.id, read: { $ne: true } }, async rows => {
       const seen = rows.filter(n => wrongRole(n)||(allowed.has(visited_path) && (visited_path === '/notifications' || routeFor(n) === visited_path)));
       seen.filter(n=>!wrongRole(n)&&n.related_entity&&n.related_id).forEach(n=>tracker.remember(`${n.related_entity}:${n.related_id}`));
-      if (seen.length) await b.entities.Notification.updateMany({ recipient_user_id: user.id, read: { $ne: true }, id: { $in: seen.map(n => n.id) } }, { $set: { read: true } });
+      if (seen.length) await b.asServiceRole.entities.Notification.updateMany({ recipient_user_id: user.id, read: { $ne: true }, id: { $in: seen.map(n => n.id) } }, { $set: { read: true } });
       for (const n of rows.filter(n => !seen.some(s => s.id === n.id))) { unread++; const route = routeFor(n); if (route !== path('chat')) add(route, n.related_id && n.related_entity ? `${n.related_entity}:${n.related_id}` : `Notification:${n.id}`,n.date||n.created_date); }
     }, b, ['id', 'related_entity', 'related_id', 'action_link', 'type','date','created_date']);
     const [feedback,assignedWork] = await Promise.all([feedbackScope(b.asServiceRole,user),assignedMaintenanceScope(b.asServiceRole,user)]);

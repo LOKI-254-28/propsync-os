@@ -1,0 +1,96 @@
+{
+  "name": "Rent Reminder Emails",
+  "description": "Send requested rent-reminder emails only to linked tenant accounts.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Notice",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.type == \"Rent Reminder\" and .trigger.data.email_requested == true }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "rent_reminder_emails",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "validate_recipient": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendRentDueNotices",
+            "args": {
+              "action": "email_context",
+              "notice_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "check_recipient",
+          "x-base44": {
+            "title": "Check tenant account",
+            "description": "Verify the reminder recipient"
+          }
+        }
+      },
+      {
+        "check_recipient": {
+          "switch": [
+            {
+              "when": "${ .validate_recipient.should_send == true }",
+              "then": "send_reminder"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Email requested?"
+          }
+        }
+      },
+      {
+        "send_reminder": {
+          "call": "send_email",
+          "with": {
+            "template_name": "RentReminder",
+            "to": "${ .validate_recipient.to }",
+            "variables": {
+              "tenant_name": "${ .validate_recipient.variables.tenant_name }",
+              "property_name": "${ .validate_recipient.variables.property_name }",
+              "unit_number": "${ .validate_recipient.variables.unit_number }",
+              "amount": "${ .validate_recipient.variables.amount }",
+              "due_date": "${ .validate_recipient.variables.due_date }",
+              "message": "${ .validate_recipient.variables.message }"
+            },
+            "description": "Shows the outstanding balance and secure rent account link"
+          },
+          "then": "mark_delivered",
+          "x-base44": {
+            "title": "Email rent reminder"
+          }
+        }
+      },
+      {
+        "mark_delivered": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendRentDueNotices",
+            "args": {
+              "action": "email_delivered",
+              "notice_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Record email delivery"
+          }
+        }
+      }
+    ]
+  }
+}

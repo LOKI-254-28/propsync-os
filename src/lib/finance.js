@@ -159,18 +159,6 @@ export async function logAudit({ user, action, entity, entity_id, entity_name, p
   }
 }
 
-export async function notify({ recipient_user_id, type, title, message, related_entity, related_id, action_link }) {
-  try {
-    await base44.entities.Notification.create({
-      recipient_user_id,
-      type,
-      title,
-      message,
-      related_entity,
-      related_id,
-      action_link,
-      date: new Date().toISOString(),
-      read: false,
-    });
-  } catch (e) {}
+export async function notify({related_entity,related_id}) {
+  await base44.functions.invoke('createOwnedRecord',{action:'notify_record',related_entity,related_id});
 }

@@ -18,6 +18,7 @@ export default function Notices() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ type: "General Notice", tenancy_id: "", subject: "", content: "", channel: "In-app" });
   const [busy, setBusy] = useState(false);
+  const [error,setError]=useState('');
 
   const list = useMemo(() => data.notices
     .filter((n) => !search || n.subject?.toLowerCase().includes(search.toLowerCase()) || n.tenant_name?.toLowerCase().includes(search.toLowerCase()) || n.notice_reference?.toLowerCase().includes(search.toLowerCase()))
@@ -25,7 +26,8 @@ export default function Notices() {
 
   const create = async () => {
     if (!form.subject) return;
-    setBusy(true);
+    setBusy(true);setError('');
+    try {
     const me = await base44.auth.me();
     const tenancy = data.tenancies.find((t) => t.id === form.tenancy_id);
     const ref = genRef("NOT");
@@ -36,10 +38,11 @@ export default function Notices() {
       subject: form.subject, content: form.content, status: "Issued", channel: form.channel, acknowledged: false,
     });
     if (tenancy?.tenant_user_id) await notify({ recipient_user_id: tenancy.tenant_user_id, type: "Notice", title: form.subject, message: form.content, related_entity: "Notice", related_id: rec.id, action_link: "/portal/notices" });
-    setBusy(false);
     setOpen(false);
     setForm({ type: "General Notice", tenancy_id: "", subject: "", content: "", channel: "In-app" });
-    data.reload();
+    await data.reload();
+    } catch(e){setError(e.response?.data?.error||e.message);}
+    finally{setBusy(false);}
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -79,6 +82,7 @@ export default function Notices() {
             <Field label="Subject"><Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} /></Field>
             <Field label="Content"><Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={4} /></Field>
           </div>
+          {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
           <DialogFooter><Button onClick={create} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Issuing..." : "Issue Notice"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>

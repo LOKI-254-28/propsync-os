@@ -1,0 +1,9 @@
+import React,{useState} from 'react';
+import {base44} from '@/api/base44Client';
+import {Button} from '@/components/ui/button';
+import {KES,daysBetween,todayISO} from '@/lib/finance';
+export default function ArrearsChargeTable({account}){
+  const [extra,setExtra]=useState([]),[cursor,setCursor]=useState(account.charge_cursor),[more,setMore]=useState(account.has_more_charges),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  const load=async()=>{setBusy(true);setError('');try{const {data}=await base44.functions.invoke('sendRentDueNotices',{action:'arrears_charges',tenant_id:account.tenant_id,cursor});setExtra(rows=>[...rows,...data.items]);setCursor(data.next_cursor);setMore(data.has_more);}catch(e){setError(e.response?.data?.error||e.message);}finally{setBusy(false);}};
+  return <><div className="mt-3 overflow-x-auto"><table className="w-full text-xs"><thead><tr className="border-b border-border text-left text-muted-foreground"><th className="pb-1.5">Period</th><th className="pb-1.5">Unit</th><th className="pb-1.5">Due</th><th className="pb-1.5 text-right">Days Overdue</th><th className="pb-1.5 text-right">Outstanding</th></tr></thead><tbody>{[...account.charges,...extra].map(charge=><tr key={charge.id} className="border-b border-border"><td className="py-1.5">{charge.billing_period}</td><td>{charge.unit_number}</td><td>{charge.due_date}</td><td className="text-right">{daysBetween(charge.due_date,todayISO())}</td><td className="text-right">{KES(charge.outstanding)}</td></tr>)}</tbody></table></div>{more&&<Button variant="outline" size="sm" className="mt-3" disabled={busy} onClick={load}>{busy?'Loading…':'Load more charges'}</Button>}{error&&<p role="alert" className="mt-2 text-sm text-destructive">{error}</p>}</>;
+}

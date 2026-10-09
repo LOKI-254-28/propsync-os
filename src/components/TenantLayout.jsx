@@ -94,7 +94,7 @@ export default function TenantLayout({ children }) {
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/80 page-gutters py-3 backdrop-blur">
           <button className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="hidden text-sm text-slate-500 lg:block">Welcome back, {(profile?.display_name||tenant?.full_name)?.split(" ")[0] || "Tenant"}</div>
-          <span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Tenant</span>
+          <nav aria-label="Top menu" className="flex items-center gap-3"><Link to="/" className="text-sm font-medium text-muted-foreground hover:text-primary">Home</Link><span className="hidden rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 lg:inline-block">Tenant</span></nav>
         </header>
         <main className="page-container py-6">
           {notLinked && (

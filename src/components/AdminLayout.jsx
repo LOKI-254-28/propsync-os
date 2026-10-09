@@ -87,7 +87,7 @@ export default function AdminLayout({ children }) {
             <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">Admin</span>
             <span className="text-sm text-slate-500">{new Date().toLocaleDateString("en-US", { timeZone: 'Africa/Nairobi', weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
           </div>
-          <Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" /><span className="absolute -right-1 -top-1"><AlertBadge count={unread} /></span></Link>
+          <nav aria-label="Top menu" className="flex items-center gap-3"><Link to="/" className="text-sm font-medium text-muted-foreground hover:text-primary">Home</Link><Link to="/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100"><Bell className="h-5 w-5" /><span className="absolute -right-1 -top-1"><AlertBadge count={unread} /></span></Link></nav>
         </header>
         <main className="page-container py-6">{children}</main>
       </div>

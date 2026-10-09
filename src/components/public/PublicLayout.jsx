@@ -23,6 +23,7 @@ export default function PublicLayout({ children, home = false }) {
             <span className="font-heading text-lg font-semibold text-foreground">PropWiz</span>
           </Link>
           <nav className="flex w-full flex-wrap items-center justify-between gap-3 text-sm sm:w-auto sm:justify-end">
+            <Link to="/" className="text-muted-foreground hover:text-primary">Home</Link>
             <Link to="/listings" className="text-muted-foreground hover:text-primary">Browse</Link>
             <Link to="/the-propwiz-experience" className="text-muted-foreground hover:text-contact-forest">The PropWiz Experience</Link>
             <Link to="/contact" className="text-muted-foreground hover:text-primary">Contact</Link>

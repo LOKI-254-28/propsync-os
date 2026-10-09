@@ -201,7 +201,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      <Route path="/" element={isAuthenticated ? <Navigate to={roleHome} replace /> : <PublicHome />} />
+      <Route path="/" element={<PublicHome />} />
       <Route path="/listings" element={<PublicListings />} />
       <Route path="/listings/:id" element={<ListingRedirect publicView />} />
       <Route path="/browse/:id" element={<PublicPropertyView />} />

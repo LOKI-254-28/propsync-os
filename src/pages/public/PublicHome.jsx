@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { usePublicListings } from "@/lib/usePublicListings";
 import PublicLayout from "@/components/public/PublicLayout";
@@ -9,7 +9,7 @@ import HomeExperience from '@/components/home/HomeExperience';
 import '@/components/home/HomePresentation.css';
 
 export default function PublicHome() {
-  const { isAuthenticated, user, isLoadingAuth } = useAuth();
+  const { isLoadingAuth } = useAuth();
   const { listings, properties, units, loading } = usePublicListings();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -19,13 +19,7 @@ export default function PublicHome() {
   if (isLoadingAuth) {
     return <div className="flex h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
   }
-  if (isAuthenticated && user) {
-    const isAdmin = user.role === "admin";
-    const home = isAdmin ? "/admin"
-      : user.account_type === "landowner" ? "/dashboard"
-      : "/portal";
-    return <Navigate to={home} replace />;
-  }
+
 
   const featured = (listings || []).filter((l) => l.status === "Published").slice(0, 6);
 

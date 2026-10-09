@@ -2,12 +2,14 @@ import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
 import {waitUntil} from 'base44:runtime';
 import {allRelated} from '../../shared/documentAccess.ts';
 import {accountProfile,decorateTenantProfiles} from '../../shared/accountProfile.ts';
+import {tenantNextOfKin} from '../../shared/tenantNextOfKin.ts';
 const profileFields=['full_name','email','phone','id_number','occupation','employer','monthly_income','emergency_contact_name','emergency_contact_phone','current_address'];
 export default async function(req:Request):Promise<Response> {
   try {
     const b=createClientFromRequest(req),user=await b.auth.me();
     if(!user)return Response.json({error:'Please sign in.'},{status:401});
     const sr=b.asServiceRole,body=await req.json();
+    if(body.action==='next_of_kin')return Response.json(await tenantNextOfKin(b,user,body));
     if(['account_profile','save_account_profile'].includes(body.action))return Response.json(await accountProfile(b,user,body));
     if(body.action==='directory') {
       if(body.cursor!=null&&(typeof body.cursor!=='string'||body.cursor.length>2000))return Response.json({error:'Invalid page cursor.'},{status:400});

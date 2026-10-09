@@ -6,14 +6,12 @@ import { Button } from '@/components/ui/button';
 import TenantKinCard from '@/components/tenants/TenantKinCard';
 export default function TenantNextOfKin({ tenant }) {
   const { user } = useAuth();
-  const applications = (tenant.tenancies || []).map(t => t.application_id).filter(Boolean);
-  const links = [...(tenant.user_id ? [{ tenant_user_id: tenant.user_id }] : []), ...(applications.length ? [{ application_id: { $in: applications } }] : [])];
-  const query = { $or: links, ...(user?.role === 'admin' ? {} : { owner_user_id: user?.id }) };
+
   const result = useInfiniteQuery({
-    queryKey: ['tenant-next-of-kin', user?.id, tenant.directory_id || tenant.id, applications],
-    enabled: !!user,
+    queryKey: ['individual-tenant-next-of-kin', user?.id, tenant.id],
+    enabled: !!user && !!tenant.id,
     initialPageParam: null,
-    queryFn: ({ pageParam }) => links.length ? base44.entities.NextOfKin.filter(query, { sort: '-created_date', limit: 20, cursor: pageParam || undefined, fields: ['full_name', 'id_number', 'phone', 'email', 'id_document_uri'] }) : Promise.resolve({ items: [], has_more: false }),
+    queryFn: async ({ pageParam }) => (await base44.functions.invoke('tenantOps', { action: 'next_of_kin', tenant_id: tenant.id, cursor: pageParam })).data,
     getNextPageParam: page => page.has_more ? page.next_cursor : undefined,
   });
   const kin = result.data?.pages.flatMap(page => page.items) || [];

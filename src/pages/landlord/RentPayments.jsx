@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { usePortfolioData } from "@/lib/useAppData";
 import { base44 } from "@/api/base44Client";
 import {
@@ -13,16 +13,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Wallet, Zap, Search, Receipt, CheckCircle2, Plus } from "lucide-react";
 import BillForm from '@/components/payment/BillForm';
 import PaymentReceipt from '@/components/payment/PaymentReceipt';
-import ApprovedPayments from '@/components/payment/ApprovedPayments';
+import ApprovedReceiptList from '@/components/payment/ApprovedReceiptList';
+import RentLedger from '@/components/payment/RentLedger';
+import useRentLedger from '@/hooks/useRentLedger';
+import useApprovedReceipts from '@/hooks/useApprovedReceipts';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
 import PendingPayments from '@/components/payment/PendingPayments';
 import {approvedReceipts,receiptMoney as KES} from '@/components/payment/receiptData';
 
 export default function RentPayments() {
-  const data = usePortfolioData();
+  const data = usePortfolioData({excludeFinancial:true});
   const [period, setPeriod] = useState(monthKey());
   const [search, setSearch] = useState("");
   const [genOpen, setGenOpen] = useState(false);
   const [genResult, setGenResult] = useState(null);
+  const [genError,setGenError]=useState('');
   const [genScope, setGenScope] = useState("all");
   const [genProp, setGenProp] = useState("");
   const [genTenancy, setGenTenancy] = useState("");
@@ -35,29 +40,23 @@ export default function RentPayments() {
   const [busy, setBusy] = useState(false);
   const [billOpen,setBillOpen] = useState(false);
   const [paymentError,setPaymentError]=useState('');
-  const approvedPayments = useMemo(()=>approvedReceipts(data.payments,data.applications).filter(p=>!search||`${p.tenant_name} ${p.unit_number}`.toLowerCase().includes(search.toLowerCase())),[data.payments,data.applications,search]);
-
-  const charges = useMemo(() => data.charges
-    .filter((c) => c.billing_period === period)
-    .filter((c) => !search || c.tenant_name?.toLowerCase().includes(search.toLowerCase()) || c.unit_number?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date)), [data.charges, period, search]);
-
-  const totals = useMemo(() => ({
-    expected: charges.reduce((s, c) => s + Number(c.amount || 0), 0),
-    collected: charges.reduce((s, c) => s + Number(c.amount_paid || 0), 0),
-    outstanding: charges.reduce((s, c) => s + Number(c.outstanding || 0), 0),
-  }), [charges]);
+  const debouncedSearch=useDebouncedValue(search);
+  const ledger=useRentLedger(period,debouncedSearch,!data.loading),receipts=useApprovedReceipts(debouncedSearch,!data.loading);
+  const totals=ledger.totals;
+  const reloadFinance=async()=>{await data.reload();await Promise.all([ledger.refresh(),receipts.refresh()]);};
 
   const runGenerate = async () => {
+    setGenError('');
+    if(genScope==='property'&&!genProp||genScope==='tenancy'&&!genTenancy){setGenError('Choose a property or tenancy for the selected scope.');return;}
     setBusy(true);
-    let tenancies = data.tenancies.filter((t) => ["Active", "Expiring Soon", "Notice Given"].includes(t.status));
-    if (genScope === "property" && genProp) tenancies = tenancies.filter((t) => t.property_id === genProp);
-    if (genScope === "tenancy" && genTenancy) tenancies = tenancies.filter((t) => t.id === genTenancy);
-    const res = await generateMonthlyCharges({ tenancies, existingCharges: data.charges, billingPeriod: period, dueDay: 1 });
-    setGenResult(res);
-    await logAudit({ user: await base44.auth.me(), action: "Rent Charges Generated", entity: "RentCharge", entity_name: period, new_value: { created: res.created, scope: genScope } });
-    setBusy(false);
-    data.reload();
+    try{
+      let tenancies=data.tenancies.filter(t=>['Active','Expiring Soon','Notice Given'].includes(t.status));
+      if(genScope==='property')tenancies=tenancies.filter(t=>t.property_id===genProp);
+      if(genScope==='tenancy')tenancies=tenancies.filter(t=>t.id===genTenancy);
+      const result=await generateMonthlyCharges({tenancies,billingPeriod:period,dueDay:1});
+      setGenResult(result);await reloadFinance();
+    }catch(error){setGenError(error.response?.data?.error||error.message||'Could not generate charges.');}
+    finally{setBusy(false);}
   };
 
   const openPay = (charge) => {
@@ -77,8 +76,8 @@ export default function RentPayments() {
       const me = await base44.auth.me();
       const result = await recordPayment({tenancy,amount:payAmount,method:payMethod,paymentDate:payDate});
       await logAudit({user:me,action:'Payment Recorded',entity:'Payment',entity_id:result.payment.id,entity_name:result.payment.payment_reference,new_value:{amount:payAmount,method:payMethod}});
-      if(tenant?.user_id)await notify({recipient_user_id:tenant.user_id,type:'Payment',title:'Payment Received',message:`Your payment of ${KES(payAmount)} has been recorded.`,related_entity:'Payment',related_id:result.payment.id,action_link:'/portal/rent'});
-      setReceipt(result.payment);setPayOpen(false);await data.reload();
+
+      setReceipt(result.payment);setPayOpen(false);await reloadFinance();
     } catch(e){setPaymentError(e.response?.data?.error||'Could not record this payment. Please try again.');}
     finally{setBusy(false);}
   };
@@ -100,48 +99,20 @@ export default function RentPayments() {
         </Field>
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by tenant or unit..." className="pl-9" />
+          <Input aria-label="Search rent charges and receipts" maxLength={100} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by tenant, unit or property..." className="pl-9" />
         </div>
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Expected" value={KES(totals.expected)} icon={Wallet} accent="emerald" />
-        <StatCard label="Collected" value={KES(totals.collected)} icon={CheckCircle2} accent="emerald" />
-        <StatCard label="Outstanding" value={KES(totals.outstanding)} icon={Receipt} accent="rose" />
+        <StatCard label="Expected" value={ledger.loading?'…':ledger.error?'—':KES(totals.expected)} icon={Wallet} accent="emerald" />
+        <StatCard label="Collected" value={ledger.loading?'…':ledger.error?'—':KES(totals.collected)} icon={CheckCircle2} accent="emerald" />
+        <StatCard label="Outstanding" value={ledger.loading?'…':ledger.error?'—':KES(totals.outstanding)} icon={Receipt} accent="rose" />
       </div>
 
-      {charges.length === 0 ? (
-        <EmptyState icon={Wallet} title={`No charges for ${monthLabel(period)}`} description="Generate this month's rent charges to populate the ledger." action={<Button onClick={() => { setGenResult(null); setGenOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700"><Zap className="mr-1.5 h-4 w-4" />Generate Charges</Button>} />
-      ) : (
-        <SectionCard title={`Ledger — ${monthLabel(period)}`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500">
-                <th className="pb-2 font-medium">Tenant</th><th className="pb-2 font-medium">Unit</th><th className="pb-2 font-medium">Bill</th><th className="pb-2 font-medium">Due</th><th className="pb-2 text-right font-medium">Amount</th><th className="pb-2 text-right font-medium">Paid</th><th className="pb-2 text-right font-medium">Outstanding</th><th className="pb-2 text-right font-medium">Status</th><th className="pb-2"></th>
-              </tr></thead>
-              <tbody>
-                {charges.map((c) => (
-                  <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="py-2.5 font-medium text-slate-800">{c.tenant_name}</td>
-                    <td className="py-2.5 text-slate-600">{c.unit_number}</td>
-                    <td className="py-2.5 text-slate-600">{c.bill_name||c.charge_type||'Rent & Service Charge'}</td>
-                    <td className="py-2.5 text-slate-600">{c.due_date}</td>
-                    <td className="py-2.5 text-right text-slate-900">{KES(c.amount)}</td>
-                    <td className="py-2.5 text-right text-emerald-700">{KES(c.amount_paid)}</td>
-                    <td className="py-2.5 text-right font-medium text-rose-600">{KES(c.outstanding)}</td>
-                    <td className="py-2.5 text-right"><StatusBadge status={c.status} /></td>
-                    <td className="py-2.5 text-right">{c.outstanding > 0 && <Button size="sm" variant="outline" onClick={() => openPay(c)} className="h-7 text-xs">Record Payment</Button>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </SectionCard>
-      )}
-
-      <PendingPayments onApproved={data.reload}/>
-      <ApprovedPayments payments={approvedPayments} onReceipt={setReceipt} />
-      {billOpen&&<BillForm tenancies={data.tenancies} period={period} onClose={()=>setBillOpen(false)} onSaved={async billingPeriod=>{setPeriod(billingPeriod);await data.reload();}} />}
+      <RentLedger ledger={ledger} period={period} search={debouncedSearch} onPay={openPay} onGenerate={()=>{setGenError('');setGenResult(null);setGenOpen(true);}}/>
+      <PendingPayments onApproved={reloadFinance}/>
+      <ApprovedReceiptList receipts={receipts} onReceipt={setReceipt}/>
+      {billOpen&&<BillForm tenancies={data.tenancies} period={period} onClose={()=>setBillOpen(false)} onSaved={async billingPeriod=>{setPeriod(billingPeriod);await reloadFinance();}} />}
       {/* Generate charges dialog */}
       <Dialog open={genOpen} onOpenChange={setGenOpen}>
         <DialogContent className="max-w-md">
@@ -177,7 +148,8 @@ export default function RentPayments() {
               </div>
             )}
           </div>
-          <DialogFooter><Button onClick={runGenerate} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Generating..." : "Generate"}</Button></DialogFooter>
+          {genError&&<p role="alert" className="text-sm text-destructive">{genError}</p>}
+          <DialogFooter><Button onClick={runGenerate} disabled={busy||(genScope==='property'&&!genProp)||(genScope==='tenancy'&&!genTenancy)} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Generating..." : "Generate"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -212,7 +184,7 @@ export default function RentPayments() {
       {/* Receipt dialog */}
       <Dialog open={!!receipt} onOpenChange={() => setReceipt(null)}>
         <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-          {receipt && <PaymentReceipt payment={receipt} charges={data.charges} />}
+          {receipt && <PaymentReceipt payment={receipt} charges={ledger.charges} />}
         </DialogContent>
       </Dialog>
     </div>

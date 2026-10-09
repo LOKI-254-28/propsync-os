@@ -2,6 +2,10 @@ export function isAccountPathActive(path, pathname) {
   return path === pathname || (!['/admin', '/portal', '/dashboard'].includes(path) && pathname.startsWith(`${path}/`));
 }
 
+export function activeAccountItem(items,pathname){
+  return [...items].sort((a,b)=>b.path.length-a.path.length).find(item=>isAccountPathActive(item.path,pathname));
+}
+
 const groups = [
   { label: 'Overview', paths: ['/dashboard', '/admin', '/portal', '/notifications'] },
   { label: 'Portfolio & leasing', paths: ['/properties', '/units', '/tenants', '/my-listings', '/applications', '/site-visits'] },

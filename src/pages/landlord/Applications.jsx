@@ -166,6 +166,7 @@ export default function Applications() {
               </div>
               {review.message && <div className="mt-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700"><span className="text-xs font-medium text-slate-500">Applicant message</span><p className="mt-1">{review.message}</p></div>}
 
+              {review.applicant_response && <div className="mt-2 rounded-lg bg-muted p-3 text-sm text-foreground"><span className="font-medium">Applicant response</span><p className="mt-1 whitespace-pre-wrap">{review.applicant_response}</p></div>}
               {/* Site visit info */}
               {review.site_visit_status && review.site_visit_status !== "" && (
                 <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">

@@ -44,17 +44,17 @@ export default function MyApplications() {
       let updates = {};
       let label = "";
       if (actionType === "info") {
-        updates = { status: "Information Provided", landlord_response: form.info, documents: form.documents };
+        updates = { status: "Information Provided", applicant_response: form.info, documents: form.documents };
         label = "Information Provided";
       } else if (actionType === "sitevisit") {
-        updates = { site_visit_date: form.site_visit_date, site_visit_time: form.site_visit_time, site_visit_status: "Proposed", status: "Site Visit Scheduled" };
+        updates = { site_visit_date: form.site_visit_date, site_visit_time: form.site_visit_time, site_visit_status: "Proposed", site_visit_proposed_by: "tenant", status: "Site Visit Requested" };
         label = "Site Visit Proposed";
       } else if (actionType === "reschedule") {
-        updates = { site_visit_date: form.site_visit_date, site_visit_time: form.site_visit_time, site_visit_status: "Rescheduled", status: "Site Visit Scheduled" };
+        updates = { site_visit_date: form.site_visit_date, site_visit_time: form.site_visit_time, site_visit_status: "Rescheduled", site_visit_proposed_by: "tenant", status: "Site Visit Requested" };
         label = "Site Visit Reschedule Requested";
       } else if (actionType === "agreement") {
         if (!form.agreement_executed_url) { toast({ title: "Validation error", description: "Please upload the executed agreement.", variant: "destructive" }); setBusy(false); return; }
-        updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Payment Requested", payment_status: "Requested", payment_due_date: addDays(nairobiToday(),7) };
+        updates = { agreement_executed_url: form.agreement_executed_url, agreement_status: "Executed", status: "Payment Requested", payment_status: "Requested" };
         label = "Agreement Executed";
       } else if (actionType === "payment") {
         if (!form.payment_proof_url) { toast({ title: "Validation error", description: "Please upload payment proof.", variant: "destructive" }); setBusy(false); return; }
@@ -130,6 +130,7 @@ export default function MyApplications() {
                 </div>
               )}
 
+              {a.applicant_response && <div className="mt-2 rounded-lg bg-muted p-2 text-sm text-foreground"><span className="font-medium">Your response: </span>{a.applicant_response}</div>}
               {a.landlord_response && <div className="mt-2 rounded-lg bg-slate-50 p-2 text-sm text-slate-700"><span className="text-xs font-medium text-slate-500">Provider response: </span>{a.landlord_response}</div>}
 
               {a.status === "Rejected" && a.landlord_response && (

@@ -22,7 +22,7 @@ export default function ProceedPanel({ app, onUpdated, onBusyChange }) {
     try {
       await patchApplication(app.id, updates);
       await syncUploadedDocuments('Application',app.id);
-      if (app.tenant_user_id) await notify({ recipient_user_id: app.tenant_user_id, type: "Application", title, message: `${title} — ${app.unit_number} · ${app.property_name}.`, related_entity: "Application", related_id: app.id, action_link: "/portal/applications" });
+
       toast({ title });
       onUpdated?.();
     } catch (e) {

@@ -1,13 +1,17 @@
 import { closedApplications, ownedUploads } from './applicationAccess.ts';
 import { registryError, syncRecordFiles } from './documentRegistry.ts';
+import {validateApplicationVisit} from './applicationVisit.ts';
+import {nairobiToday,addDays} from './nairobiDates.ts';
 export async function patchApplication(sr,user,context,updates) {
   const {app,staff} = context;
   if (!updates || typeof updates !== 'object' || Array.isArray(updates) || Object.keys(updates).length > 16) throw registryError('Invalid application update.');
   if (closedApplications.includes(app.status) || app.completion_token) throw registryError('This application is closed or being completed.',409);
-  const common = ['status','site_visit_date','site_visit_time','site_visit_status','site_visit_proposed_by','site_visit_notes','landlord_response'];
-  const allowed = staff ? [...common,'agreement_url','agreement_status','payment_amount','payment_due_date','payment_method','payment_instructions','payment_status'] : [...common,'documents','agreement_executed_url','agreement_status','payment_proof_url','payment_reference','payment_method','payment_status','payment_due_date','next_of_kin_id'];
+  const common = ['status','site_visit_date','site_visit_time','site_visit_status','site_visit_proposed_by','site_visit_notes'];
+  const allowed = staff ? [...common,'landlord_response','agreement_url','agreement_status','payment_amount','payment_due_date','payment_method','payment_instructions','payment_status'] : [...common,'applicant_response','documents','agreement_executed_url','agreement_status','payment_proof_url','payment_reference','payment_method','payment_status','next_of_kin_id'];
   if (Object.keys(updates).some(k=>!allowed.includes(k)) || Object.values(updates).some(v=> typeof v === 'string' && v.length > 5000)) throw registryError('That field cannot be changed here.');
   const target = updates.status;
+  validateApplicationVisit(app,updates,staff);
+  if('applicant_response' in updates&&(typeof updates.applicant_response!=='string'||target!=='Information Provided'))throw registryError('Submit your response with the requested information.');
   if (staff) {
     const transitions = {
       'Under Review':['Submitted','Pending','Information Provided'], 'More Information Required':['Under Review','Information Provided'],
@@ -50,7 +54,8 @@ export async function patchApplication(sr,user,context,updates) {
   if (updates.site_visit_date && !/^\d{4}-\d{2}-\d{2}$/.test(updates.site_visit_date)) throw registryError('Choose a valid visit date.');
   if (updates.site_visit_time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(updates.site_visit_time)) throw registryError('Choose a valid visit time.');
   const receiptFields = target === 'Payment Verified' ? {payment_approved_amount:Number(app.payment_received_amount || updates.payment_amount || app.payment_amount),payment_approved_at:new Date().toISOString(),payment_receipt_number:app.payment_receipt_number||`RCP-APP-${app.id.toUpperCase()}`} : {};
-  const updated = await sr.entities.Application.update(app.id,{...updates,...receiptFields});
+  const deadline=!staff&&['Payment Requested','Agreement Executed'].includes(target)&&!app.payment_due_date?{payment_due_date:addDays(nairobiToday(),7)}:{};
+  const updated = await sr.entities.Application.update(app.id,{...updates,...receiptFields,...deadline});
   await syncRecordFiles(sr,user,'Application',updated);
   return {application:updated};
 }

@@ -2,11 +2,11 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Bell, Menu, ChevronRight } from 'lucide-react';
 import AlertBadge from '@/components/alerts/AlertBadge';
-import { isAccountPathActive } from '@/components/account/accountNavigation';
+import { activeAccountItem } from '@/components/account/accountNavigation';
 
 export default function AccountTopbar({ items, role, greeting, unread, onOpen, menuRef, open }) {
   const { pathname } = useLocation();
-  const page = [...items].sort((a, b) => b.path.length - a.path.length).find(item => isAccountPathActive(item.path, pathname));
+  const page = activeAccountItem(items,pathname);
   return <header className="account-topbar sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur-xl">
     <div className="page-container flex min-h-20 items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">

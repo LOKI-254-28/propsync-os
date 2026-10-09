@@ -89,6 +89,10 @@
     "landlord_response": {
       "type": "string"
     },
+    "applicant_response": {
+      "type": "string",
+      "maxLength": 5000
+    },
     "submitted_date": {
       "type": "string",
       "format": "date"

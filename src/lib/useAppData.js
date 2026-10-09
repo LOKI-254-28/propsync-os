@@ -10,7 +10,7 @@ import {occupancySummary} from '@/lib/occupancy';
 // Loads portfolio records for admin/landowner dashboards.
 // Landowners see only their own records (filtered by owner_user_id).
 // Admins see all records.
-export function usePortfolioData({enabled=true}={}) {
+export function usePortfolioData({enabled=true,excludeFinancial=false}={}) {
   const [data, setData] = useState({
     properties: [], units: [], tenants: [], tenancies: [], charges: [],
     payments: [], applications: [], maintenance: [], inspections: [],
@@ -39,9 +39,9 @@ export function usePortfolioData({enabled=true}={}) {
         owned('Unit', '-created_date', 500),
         isLandowner || isAdmin ? loadTenantDirectory() : Promise.resolve([]),
         owned('Tenancy', '-created_date', 500),
-        owned('RentCharge', '-due_date', 1000),
-        owned('Payment', '-payment_date', 500),
-        owned('Application', '-created_date', 200),
+        excludeFinancial?Promise.resolve([]):owned('RentCharge', '-due_date', 1000),
+        excludeFinancial?Promise.resolve([]):owned('Payment', '-payment_date', 500),
+        excludeFinancial?Promise.resolve([]):owned('Application', '-created_date', 200),
         owned('Maintenance', '-created_date', 500),
         owned('Inspection', '-created_date', 200),
         owned('Notice', '-created_date', 200),
@@ -52,7 +52,7 @@ export function usePortfolioData({enabled=true}={}) {
         loadDocuments(),
         owned('Listing', '-created_date', 200),
       ]);
-      const reconciledCharges = await reconcileInitialRent(tenancies) ? await owned('RentCharge','-due_date') : charges;
+      const reconciledCharges = await reconcileInitialRent(tenancies)&&!excludeFinancial ? await owned('RentCharge','-due_date') : charges;
       const reconciledUnits = occupancySummary(units,tenancies).units;
       setData({ properties, units:reconciledUnits, tenants, tenancies, charges:reconciledCharges, payments, applications, maintenance, inspections, notices, expenses, contractors, feedback, vacationRequests, documents, listings });
     } finally {
@@ -67,6 +67,6 @@ export function usePortfolioData({enabled=true}={}) {
     const refresh=()=>{clearTimeout(timer);timer=setTimeout(load,250);};
     const unsubscribers=['Property','Unit','Tenancy','VacationRequest'].map(entity=>base44.entities[entity].subscribe(refresh));
     return ()=>{clearTimeout(timer);unsubscribers.forEach(unsubscribe=>unsubscribe());};
-  }, [enabled]);
+  }, [enabled,excludeFinancial]);
   return { ...data, loading, reload: load };
 }

@@ -1,5 +1,6 @@
 import { reviewError,tenancyEligibility } from './reviewEligibility.ts';
 import { nairobiToday } from './nairobiDates.ts';
+import { updateTenantRating } from './updateTenantRating.ts';
 export const reviewTypes=['TenantReview','TenancyReview','PropertyReview'];
 export async function submitReview(b,user,body) {
   const {entity,target_id,rating,comment='',visibility='Public'}=body;
@@ -37,12 +38,8 @@ export async function manageReview(b,user,body) {
   const sr=b.asServiceRole,review=await sr.entities[entity].get(review_id);
   const owner=entity==='TenantReview'?review.owner_user_id:(await sr.entities.Property.get(review.property_id)).owner_user_id;
   if (user.role!=='admin' && owner!==user.id) throw reviewError('Only the landlord owner or an admin can manage this rating.',403);
-  if (action==='update') {
-    if (entity!=='TenantReview' || review.removed) throw reviewError('Only an active tenant rating can be edited.');
-    if (!Number.isInteger(body.rating) || body.rating<1 || body.rating>5 || typeof body.comment!=='string' || body.comment.length>2000 || !['Public','Hidden'].includes(visibility)) throw reviewError('Choose 1–5 stars and a comment of up to 2,000 characters.');
-    const updated=await sr.entities.TenantReview.update(review.id,{rating:body.rating,comment:body.comment.trim(),visibility});
-    return {ok:true,id:updated.id,review:updated};
-  } else if (action==='visibility') {
+  if (action==='update') return updateTenantRating(b,user,body);
+  if (action==='visibility') {
     if (entity!=='TenantReview' || !['Public','Hidden'].includes(visibility) || review.removed) throw reviewError('Choose visibility for an active tenant rating.');
     await sr.entities.TenantReview.update(review.id,{visibility});
   } else if (action==='remove') {

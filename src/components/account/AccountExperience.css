@@ -40,6 +40,14 @@
 .account-content tbody tr:not(:last-child) td{border-bottom:1px solid hsl(var(--border)/.65)}
 .account-content tbody tr:hover{background:hsl(var(--accent)/.25)}
 .account-theme [role=dialog]{border-color:hsl(var(--border));border-radius:1rem}
+@media(min-width:768px) and (max-width:1023px){
+  .account-theme [role=dialog]{width:calc(100vw - 4rem)}
+  .account-theme .account-page-header{flex-wrap:wrap}
+  .account-theme .account-header-actions{flex-wrap:wrap;max-width:100%}
+  .account-content .account-section-header{flex-wrap:wrap}
+  .account-content .overflow-x-auto{border-radius:.6rem;border:1px solid hsl(var(--border))}
+  .account-content .overflow-x-auto thead th{position:sticky;top:0;z-index:1}
+}
 .account-theme [role=dialog] :is(input,select,textarea){border-radius:.6rem}
 .account-theme [role=tablist]{border:1px solid hsl(var(--border));background:hsl(var(--muted));padding:.3rem;height:auto;max-width:100%;overflow-x:auto;justify-content:flex-start}
 .account-theme [role=tab]{min-height:2.25rem}

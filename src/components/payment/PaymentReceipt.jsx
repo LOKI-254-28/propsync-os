@@ -10,6 +10,7 @@ import {useAuth} from '@/lib/AuthContext';
 import ReceiptParties from '@/components/payment/ReceiptParties';
 import {amountInWords} from '@/components/payment/amountInWords';
 import ReceiptDeliveryActions from '@/components/payment/ReceiptDeliveryActions';
+import ReceiptFooter from '@/components/payment/ReceiptFooter';
 export default function PaymentReceipt({payment:inputPayment,charges:inputCharges=[]}) {
   const paymentId=inputPayment.id;
   const {user}=useAuth();
@@ -24,12 +25,12 @@ export default function PaymentReceipt({payment:inputPayment,charges:inputCharge
       <div className="border-b border-border pb-3"><p className="font-heading text-lg font-semibold">PropWiz</p><p className="break-all text-sm text-muted-foreground">Receipt No. {payment.receipt_number||`RCP-${payment.id.toUpperCase()}`}</p><p className="mt-1 text-sm">Approved / Paid</p></div>
       <ReceiptParties details={details}/>
       <div className="grid grid-cols-2 gap-3 text-sm">{fields.map(([label,value])=><div key={label}><p className="text-xs text-muted-foreground">{label}</p><p className="break-words font-medium">{value||'Not recorded'}</p></div>)}</div>
-      <div className="space-y-2 border-t border-border pt-3 text-sm">{receiptLines(payment,charges).map((line,i)=><div key={i} className="flex justify-between gap-3"><span>{line.label}</span><span className="shrink-0 font-medium">{receiptMoney(line.amount)}</span></div>)}</div>
+      <div className="overflow-x-auto rounded-md border border-border"><table className="w-full border-collapse text-sm"><thead className="bg-primary text-primary-foreground"><tr><th scope="col" className="px-3 py-2 text-left font-semibold">Description / billing period</th><th scope="col" className="px-3 py-2 text-right font-semibold">Amount (KES)</th></tr></thead><tbody>{receiptLines(payment,charges).map((line,i)=><tr key={i} className="border-b border-border last:border-0"><td className="px-3 py-2">{line.label}</td><td className="whitespace-nowrap px-3 py-2 text-right font-medium tabular-nums">{receiptMoney(line.amount)}</td></tr>)}</tbody></table></div>
       <div className="flex justify-between gap-3 border-t border-border pt-3"><span>Total received</span><strong>{receiptMoney(payment.amount)}</strong></div>
       <p className="text-sm font-medium">{amountInWords(payment.amount)}</p>
       {details?.property_address&&<p className="text-sm text-muted-foreground">Property address: {details.property_address}</p>}
       <div className="grid gap-4 border-t border-border pt-4 text-xs sm:grid-cols-2"><div><p>Authorised by: {details?.authorised_by||'Not recorded'}</p><p className="mt-4">Signature: ____________________</p></div><div><p>Received by: {payment.tenant_name||details?.payer?.name}</p><p className="mt-4">Signature: ____________________</p></div></div>
-      <p className="text-xs text-muted-foreground">Computer-generated acknowledgement of verified payment. Retain this receipt for your records.</p>
+      <ReceiptFooter/>
     </div>
     <ReceiptDeliveryActions key={paymentId} details={details}/>
     <DialogFooter className="flex-wrap gap-2"><Button variant="outline" disabled={!details} onClick={()=>downloadReceipt(payment,charges,true,details)}>Print Receipt</Button><Button variant="outline" disabled={!details} onClick={()=>downloadReceipt(payment,charges,false,details)}><Download className="h-4 w-4" />Download Receipt PDF</Button></DialogFooter>

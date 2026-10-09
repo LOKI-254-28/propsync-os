@@ -14,6 +14,7 @@ import { Wallet, Zap, Search, Receipt, CheckCircle2, Plus } from "lucide-react";
 import BillForm from '@/components/payment/BillForm';
 import PaymentReceipt from '@/components/payment/PaymentReceipt';
 import ApprovedPayments from '@/components/payment/ApprovedPayments';
+import PendingPayments from '@/components/payment/PendingPayments';
 import {approvedReceipts,receiptMoney as KES} from '@/components/payment/receiptData';
 
 export default function RentPayments() {
@@ -137,6 +138,7 @@ export default function RentPayments() {
         </SectionCard>
       )}
 
+      <PendingPayments onApproved={data.reload}/>
       <ApprovedPayments payments={approvedPayments} onReceipt={setReceipt} />
       {billOpen&&<BillForm tenancies={data.tenancies} period={period} onClose={()=>setBillOpen(false)} onSaved={async billingPeriod=>{setPeriod(billingPeriod);await data.reload();}} />}
       {/* Generate charges dialog */}
@@ -207,7 +209,7 @@ export default function RentPayments() {
 
       {/* Receipt dialog */}
       <Dialog open={!!receipt} onOpenChange={() => setReceipt(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
           {receipt && <PaymentReceipt payment={receipt} charges={data.charges} />}
         </DialogContent>
       </Dialog>

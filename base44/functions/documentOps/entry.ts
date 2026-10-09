@@ -4,6 +4,7 @@ import { documentAccess } from '../../shared/documentAccess.ts';
 import { nairobiToday } from '../../shared/nairobiDates.ts';
 import { documentAction } from '../../shared/documentActions.ts';
 import { receiptDetails } from '../../shared/receiptDetails.ts';
+import { emailReceipt } from '../../shared/emailReceipt.ts';
 
 
 export default async function(req: Request): Promise<Response> {
@@ -15,6 +16,7 @@ export default async function(req: Request): Promise<Response> {
     const body = await req.json();
     const { action } = body;
     if(action==='receipt_details')return Response.json(await receiptDetails(base44,user,body));
+    if(action==='email_receipt')return Response.json(await emailReceipt(base44,user,body));
 
     const sr = base44.asServiceRole;
     if (['register_upload', 'sync_record', 'backfill'].includes(action)) return Response.json(await documentAction(base44,user,body));

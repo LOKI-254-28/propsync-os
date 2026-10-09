@@ -135,42 +135,9 @@ export async function generateMonthlyCharges({ tenancies, existingCharges, billi
 }
 
 // Record a payment and allocate it across outstanding charges (oldest first)
-export async function recordPayment({ tenant, tenancy, amount, method, paymentDate, recordedBy }) {
-  const charges = await base44.entities.RentCharge.filter({ tenancy_id: tenancy.id });
-  const open = charges.filter((c) => c.status !== "Void" && (c.outstanding || 0) > 0);
-  const { allocations, unallocated } = allocatePayment(open, amount);
-  const payment = await base44.entities.Payment.create({
-    payment_reference: genRef("PAY"),
-    tenant_id: tenant.id,
-    tenant_user_id: tenant.user_id,
-    tenant_name: tenant.full_name,
-    tenancy_id: tenancy.id,
-    property_id: tenancy.property_id,
-    property_name: tenancy.property_name,
-    unit_id: tenancy.unit_id,
-    unit_number: tenancy.unit_number,
-    amount: Number(amount),
-    payment_date: paymentDate,
-    method,
-    status: "Successful",
-    allocations,
-    receipt_number: genRef("RCP"),
-    recorded_by: recordedBy,
-    owner_user_id: tenancy.owner_user_id || "",
-  });
-  // Apply allocations to charges
-  for (const a of allocations) {
-    const charge = charges.find((c) => c.id === a.charge_id);
-    if (!charge) continue;
-    const newPaid = Number(charge.amount_paid || 0) + a.amount;
-    const newOutstanding = Math.max(0, Number(charge.amount || 0) - newPaid);
-    await base44.entities.RentCharge.update(charge.id, {
-      amount_paid: newPaid,
-      outstanding: newOutstanding,
-      status: chargeStatus({ ...charge, amount_paid: newPaid, amount: charge.amount }),
-    });
-  }
-  return { payment, unallocated, allocations };
+export async function recordPayment({ tenancy, amount, method, paymentDate }) {
+  const {data}=await base44.functions.invoke('createOwnedRecord',{action:'record_payment',tenancy_id:tenancy?.id,amount:Number(amount),method,payment_date:paymentDate});
+  return data;
 }
 
 export async function logAudit({ user, action, entity, entity_id, entity_name, previous_value, new_value }) {

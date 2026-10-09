@@ -17,6 +17,8 @@ export default function MyRent() {
   const [payMethod, setPayMethod] = useState("M-Pesa");
   const [receipt, setReceipt] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [paymentMessage,setPaymentMessage]=useState('');
+  const [paymentError,setPaymentError]=useState('');
 
   const activeTenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
   const charges = useMemo(() => [...t.charges].sort((a, b) => new Date(a.due_date) - new Date(b.due_date)), [t.charges]);
@@ -26,13 +28,15 @@ export default function MyRent() {
 
   const pay = async () => {
     if (!activeTenancy || payAmount <= 0) return;
-    setBusy(true);
+    setBusy(true);setPaymentError('');setPaymentMessage('');
     try {
       const result = await recordPayment({ tenant: t.tenant, tenancy: activeTenancy, amount: payAmount, method: payMethod, paymentDate: todayISO(), recordedBy: t.tenant?.full_name });
-      setReceipt(result.payment);
+      if(result.payment.status==='Successful')setReceipt(result.payment);
+      else setPaymentMessage('Payment submitted. Your landlord must verify it before a receipt is issued and your balance is updated.');
       setPayOpen(false);
       t.reload();
-    } finally { setBusy(false); }
+    } catch(e){setPaymentError(e.response?.data?.error||'Could not submit your payment. Please try again.');}
+    finally { setBusy(false); }
   };
 
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -41,6 +45,7 @@ export default function MyRent() {
     <div>
       <PageHeader title="Rent & Payments" description="Your rent ledger and payment history." actions={<Button disabled={!activeTenancy || outstanding<=0} onClick={() => { setPayAmount(outstanding); setPayOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700"><Wallet className="mr-1.5 h-4 w-4" />Pay Outstanding Charges</Button>} />
 
+      {paymentMessage&&<p role="status" className="mb-4 text-sm text-primary">{paymentMessage}</p>}
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Total Charged" value={KES(charges.reduce((s, c) => s + Number(c.amount || 0), 0))} icon={Receipt} accent="slate" />
         <StatCard label="Total Paid" value={KES(paid)} icon={Wallet} accent="emerald" />
@@ -98,14 +103,15 @@ export default function MyRent() {
             <div className="rounded-lg bg-slate-50 p-3 text-sm"><p className="text-slate-500">Outstanding balance</p><p className="text-xl font-bold text-rose-600">{KES(outstanding)}</p></div>
             <Field label="Amount (KES)"><Input type="number" value={payAmount} onChange={(e) => setPayAmount(Number(e.target.value))} /></Field>
             <Field label="Payment method"><select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{["M-Pesa", "Bank Transfer", "Card", "Cash"].map((m) => <option key={m}>{m}</option>)}</select></Field>
-            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">Sandbox mode — no real money moves. Your payment is recorded and allocated to outstanding charges (oldest first).</div>
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">Submitting does not move money. Your landlord must confirm receipt of funds before the payment is allocated and a receipt is issued.</div>
           </div>
+          {paymentError&&<p role="alert" className="text-sm text-destructive">{paymentError}</p>}
           <DialogFooter><Button onClick={pay} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Processing..." : "Confirm Payment"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!receipt} onOpenChange={() => setReceipt(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
           {receipt && <PaymentReceipt payment={receipt} charges={charges} />}
         </DialogContent>
       </Dialog>

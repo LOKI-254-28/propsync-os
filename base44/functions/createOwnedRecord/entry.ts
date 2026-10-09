@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { fileFields, syncRecordFiles } from '../../shared/documentRegistry.ts';
+import { paymentOperation } from '../../shared/paymentOperations.ts';
 
 // Entities that require an approved landowner (or admin) to create,
 // and that carry owner_user_id for ownership isolation.
@@ -45,6 +46,7 @@ export default async function(req: Request): Promise<Response> {
     if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
     const body = await req.json();
+    if(['record_payment','approve_payment'].includes(body.action))return Response.json(await paymentOperation(base44.asServiceRole,user,body));
     const { entity, data, bulk, records } = body;
 
     if (!entity) return Response.json({ error: 'Entity is required' }, { status: 400 });
@@ -180,6 +182,6 @@ export default async function(req: Request): Promise<Response> {
 
     return Response.json({ ok: true, record: created });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: error.status || 500 });
   }
 }

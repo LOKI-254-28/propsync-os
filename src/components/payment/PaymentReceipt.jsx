@@ -9,11 +9,13 @@ import {base44} from '@/api/base44Client';
 import {useAuth} from '@/lib/AuthContext';
 import ReceiptParties from '@/components/payment/ReceiptParties';
 import {amountInWords} from '@/components/payment/amountInWords';
-export default function PaymentReceipt({payment,charges=[]}) {
+import ReceiptDeliveryActions from '@/components/payment/ReceiptDeliveryActions';
+export default function PaymentReceipt({payment:inputPayment,charges:inputCharges=[]}) {
+  const paymentId=inputPayment.id;
   const {user}=useAuth();
-  const result=useQuery({queryKey:['receipt-details',user?.id,payment.id],enabled:!!user&&payment.status==='Successful',queryFn:async()=>(await base44.functions.invoke('documentOps',{action:'receipt_details',payment_id:payment.id})).data});
-  if(payment.status!=='Successful') return null;
-  const details=result.data;
+  const result=useQuery({queryKey:['receipt-details',user?.id,paymentId],enabled:!!user&&inputPayment.status==='Successful',queryFn:async()=>(await base44.functions.invoke('documentOps',{action:'receipt_details',payment_id:paymentId})).data});
+  if(inputPayment.status!=='Successful') return null;
+  const details=result.data,payment=details?.payment||inputPayment,charges=details?.charges||inputCharges;
   const fields=[['Tenant',payment.tenant_name],['Property',payment.property_name],['Unit',payment.unit_number],['Payment / approval date',payment.payment_date||'Not recorded'],['Method',payment.method],['Reference',payment.payment_reference]];
   return <><DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="h-5 w-5" />Payment Receipt</DialogTitle></DialogHeader>
     <div className="space-y-4 rounded-lg border border-border bg-card p-5 text-card-foreground">
@@ -27,6 +29,7 @@ export default function PaymentReceipt({payment,charges=[]}) {
       <div className="grid gap-4 border-t border-border pt-4 text-xs sm:grid-cols-2"><div><p>Authorised by: {details?.authorised_by||'Not recorded'}</p><p className="mt-4">Signature: ____________________</p></div><div><p>Received by: {payment.tenant_name||details?.payer?.name}</p><p className="mt-4">Signature: ____________________</p></div></div>
       <p className="text-xs text-muted-foreground">Computer-generated acknowledgement of verified payment. Retain this receipt for your records.</p>
     </div>
-    <DialogFooter><Button variant="outline" disabled={!details} onClick={()=>downloadReceipt(payment,charges,true,details)}>Print Receipt</Button><Button variant="outline" disabled={!details} onClick={()=>downloadReceipt(payment,charges,false,details)}><Download className="h-4 w-4" />Download Receipt PDF</Button></DialogFooter>
+    <ReceiptDeliveryActions key={paymentId} details={details}/>
+    <DialogFooter className="flex-wrap gap-2"><Button variant="outline" disabled={!details} onClick={()=>downloadReceipt(payment,charges,true,details)}>Print Receipt</Button><Button variant="outline" disabled={!details} onClick={()=>downloadReceipt(payment,charges,false,details)}><Download className="h-4 w-4" />Download Receipt PDF</Button></DialogFooter>
   </>;
 }

@@ -16,6 +16,7 @@ import AlertBadge from '@/components/alerts/AlertBadge';
 import AssignedWorkLink from '@/components/maintenance/AssignedWorkLink';
 import AccountIdentity from '@/components/profile/AccountIdentity';
 import useAccountProfile from '@/hooks/useAccountProfile';
+import TenantKinPrompt from '@/components/tenants/TenantKinPrompt';
 
 const ICONS = {
   LayoutDashboard, DoorOpen, FileText, ScrollText, Wallet, Wrench,
@@ -102,6 +103,7 @@ export default function TenantLayout({ children }) {
               <strong>No tenancy linked yet.</strong> Browse available listings and apply to join a property to get started.
             </div>
           )}
+          <TenantKinPrompt/>
           {children}
         </main>
       </div>

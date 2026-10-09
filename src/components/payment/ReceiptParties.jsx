@@ -1,0 +1,4 @@
+import React from 'react';
+export default function ReceiptParties({details}) {
+  return <div className="grid gap-4 border-b border-border pb-4 text-sm sm:grid-cols-2">{[['Issued by',details.issuer],['Received from',details.payer]].map(([label,party])=><div key={label}><h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</h4><p className="font-medium">{party.name}</p><p className="whitespace-pre-wrap break-words">{party.address||'Address not recorded'}</p>{party.phone&&<p>{party.phone}</p>}{party.email&&<p className="break-all">{party.email}</p>}</div>)}</div>;
+}

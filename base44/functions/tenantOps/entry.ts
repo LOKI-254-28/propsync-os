@@ -3,6 +3,8 @@ import {waitUntil} from 'base44:runtime';
 import {allRelated} from '../../shared/documentAccess.ts';
 import {accountProfile,decorateTenantProfiles} from '../../shared/accountProfile.ts';
 import {tenantNextOfKin} from '../../shared/tenantNextOfKin.ts';
+import {requestTenantKin} from '../../shared/requestTenantKin.ts';
+import {submitTenantKin} from '../../shared/submitTenantKin.ts';
 const profileFields=['full_name','email','phone','id_number','occupation','employer','monthly_income','emergency_contact_name','emergency_contact_phone','current_address'];
 export default async function(req:Request):Promise<Response> {
   try {
@@ -10,6 +12,8 @@ export default async function(req:Request):Promise<Response> {
     if(!user)return Response.json({error:'Please sign in.'},{status:401});
     const sr=b.asServiceRole,body=await req.json();
     if(body.action==='next_of_kin')return Response.json(await tenantNextOfKin(b,user,body));
+    if(body.action==='request_next_of_kin')return Response.json(await requestTenantKin(b,user,body));
+    if(body.action==='submit_next_of_kin')return Response.json(await submitTenantKin(b,user,body));
     if(['account_profile','save_account_profile'].includes(body.action))return Response.json(await accountProfile(b,user,body));
     if(body.action==='directory') {
       if(body.cursor!=null&&(typeof body.cursor!=='string'||body.cursor.length>2000))return Response.json({error:'Invalid page cursor.'},{status:400});

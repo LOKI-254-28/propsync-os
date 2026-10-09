@@ -5,6 +5,12 @@
     "application_id": {
       "type": "string"
     },
+    "tenant_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
     "tenant_user_id": {
       "type": "string"
     },

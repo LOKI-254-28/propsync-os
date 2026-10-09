@@ -58,6 +58,11 @@ export function useTenantData() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();let timer;
+    const refresh=()=>{clearTimeout(timer);timer=setTimeout(load,250);};
+    const unsubscribe=base44.entities.Tenancy.subscribe(refresh),noticeUnsubscribe=base44.entities.VacationRequest.subscribe(refresh);
+    return ()=>{clearTimeout(timer);unsubscribe();noticeUnsubscribe();};
+  }, []);
   return { user, tenant, notLinked, ...data, loading, reload: load, ensureTenant: load };
 }

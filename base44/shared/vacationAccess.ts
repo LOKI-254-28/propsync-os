@@ -6,6 +6,8 @@ export async function vacationAccess(b,user,tenancyId) {
   if(typeof tenancyId!=='string'||!tenancyId||tenancyId.length>100)throw registryError('Choose a tenancy.');
   const tenancy=await b.asServiceRole.entities.Tenancy.get(tenancyId);
   const property=await b.asServiceRole.entities.Property.get(tenancy.property_id);
+  const unit=await b.asServiceRole.entities.Unit.get(tenancy.unit_id);
+  if(unit.property_id!==property.id||(tenancy.owner_user_id&&tenancy.owner_user_id!==property.owner_user_id)||(unit.owner_user_id&&unit.owner_user_id!==property.owner_user_id))throw registryError('The tenancy, unit and property ownership links need review.',409);
   const manager=user.role==='admin'||property.owner_user_id===user.id;
   if(!manager&&tenancy.tenant_user_id!==user.id)throw registryError('This notice is not associated with your tenancy or property.',403);
   return {tenancy,property,manager};

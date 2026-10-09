@@ -154,6 +154,32 @@
     },
     "completed_by": {
       "type": "string"
+    },
+    "scheduled_release_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scheduled_release_status": {
+      "type": "string",
+      "enum": [
+        "Scheduled",
+        "Awaiting Handover",
+        "Completed",
+        "Cancelled"
+      ]
+    },
+    "scheduled_release_token": {
+      "type": "string"
+    },
+    "scheduled_by_user_id": {
+      "type": "string"
+    },
+    "handover_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handover_confirmed_by": {
+      "type": "string"
     }
   },
   "required": [

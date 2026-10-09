@@ -65,7 +65,7 @@ export function usePortfolioData({enabled=true}={}) {
     load();
     let timer;
     const refresh=()=>{clearTimeout(timer);timer=setTimeout(load,250);};
-    const unsubscribers=['Property','Unit','Tenancy'].map(entity=>base44.entities[entity].subscribe(refresh));
+    const unsubscribers=['Property','Unit','Tenancy','VacationRequest'].map(entity=>base44.entities[entity].subscribe(refresh));
     return ()=>{clearTimeout(timer);unsubscribers.forEach(unsubscribe=>unsubscribe());};
   }, [enabled]);
   return { ...data, loading, reload: load };

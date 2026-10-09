@@ -1,0 +1,63 @@
+{
+  "name": "Scheduled Tenancy Release",
+  "description": "Waits for each landlord-approved disconnection time, then releases only the matching schedule after actual handover is confirmed.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "VacationRequest",
+      "events": [
+        "update"
+      ]
+    },
+    "condition": "${ .trigger.data.scheduled_release_status == \"Scheduled\" and .trigger.data.scheduled_release_token != .trigger.old_data.scheduled_release_token }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "scheduled_tenancy_release",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "until_due": {
+          "call": "compute_seconds_until",
+          "with": {
+            "target_iso": "${ .trigger.data.scheduled_release_at }"
+          },
+          "then": "wait_for_exit",
+          "x-base44": {
+            "title": "Calculate disconnection time"
+          }
+        }
+      },
+      {
+        "wait_for_exit": {
+          "wait": "${ \"PT\" + ((.until_due.seconds | ceil | if . < 1 then 1 else . end) | tostring) + \"S\" }",
+          "then": "release_tenancy",
+          "x-base44": {
+            "title": "Wait until scheduled time"
+          }
+        }
+      },
+      {
+        "release_tenancy": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "submitVacationNotice",
+            "args": {
+              "action": "release_scheduled",
+              "notice_id": "${ .trigger.entity_id }",
+              "schedule_token": "${ .trigger.data.scheduled_release_token }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Verify handover and disconnect",
+            "description": "Preserve history and protect reassigned units"
+          }
+        }
+      }
+    ]
+  }
+}

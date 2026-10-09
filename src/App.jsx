@@ -78,6 +78,7 @@ import PropWizExperience from '@/pages/public/PropWizExperience';
 import AssignedMaintenance from '@/pages/AssignedMaintenance';
 import AccountProfile from '@/pages/AccountProfile';
 import ReceiptView from '@/pages/ReceiptView';
+import AccountSurface from '@/components/account/AccountSurface';
 
 const LandlordRoutes = () => (
   <Layout>
@@ -214,10 +215,10 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to={`/login?returnTo=${encodeURIComponent(window.location.pathname)}`} replace />} />}>
-        <Route path="/receipt/:id" element={<ReceiptView />} />
+        <Route path="/receipt/:id" element={<AccountSurface><ReceiptView /></AccountSurface>} />
       </Route>
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/assigned-maintenance" element={<AssignedMaintenance />} />
+        <Route path="/assigned-maintenance" element={<AccountSurface className="account-content"><AssignedMaintenance /></AccountSurface>} />
         <Route path="/admin" element={isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to={isLandlord ? "/dashboard" : "/portal"} replace />} />
         <Route path="/*" element={isAdmin ? <AdminRoutes /> : isLandlord ? <LandlordRoutes /> : <TenantRoutes />} />
       </Route>

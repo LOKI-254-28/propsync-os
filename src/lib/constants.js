@@ -9,6 +9,7 @@ export const LANDLORD_NAV = [
   { label: "Rent & Payments", path: "/rent", icon: "Wallet" },
   { label: "Arrears", path: "/arrears", icon: "AlertTriangle" },
   { label: "Maintenance / Repairs", path: "/maintenance", icon: "Wrench" },
+  { label: "Contractors", path: "/contractors", icon: "Users" },
   { label: "Inspections", path: "/inspections", icon: "ClipboardCheck" },
   { label: "Notices", path: "/notices", icon: "Bell" },
   { label: "Vacation & Termination", path: "/vacation-requests", icon: "LogOut" },
@@ -35,6 +36,7 @@ export const ADMIN_NAV = [
   { label: "Rent & Payments", path: "/rent", icon: "Wallet" },
   { label: "Arrears", path: "/arrears", icon: "AlertTriangle" },
   { label: "Maintenance / Repairs", path: "/maintenance", icon: "Wrench" },
+  { label: "Contractors", path: "/contractors", icon: "Users" },
   { label: "Inspections", path: "/inspections", icon: "ClipboardCheck" },
   { label: "Notices", path: "/notices", icon: "Bell" },
   { label: "Vacation & Termination", path: "/vacation-requests", icon: "LogOut" },
@@ -45,6 +47,8 @@ export const ADMIN_NAV = [
   { label: "Listings", path: "/my-listings", icon: "Tag" },
   { label: "Notifications", path: "/notifications", icon: "BellRing" },
   { label: "Contact us page", path: "/admin/contact-page", icon: "MessageSquare" },
+  { label: "Staff & Permissions", path: "/staff", icon: "ShieldCheck" },
+  { label: "Property Comparison", path: "/comparison", icon: "Columns3" },
   { label: "Settings", path: "/settings", icon: "Settings" },
   { label: "My Profile", path: "/profile", icon: "UserCog" },
 ];
@@ -52,6 +56,7 @@ export const ADMIN_NAV = [
 export const TENANT_NAV = [
   { label: "Dashboard", path: "/portal", icon: "LayoutDashboard" },
   { label: "Browse Listings", path: "/portal/listings", icon: "Tag" },
+  { label: "Browse Units", path: "/portal/units", icon: "DoorOpen" },
   { label: "My Applications", path: "/portal/applications", icon: "FileText" },
   { label: "My Tenancies", path: "/portal/my-tenancies", icon: "ScrollText" },
   { label: "Rent & Payments", path: "/portal/rent", icon: "Wallet" },

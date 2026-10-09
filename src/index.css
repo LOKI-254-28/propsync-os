@@ -107,7 +107,7 @@
   --urban-muted: #6d6471;
 }
 
-.public-site, .dark .public-site {
+.public-site, .dark .public-site, .account-theme, .dark.account-theme {
   --background: 210 20% 96%;
   --foreground: 215 28% 20%;
   --card: 0 0% 100%;
@@ -135,6 +135,21 @@
   --urban-focus: hsl(213 43% 36% / .15);
   --urban-shadow: hsl(215 28% 20% / .08);
   --urban-shadow-strong: hsl(215 28% 20% / .16);
+}
+
+.account-theme, .dark.account-theme {
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 28% 20%;
+  --secondary: 211 35% 91%;
+  --secondary-foreground: 213 43% 36%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 215 28% 20%;
+  --sidebar-primary: 213 43% 36%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 211 35% 91%;
+  --sidebar-accent-foreground: 213 43% 36%;
+  --sidebar-border: 214 20% 86%;
+  --sidebar-ring: 213 43% 36%;
 }
 
 :root, .dark {

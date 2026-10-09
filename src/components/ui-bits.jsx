@@ -33,15 +33,15 @@ export function StatCard({ label, value, sub, icon: Icon, accent = "emerald", tr
     slate: "from-slate-500/10 to-slate-500/5 text-slate-700",
   };
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="account-stat rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{value}</p>
+          <p className="account-stat-label text-xs font-medium uppercase tracking-wider text-slate-500">{label}</p>
+          <p className="account-stat-value mt-2 text-2xl font-semibold text-slate-900">{value}</p>
           {sub && <p className="mt-1 text-xs text-slate-500">{sub}</p>}
         </div>
         {Icon && (
-          <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br", accents[accent])}>
+          <div className={cn("account-stat-icon flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br", accents[accent])}>
             <Icon className="h-5 w-5" />
           </div>
         )}
@@ -53,21 +53,21 @@ export function StatCard({ label, value, sub, icon: Icon, accent = "emerald", tr
 
 export function PageHeader({ title, description, actions }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="account-page-header mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 className="font-heading text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
         {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="account-header-actions flex flex-wrap gap-2">{actions}</div>}
     </div>
   );
 }
 
 export function SectionCard({ title, children, actions, className }) {
   return (
-    <div className={cn("rounded-xl border border-slate-200 bg-white shadow-sm", className)}>
+    <div className={cn("account-section rounded-xl border border-slate-200 bg-white shadow-sm", className)}>
       {title && (
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+        <div className="account-section-header flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
           <h3 className="font-medium text-slate-800">{title}</h3>
           {actions}
         </div>
@@ -79,7 +79,7 @@ export function SectionCard({ title, children, actions, className }) {
 
 export function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-14 text-center">
+    <div className="account-empty flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-14 text-center">
       {Icon && <Icon className="mb-3 h-10 w-10 text-slate-400" />}
       <p className="font-medium text-slate-700">{title}</p>
       {description && <p className="mt-1 max-w-sm text-sm text-slate-500">{description}</p>}

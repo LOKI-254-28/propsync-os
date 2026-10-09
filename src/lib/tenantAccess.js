@@ -1,7 +1,7 @@
 import {base44} from '@/api/base44Client';
-export async function loadTenantDirectory() {
+export async function loadTenantDirectory(request=read=>read()) {
   const rows=[];let cursor;
-  do {const {data}=await base44.functions.invoke('tenantOps',{action:'directory',cursor});rows.push(...data.items);cursor=data.has_more?data.next_cursor:null;}while(cursor);
+  do {const {data}=await request(()=>base44.functions.invoke('tenantOps',{action:'directory',cursor}));rows.push(...data.items);cursor=data.has_more?data.next_cursor:null;}while(cursor);
   return rows;
 }
 export async function saveOwnTenantProfile(profile) {

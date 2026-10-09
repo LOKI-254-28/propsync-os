@@ -75,22 +75,40 @@
   ],
   "rls": {
     "read": {
-      "$or": [
+      "$and": [
         {
-          "user_condition": {
-            "role": "admin"
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "user"
+              }
+            }
+          ]
         },
         {
-          "data.owner_user_id": "{{user.id}}"
-        },
-        {
-          "data.status": {
-            "$in": [
-              "Published",
-              "Active"
-            ]
-          }
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "data.owner_user_id": "{{user.id}}"
+            },
+            {
+              "data.status": {
+                "$in": [
+                  "Published",
+                  "Active"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

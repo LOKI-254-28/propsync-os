@@ -1,19 +1,34 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { computeUnitAvailability } from '../../shared/unitAvailability.ts';
+import { rentalSamples, rentalCatalog, publicProperty, rentalTypes } from '../../shared/rentalSamples.ts';
+import { browseReviews } from '../../shared/browseReviews.ts';
 
 // Public: returns a property, its units with derived availability, and its reviews.
 export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const sr = base44.asServiceRole;
-    const { property_id } = await req.json();
-    if (!property_id) return Response.json({ error: 'property_id is required' }, { status: 400 });
+    const body = await req.json();
+    if ((body.cursor != null && (typeof body.cursor !== 'string' || body.cursor.length > 4000)) || (body.search != null && (typeof body.search !== 'string' || body.search.length > 200)) || (body.type && !rentalTypes.includes(body.type)) || (body.maxPrice != null && (typeof body.maxPrice !== 'number' || !Number.isFinite(body.maxPrice) || body.maxPrice < 0))) return Response.json({error:'Invalid browse filters.'},{status:400});
+    if (body.action === 'catalog') return Response.json(await rentalCatalog(sr,body));
+    if (body.action === 'resolve_listing') {
+      if(typeof body.listing_id!=='string'||body.listing_id.length>100)return Response.json({error:'Invalid listing.'},{status:400});
+      const listing=await sr.entities.Listing.get(body.listing_id).catch(()=>null);
+      if(!listing||!['Published','Active'].includes(listing.status))return Response.json({error:'Listing not found.'},{status:404});
+      return Response.json({property_id:listing.property_id});
+    }
+    const { property_id } = body;
+    if (typeof property_id !== 'string' || !property_id || property_id.length > 100) return Response.json({ error: 'property_id is required' }, { status: 400 });
 
     const p = await sr.entities.Property.get(property_id).catch(() => null);
     if (!p || p.status === 'Archived') return Response.json({ error: 'Property not found' }, { status: 404 });
 
-    const units = (await sr.entities.Unit.filter({ property_id }, 'unit_number', 300)).filter((u) => u.status !== 'Inactive');
-    const outUnits = await Promise.all(units.map(async (u) => {
+    const user = await base44.auth.me().catch(() => null);
+    const reviewData = user && body.cursor ? {} : await browseReviews(sr,property_id);
+    if (!user || body.summary_only === true) return Response.json({property:publicProperty(p),units:[],samples:await rentalSamples(sr,[property_id]),summary_only:true,...reviewData});
+    const query = {property_id,status:{$ne:'Inactive'}};
+    const [page,units_total] = await Promise.all([sr.entities.Unit.filter(query,{sort:'unit_number',limit:30,cursor:body.cursor||undefined}),body.cursor ? Promise.resolve(undefined) : sr.entities.Unit.count(query)]);
+    const decorate = async (u) => {
       const a = await computeUnitAvailability(sr, u);
       return {
         id: u.id, unit_number: u.unit_number, unit_type: u.unit_type, bedrooms: u.bedrooms, bathrooms: u.bathrooms,
@@ -22,28 +37,15 @@ export default async function(req: Request): Promise<Response> {
         state: a.state, bookable: a.bookable, occupied: a.occupied, available_from: a.available_from,
         tenancy_end_date: a.tenancy_end_date || null, exit_confirmed: a.exit_confirmed, half_deposit: a.half_deposit,
       };
-    }));
-
-    const [propertyReviews, tenancyReviews] = await Promise.all([
-      sr.entities.PropertyReview.filter({ property_id,removed:{$ne:true} }, '-created_date', 50),
-      sr.entities.TenancyReview.filter({ property_id, removed: false }, '-created_date', 50),
-    ]);
-    const reviews = [...propertyReviews, ...tenancyReviews].sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
-    const summarize=items=>({average:items.length?Math.round(items.reduce((s,r)=>s+Number(r.rating||0),0)/items.length*10)/10:0,count:items.length});
-    const publicReview=r=>({id:r.id,rating:r.rating,comment:r.comment,tenant_name:r.tenant_name,date:r.created_date});
-    const avg = reviews.length ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length : 0;
-
-    return Response.json({
-      property: {
-        id: p.id, name: p.name, address: p.address, description: p.description, property_type: p.property_type,
-        amenities: p.amenities || [], images: p.images || [], latitude: p.latitude, longitude: p.longitude,
-      },
-      units: outUnits,
-      reviews: reviews.map(publicReview),
-      property_reviews:propertyReviews.map(publicReview),tenancy_reviews:tenancyReviews.map(publicReview),
-      property_rating:summarize(propertyReviews),tenancy_rating:summarize(tenancyReviews),
-      rating: { average: Math.round(avg * 10) / 10, count: reviews.length },
-    });
+    };
+    const outUnits=[];
+    for(let i=0;i<page.items.length;i+=6) outUnits.push(...await Promise.all(page.items.slice(i,i+6).map(decorate)));
+    let selected_unit=null;
+    if(typeof body.unit_id==='string' && body.unit_id.length<=100) {
+      const selected=await sr.entities.Unit.get(body.unit_id).catch(()=>null);
+      if(selected?.property_id===property_id && selected.status!=='Inactive') selected_unit=await decorate(selected);
+    }
+    return Response.json({property:publicProperty(p),units:outUnits,units_total,selected_unit,summary_only:false,has_more:page.has_more,next_cursor:page.next_cursor,...reviewData});
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

@@ -9,6 +9,8 @@ import ReviewsSection from "@/components/booking/ReviewsSection";
 import ReviewForm from "@/components/booking/ReviewForm";
 import UnitDialog from "@/components/booking/UnitDialog";
 import UnitStatus from "@/components/booking/UnitStatus";
+import RentalTypeSamples from '@/components/booking/RentalTypeSamples';
+import {Button} from '@/components/ui/button';
 
 // Property page shared by the public site (mode="public") and the tenant portal (mode="tenant").
 export default function PropertyBrowseView({ propertyId, mode }) {
@@ -17,13 +19,15 @@ export default function PropertyBrowseView({ propertyId, mode }) {
   const [error, setError] = useState("");
   const [unit, setUnit] = useState(null);
 
-  const load = (first) => base44.functions.invoke("getPropertyBrowse", { property_id: propertyId })
+  const [moreLoading,setMoreLoading] = useState(false);
+  const load = (first, cursor) => base44.functions.invoke("getPropertyBrowse", { property_id: propertyId, cursor, unit_id: mode === 'tenant' && first === true ? params.get('unit') : undefined })
     .then((r) => {
-      setData(r.data);
-      const pre = first === true && r.data.units.find((u) => u.id === params.get("unit"));
+      setData(previous => cursor ? {...previous,...r.data,units:[...previous.units,...r.data.units]} : r.data);
+      const pre = first === true && (r.data.selected_unit || r.data.units.find((u) => u.id === params.get("unit")));
       if (pre) setUnit(pre);
     })
     .catch(() => setError("Could not load this property."));
+  const loadMore = async () => {setMoreLoading(true);await load(false,data.next_cursor);setMoreLoading(false);};
 
   useEffect(() => { load(true); }, [propertyId]);
 
@@ -45,8 +49,8 @@ export default function PropertyBrowseView({ propertyId, mode }) {
         {mode === "tenant" && <ReviewForm propertyId={p.id} onSaved={load} />}
       </div>
       {!unit && <PropertyMap latitude={p.latitude} longitude={p.longitude} name={p.name} />}
-      <div>
-        <h2 className="mb-3 font-medium text-slate-800">Units ({units.length})</h2>
+      {data.summary_only ? <RentalTypeSamples samples={data.samples || []} propertyId={p.id}/> : <div>
+        <h2 className="mb-3 font-medium text-slate-800">Units ({data.units_total})</h2>
         {units.length === 0 ? <p className="text-sm text-slate-500">No units listed yet.</p> : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {units.map((u) => (
@@ -58,7 +62,8 @@ export default function PropertyBrowseView({ propertyId, mode }) {
             ))}
           </div>
         )}
-      </div>
+        {data.has_more && <Button variant="outline" className="mt-4" disabled={moreLoading} onClick={loadMore}>{moreLoading?'Loading…':'Load more'}</Button>}
+      </div>}
       {unit && <UnitDialog unit={unit} mode={mode} propertyId={p.id} onClose={() => setUnit(null)} />}
     </div>
   );

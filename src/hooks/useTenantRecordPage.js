@@ -8,5 +8,6 @@ export default function useTenantRecordPage(entity,fields,sort) {
   const text=useDebouncedValue(search);
   const query={tenant_user_id:identity.user?.id,...entitySearch(text,fields)};
   const page=usePagedEntity(entity,query,sort,!!identity.user&&!identity.loading);
-  return {...identity,...page,user:identity.user,loading:identity.loading||page.isPending,search,setSearch,reload:page.refetch};
+  const error=identity.error||page.error,refetch=identity.error?identity.refetch:page.refetch;
+  return {...identity,...page,user:identity.user,error,loading:!error&&identity.loading,search,setSearch,refetch,reload:refetch};
 }

@@ -1,5 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { useTenantData } from "@/lib/useTenantData";
+import useTenantIdentity from '@/hooks/useTenantIdentity';
+import usePagedEntity from '@/hooks/usePagedEntity';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
+import entitySearch from '@/lib/entitySearch';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { KES, genRef, logAudit, notify, todayISO } from "@/lib/finance";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
@@ -12,7 +16,7 @@ import { toast } from "@/components/ui/use-toast";
 import ApplicationIdentityUploads from '@/components/booking/ApplicationIdentityUploads';
 
 export default function BrowseUnits() {
-  const t = useTenantData();
+  const t = useTenantIdentity();
   const [search, setSearch] = useState("");
   const [apply, setApply] = useState(null);
   const [form, setForm] = useState({ proposed_start_date: todayISO(), message: "", monthly_income: 0, occupation: "", id_number: "" });
@@ -21,9 +25,9 @@ export default function BrowseUnits() {
   const [uploads,setUploads] = useState({id:false,photo:false});
   const uploading = uploads.id || uploads.photo;
 
-  const available = useMemo(() => t.units.filter((u) => ["Available", "Vacant"].includes(u.status))
-    .filter((u) => !search || u.unit_number?.toLowerCase().includes(search.toLowerCase()) || u.property_name?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => a.unit_number.localeCompare(b.unit_number)), [t.units, search]);
+  const text=useDebouncedValue(search);
+  const page=usePagedEntity('Unit',{status:{$in:['Available','Vacant']},...entitySearch(text,['unit_number','property_name'])},'unit_number',!!t.user);
+  const available=page.items;
 
   const [err, setErr] = useState("");
   const submit = async () => {
@@ -36,7 +40,7 @@ export default function BrowseUnits() {
       setApply(null);
       setIdentity({id:null,photo:null});
       setForm({ proposed_start_date: todayISO(), message: "", monthly_income: 0, occupation: "", id_number: "" });
-      t.reload();
+      page.refetch();
     } catch (e) {
       setErr(e.message || "Failed to submit application. Please try again.");
       toast({ title: "Error", description: e.message || "Failed to submit application.", variant: "destructive" });
@@ -45,6 +49,7 @@ export default function BrowseUnits() {
     }
   };
 
+  if (t.error) return <p role="alert" className="text-destructive">Could not load your profile. <button onClick={()=>t.refetch()} className="underline">Try again</button></p>;
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
   return (
@@ -54,7 +59,7 @@ export default function BrowseUnits() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search units..." className="pl-9" />
       </div>
-      {available.length === 0 ? <EmptyState icon={DoorOpen} title="No available units" description="Check back later for new listings." /> : (
+      {page.isPending ? <p className="py-6 text-sm text-muted-foreground">Loading units…</p> : available.length === 0 ? <EmptyState icon={DoorOpen} title="No available units" description="Check back later for new listings." /> : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {available.map((u) => (
             <div key={u.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -75,6 +80,7 @@ export default function BrowseUnits() {
         </div>
       )}
 
+      <RecordPageControls page={page}/>
       <Dialog open={!!apply} onOpenChange={() => {if (!busy && !uploading) setApply(null);}}>
         <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           {apply && (

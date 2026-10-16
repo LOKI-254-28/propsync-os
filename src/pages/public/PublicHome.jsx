@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { usePublicListings } from "@/lib/usePublicListings";
+import usePublicCatalog from '@/hooks/usePublicCatalog';
 import PublicLayout from "@/components/public/PublicLayout";
 import HomeHero from '@/components/home/HomeHero';
 import HomeFeaturedRentals from '@/components/home/HomeFeaturedRentals';
@@ -10,7 +10,7 @@ import '@/components/home/HomePresentation.css';
 
 export default function PublicHome() {
   const { isLoadingAuth } = useAuth();
-  const { listings, properties, units, loading } = usePublicListings();
+  const catalog = usePublicCatalog();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [type, setType] = useState("");
@@ -21,7 +21,7 @@ export default function PublicHome() {
   }
 
 
-  const featured = (listings || []).filter((l) => l.status === "Published").slice(0, 6);
+
 
   const submitSearch = (e) => {
     e.preventDefault();
@@ -35,7 +35,7 @@ export default function PublicHome() {
   return (
     <PublicLayout home>
       <HomeHero search={search} setSearch={setSearch} type={type} setType={setType} maxPrice={maxPrice} setMaxPrice={setMaxPrice} submitSearch={submitSearch} />
-      <HomeFeaturedRentals featured={featured} properties={properties} units={units} loading={loading} />
+      <HomeFeaturedRentals catalog={catalog} />
       <HomeExperience />
     </PublicLayout>
   );

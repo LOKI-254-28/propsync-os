@@ -8,5 +8,5 @@ export default function useTenantIdentity() {
     const page=await base44.entities.Tenant.filter({user_id:user.id},{limit:1});
     return {tenant:page.items[0]||null,notLinked:!!data?.notFound};
   }});
-  return {user,tenant:result.data?.tenant,notLinked:result.data?.notLinked,loading:result.isPending,error:result.error};
+  return {user,tenant:result.data?.tenant,notLinked:result.data?.notLinked,loading:result.isPending,error:result.error,refetch:result.refetch};
 }

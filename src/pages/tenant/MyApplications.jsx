@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useTenantData } from "@/lib/useTenantData";
+import useTenantRecordPage from '@/hooks/useTenantRecordPage';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { KES, logAudit, todayISO } from "@/lib/finance";
 import { PageHeader, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
@@ -20,7 +21,7 @@ import MoveInInspectionPanel from '@/components/inspections/MoveInInspectionPane
 import {addDays,nairobiToday} from '@/lib/nairobiDates';
 
 export default function MyApplications() {
-  const t = useTenantData();
+  const t=useTenantRecordPage('Application',['application_reference','unit_number','property_name'],'-submitted_date');
   const [actionApp, setActionApp] = useState(null);
   const [actionType, setActionType] = useState("");
   const [payApp, setPayApp] = useState(null);
@@ -28,7 +29,7 @@ export default function MyApplications() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ info: "", site_visit_date: "", site_visit_time: "", agreement_executed_url: "", payment_proof_url: "", payment_reference: "", documents: [] });
 
-  const list = useMemo(() => [...t.applications].sort((a, b) => new Date(b.submitted_date || b.created_date) - new Date(a.submitted_date || a.created_date)), [t.applications]);
+  const list=t.items;
 
   const openAction = (app, type) => {
     setActionApp(app);
@@ -85,8 +86,9 @@ export default function MyApplications() {
   return (
     <div>
       <PageHeader title="My Applications" description="Track your applications and respond to provider requests." />
+      <RecordPageControls page={t} search placeholder="Search applications…"/>
 
-      {list.length === 0 ? <EmptyState icon={FileText} title="No applications submitted" description="Browse listings to apply for a property." /> : (
+      {t.isPending ? <p className="py-6 text-sm text-muted-foreground">Loading applications…</p> : list.length === 0 ? <EmptyState icon={FileText} title="No applications submitted" description="Browse listings to apply for a property." /> : (
         <div className="space-y-3">
           {list.map((a) => (
             <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -157,6 +159,7 @@ export default function MyApplications() {
 
       {payApp && <ApplicationPayment app={payApp} onClose={() => setPayApp(null)} onDone={t.reload} />}
 
+      <RecordPageControls page={t}/>
       <Dialog open={!!actionApp} onOpenChange={(value) => { if (!value && !busy && !uploading) setActionApp(null); }}>
         <DialogContent className="max-w-md">
           {actionApp && (

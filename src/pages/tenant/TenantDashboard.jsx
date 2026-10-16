@@ -1,21 +1,19 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useTenantData } from "@/lib/useTenantData";
+import useTenantIdentity from '@/hooks/useTenantIdentity';
+import useDashboardSummary from '@/hooks/useDashboardSummary';
+import TenantMonthCharges from '@/components/payment/TenantMonthCharges';
 import { KES, monthKey, monthLabel, daysBetween, todayISO } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { Wallet, DoorOpen, Wrench, Bell, ScrollText, AlertTriangle, FileText, Search } from "lucide-react";
 import DashboardAlerts from '@/components/alerts/DashboardAlerts';
 
 export default function TenantDashboard() {
-  const t = useTenantData();
-  const activeTenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
-
-  const outstanding = useMemo(() => t.charges.filter((c) => c.status !== "Void" && c.status !== "Paid").reduce((s, c) => s + Number(c.outstanding || 0), 0), [t.charges]);
-  const thisMonthCharges = t.charges.filter((c) => c.billing_period === monthKey());
-  const openMaint = t.maintenance.filter((m) => !["Completed", "Closed", "Rejected"].includes(m.status));
-  const unreadNotices = t.notices.filter((n) => !n.acknowledged);
-
-  if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
+  const t = useTenantIdentity();
+  const summary = useDashboardSummary(!t.loading);
+  if(t.error || summary.error) return <p role="alert" className="text-destructive">Could not load your account. <button className="underline" onClick={()=>t.error?t.refetch():summary.refetch()}>Try again</button></p>;
+  if(t.loading || summary.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" /></div>;
+  const {activeTenancy,outstanding,openMaint,unreadNotices,maintenanceCount,notices}=summary.data;
 
   return (
     <div>
@@ -25,23 +23,13 @@ export default function TenantDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Current Unit" value={activeTenancy?.unit_number || "—"} sub={activeTenancy?.property_name} icon={DoorOpen} accent="emerald" />
         <StatCard label="Outstanding Balance" value={KES(outstanding)} sub={outstanding > 0 ? "Action required" : "All clear"} icon={Wallet} accent={outstanding > 0 ? "rose" : "emerald"} />
-        <StatCard label="Open Maintenance" value={openMaint.length} icon={Wrench} accent="gold" />
-        <StatCard label="Unread Notices" value={unreadNotices.length} icon={Bell} accent="blue" />
+        <StatCard label="Open Maintenance" value={maintenanceCount} icon={Wrench} accent="gold" />
+        <StatCard label="Unread Notices" value={unreadNotices} icon={Bell} accent="blue" />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SectionCard title="This Month's Rent" actions={<Link to="/portal/rent" className="text-sm text-emerald-700 hover:underline">View ledger →</Link>}>
-          {thisMonthCharges.length === 0 ? <p className="text-sm text-slate-500">No charges for {monthLabel(monthKey())} yet.</p> : (
-            <div className="space-y-2">
-              {thisMonthCharges.map((c) => (
-                <div key={c.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2.5">
-                  <div><p className="text-sm font-medium text-slate-800">{monthLabel(c.billing_period)}</p><p className="text-xs text-slate-500">Due {c.due_date}</p></div>
-                  <div className="text-right"><p className="font-semibold text-slate-900">{KES(c.outstanding)}</p><StatusBadge status={c.status} /></div>
-                </div>
-              ))}
-              {outstanding > 0 && <Link to="/portal/rent"><button className="mt-2 w-full rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700">Pay Now</button></Link>}
-            </div>
-          )}
+          <TenantMonthCharges userId={t.user?.id} outstanding={outstanding}/>
         </SectionCard>
 
         <SectionCard title="My Tenancy" actions={activeTenancy && <Link to="/portal/tenancy" className="text-sm text-emerald-700 hover:underline">Details →</Link>}>
@@ -64,8 +52,8 @@ export default function TenantDashboard() {
         </SectionCard>
 
         <SectionCard title="Recent Notices" actions={<Link to="/portal/notices" className="text-sm text-emerald-700 hover:underline">All →</Link>}>
-          {t.notices.length === 0 ? <p className="text-sm text-slate-500">No notices.</p> : (
-            <div className="space-y-2">{t.notices.slice(0, 4).map((n) => <div key={n.id} className="rounded-lg border border-slate-100 px-3 py-2"><div className="flex items-center justify-between"><p className="text-sm font-medium text-slate-800">{n.subject}</p><StatusBadge status={n.type} /></div><p className="text-xs text-slate-500">{n.date_issued}</p></div>)}</div>
+          {notices.length === 0 ? <p className="text-sm text-slate-500">No notices.</p> : (
+            <div className="space-y-2">{notices.slice(0, 4).map((n) => <div key={n.id} className="rounded-lg border border-slate-100 px-3 py-2"><div className="flex items-center justify-between"><p className="text-sm font-medium text-slate-800">{n.subject}</p><StatusBadge status={n.type} /></div><p className="text-xs text-slate-500">{n.date_issued}</p></div>)}</div>
           )}
         </SectionCard>
       </div>

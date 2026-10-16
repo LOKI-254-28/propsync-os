@@ -4,10 +4,10 @@ import {Image} from '@/components/ui/image';
 import {Tag, MapPin, Bed, Bath, Maximize} from 'lucide-react';
 import {KES} from '@/lib/finance';
 export default function HomeRentalCard({listing,property,unit}) {
-  return <Link to={`/listings/${listing.id}`} className="card">
+  return <Link to={`/browse/${listing.property_id}`} className="card">
     {listing.images?.[0] ? <Image className="listing-img" src={listing.images[0]} alt={listing.property_name} /> : <div className="listing-placeholder"><Tag size={40}/></div>}
     <div className="cardbody"><div><h3>{listing.property_name}</h3>
-      {listing.unit_number && <p className="rental-detail">Unit {listing.unit_number}</p>}
+      <p className="rental-detail">{listing.unit_type} available · Representative sample</p>
       {property?.address && <p className="rental-detail"><MapPin size={12}/>{property.address}</p>}
       {unit && <div className="rental-facts">
         {unit.bedrooms>0 && <span><Bed size={14}/>{unit.bedrooms}</span>}

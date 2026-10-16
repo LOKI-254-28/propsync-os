@@ -12,7 +12,7 @@ export async function rentalSamples(sr,propertyIds,options={}) {
   // A stable lowest-rent sample prevents filters or pagination from enumerating units.
   for(let i=0;i<groups.rows.length;i+=6) {
     const batch=await Promise.all(groups.rows.slice(i,i+6).map(async group=>{
-      const page=await sr.entities.Unit.filter({...query,property_id:group.property_id,unit_type:group.unit_type},{sort:'monthly_rent,created_date',limit:1,fields:sampleFields});
+      const page=await sr.entities.Unit.filter({...query,property_id:group.property_id,unit_type:group.unit_type},{sort:'monthly_rent',limit:1,fields:sampleFields});
       const u=page.items[0];
       return u?{property_id:group.property_id,unit_type:group.unit_type,available:true,sample:Object.fromEntries(sampleFields.filter(key=>key!=='property_id').map(key=>[key,u[key]??(['amenities','images','room_photos'].includes(key)?[]:null)]))}:null;
     }));

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { usePortfolioData } from "@/lib/useAppData";
+import useDashboardSummary from '@/hooks/useDashboardSummary';
 import { base44 } from "@/api/base44Client";
 import { portfolioStats, KES, monthKey, monthLabel } from "@/lib/finance";
 import { StatCard, PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
@@ -13,19 +13,11 @@ import {
 } from "lucide-react";
 
 export default function Dashboard() {
-  const data = usePortfolioData();
-  const stats = useMemo(() => portfolioStats(data), [data]);
-  const [user, setUser] = useState(null);
-  const isAdmin = user?.role === "admin";
-
-  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
-
-  if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
-
-  const recentPayments = [...data.payments].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)).slice(0, 6);
-  const expiringTenancies = data.tenancies.filter((t) => t.status === "Expiring Soon" || (t.expected_end_date && t.expected_end_date < addDays(nairobiToday(),30) && ["Active"].includes(t.status))).slice(0, 5);
-  const openApps = data.applications.filter((a) => ["Pending", "Under Review"].includes(a.status)).slice(0, 5);
-  const openMaint = data.maintenance.filter((m) => !["Completed", "Closed", "Rejected"].includes(m.status)).slice(0, 5);
+  const summary = useDashboardSummary();
+  const isAdmin = summary.user?.role === 'admin';
+  if (summary.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" /></div>;
+  if (summary.error) return <p role="alert" className="text-destructive">Could not load your dashboard. <button className="underline" onClick={()=>summary.refetch()}>Try again</button></p>;
+  const {stats,recentPayments,openApps,openMaint} = summary.data;
 
   return (
     <div>
@@ -91,8 +83,8 @@ export default function Dashboard() {
         <div className="space-y-6">
           <SectionCard title="Alerts" >
             <div className="space-y-3 text-sm">
-              <AlertRow icon={FileText} count={openApps.length} label="Pending applications" to="/applications" />
-              <AlertRow icon={ScrollText} count={expiringTenancies.length} label="Expiring tenancies" to="/tenants?tab=tenancies" />
+              <AlertRow icon={FileText} count={stats.pendingApplications} label="Pending applications" to="/applications" />
+              <AlertRow icon={ScrollText} count={stats.expiringTenancies} label="Expiring tenancies" to="/tenants?tab=tenancies" />
               <AlertRow icon={AlertTriangle} count={stats.arrearsCount} label="Arrears charges" to="/arrears" />
               <AlertRow icon={DoorOpen} count={stats.vacantCount} label="Vacant units" to="/units" />
               <AlertRow icon={Wrench} count={stats.openMaintenance} label="Open maintenance" to="/maintenance" />

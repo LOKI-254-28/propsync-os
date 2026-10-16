@@ -5,12 +5,24 @@ import {accountProfile,decorateTenantProfiles} from '../../shared/accountProfile
 import {tenantNextOfKin} from '../../shared/tenantNextOfKin.ts';
 import {requestTenantKin} from '../../shared/requestTenantKin.ts';
 import {submitTenantKin} from '../../shared/submitTenantKin.ts';
+import {directoryScope,managementInput,managementAccess} from '../../shared/tenantManagementScope.ts';
+import {tenantManagementStats} from '../../shared/tenantManagementStats.ts';
+import {tenantDirectoryPage} from '../../shared/tenantDirectoryPage.ts';
+import {tenantManagementDetails} from '../../shared/tenantManagementDetails.ts';
 const profileFields=['full_name','email','phone','id_number','occupation','employer','monthly_income','emergency_contact_name','emergency_contact_phone','current_address'];
 export default async function(req:Request):Promise<Response> {
   try {
     const b=createClientFromRequest(req),user=await b.auth.me();
     if(!user)return Response.json({error:'Please sign in.'},{status:401});
     const sr=b.asServiceRole,body=await req.json();
+    if(['management_directory','management_stats','management_tenancies','management_history','management_ledger','management_tenancy_detail'].includes(body.action)){
+      managementAccess(user);managementInput(body);
+      if(body.action==='management_directory'||body.action==='management_stats'){
+        const context=await directoryScope(sr,user);
+        return Response.json(body.action==='management_stats'?await tenantManagementStats(sr,context):await tenantDirectoryPage(sr,context,body));
+      }
+      return Response.json(await tenantManagementDetails(sr,user,body));
+    }
     if(body.action==='next_of_kin')return Response.json(await tenantNextOfKin(b,user,body));
     if(body.action==='request_next_of_kin')return Response.json(await requestTenantKin(b,user,body));
     if(body.action==='submit_next_of_kin')return Response.json(await submitTenantKin(b,user,body));

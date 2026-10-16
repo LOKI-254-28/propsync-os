@@ -1,14 +1,16 @@
 import React from 'react';
-import { StatusBadge } from '@/components/ui-bits';
-import { Button } from '@/components/ui/button';
-import { KES } from '@/lib/finance';
-import { downloadFile } from '@/lib/files';
-import RatingPanel from '@/components/reviews/RatingPanel';
-import { nairobiToday } from '@/lib/nairobiDates';
-export default function TenantTenancyHistory({tenant,data}) {
-  return <div className="space-y-4"><h3 className="font-heading font-semibold">Current and previous tenancies</h3>{!tenant.tenancies.length&&<p className="text-sm text-muted-foreground">No tenancy has been assigned yet.</p>}{tenant.tenancies.map(ten=>{
-    const charges=data.charges.filter(c=>c.tenancy_id===ten.id&&c.status!=='Void');
-    const payments=data.payments.filter(p=>p.tenancy_id===ten.id);
-    return <section key={ten.id} className="space-y-3 rounded-lg border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-2"><div><p className="font-medium">{ten.unit_number} · {ten.property_name}</p><p className="text-xs text-muted-foreground">{ten.tenancy_reference}</p></div><StatusBadge status={ten.status}/></div><dl className="grid grid-cols-2 gap-3 text-sm"><div><dt className="text-muted-foreground">Start / actual end</dt><dd>{ten.start_date || '—'} / {ten.actual_end_date || '—'}</dd></div><div><dt className="text-muted-foreground">Expected end</dt><dd>{ten.expected_end_date || 'Open-ended'}</dd></div><div><dt className="text-muted-foreground">Monthly rent</dt><dd>{KES(ten.monthly_rent)}</dd></div><div><dt className="text-muted-foreground">Deposit / service charge</dt><dd>{KES(ten.security_deposit)} / {KES(ten.service_charge)}</dd></div><div><dt className="text-muted-foreground">Payment terms</dt><dd>Day {ten.payment_due_day} · {ten.grace_period_days} days grace</dd></div><div><dt className="text-muted-foreground">Notice period</dt><dd>{ten.notice_period_days} days</dd></div><div><dt className="text-muted-foreground">Total charged / paid</dt><dd>{KES(charges.reduce((s,c)=>s+Number(c.amount||0),0))} / {KES(charges.reduce((s,c)=>s+Number(c.amount_paid||0),0))}</dd></div><div><dt className="text-muted-foreground">Outstanding</dt><dd>{KES(charges.reduce((s,c)=>s+Number(c.outstanding||0),0))}</dd></div></dl>{ten.notes&&<p className="whitespace-pre-wrap text-sm text-muted-foreground">{ten.notes}</p>}{ten.agreement_document_url&&<Button size="sm" variant="outline" onClick={()=>downloadFile(ten.agreement_document_url)}>View tenancy agreement</Button>}<details className="text-sm"><summary className="cursor-pointer font-medium">Charge and payment history</summary><div className="mt-2 space-y-2">{charges.map(c=><p key={c.id}>{c.billing_period} · {KES(c.amount)} · Paid {KES(c.amount_paid)} · {c.status}</p>)}{payments.map(p=><p key={p.id}>{p.payment_date} · {p.payment_reference || p.receipt_number} · {KES(p.amount)} · {p.status}</p>)}{!charges.length&&!payments.length&&<p className="text-muted-foreground">No financial records yet.</p>}</div></details><RatingPanel entity="TenantReview" filter={{tenancy_id:ten.id}} targetId={ten.id} canRate={['Active','Expiring Soon','Notice Given','Terminated','Vacated','Archived'].includes(ten.status) && !!ten.start_date && ten.start_date <= nairobiToday()} title="Rate tenant for this tenancy"/></section>;
-  })}</div>;
+import TenantHistoryRecord from '@/components/tenants/TenantHistoryRecord';
+import TenantExitActions from '@/components/vacation/TenantExitActions';
+import RecordPageControls from '@/components/account/RecordPageControls';
+export default function TenantTenancyHistory({tenant,page}){
+  const totals=page.data?.pages.flatMap(part=>part.totals)||[];
+  const vacationRequests=page.data?.pages.flatMap(part=>part.vacationRequests)||[];
+  return <div className="space-y-4">
+    <h3 className="font-heading font-semibold">Current and previous tenancies</h3>
+    {page.isPending?<p className="text-sm text-muted-foreground">Loading tenancy history…</p>:!page.error&&!page.items.length?<p className="text-sm text-muted-foreground">No tenancy has been assigned yet.</p>:<>
+      <TenantExitActions tenant={{...tenant,tenancies:page.items}} data={{vacationRequests,reload:page.reload}}/>
+      {page.items.map(tenancy=><TenantHistoryRecord key={tenancy.id} tenancy={tenancy} totals={totals.find(row=>row.tenancy_id===tenancy.id)}/>)}
+    </>}
+    <RecordPageControls page={page}/>
+  </div>;
 }

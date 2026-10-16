@@ -4,6 +4,7 @@ import { paymentOperation } from '../../shared/paymentOperations.ts';
 import {createNotice,acknowledgeNotice} from '../../shared/noticeService.ts';
 import {recordNotification} from '../../shared/recordNotification.ts';
 import {waitUntil} from 'base44:runtime';
+import {expenseRecord} from '../../shared/expenseRecord.ts';
 
 // Entities that require an approved landowner (or admin) to create,
 // and that carry owner_user_id for ownership isolation.
@@ -119,11 +120,11 @@ export default async function(req: Request): Promise<Response> {
     // ---- Single record creation ----
     if (!data) return Response.json({ error: 'Data is required' }, { status: 400 });
 
-    const ownershipError = await validateParentOwnership(base44, user, entity, data);
+    const ownershipError = entity === 'Expense' ? null : await validateParentOwnership(base44, user, entity, data);
     if (ownershipError) return Response.json({ error: ownershipError, code: 'OWNERSHIP' }, { status: 403 });
 
-    const record = { ...data };
-    if (ENTITIES_WITH_OWNER.includes(entity)) {
+    const record = entity === 'Expense' ? await expenseRecord(base44.asServiceRole,user,data) : { ...data };
+    if (entity !== 'Expense' && ENTITIES_WITH_OWNER.includes(entity)) {
       record.owner_user_id = user.id;
     }
     if (entity === 'Contractor') {

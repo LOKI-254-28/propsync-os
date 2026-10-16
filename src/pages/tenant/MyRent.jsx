@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { useTenantData } from "@/lib/useTenantData";
+import useTenantRentData from '@/hooks/useTenantRentData';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { recordPayment, genRef, todayISO, monthKey, monthLabel } from "@/lib/finance";
 import PaymentReceipt from '@/components/payment/PaymentReceipt';
@@ -13,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Wallet, Download, Receipt } from "lucide-react";
 
 export default function MyRent() {
-  const t = useTenantData();
+  const t=useTenantRentData();
   const [payOpen, setPayOpen] = useState(false);
   const [payAmount, setPayAmount] = useState('');
   const [payMethod, setPayMethod] = useState("M-Pesa");
@@ -22,11 +23,8 @@ export default function MyRent() {
   const [paymentMessage,setPaymentMessage]=useState('');
   const [paymentError,setPaymentError]=useState('');
 
-  const activeTenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
-  const charges = useMemo(() => [...t.charges].sort((a, b) => new Date(a.due_date) - new Date(b.due_date)), [t.charges]);
-  const payments = useMemo(() => approvedReceipts(t.payments,t.applications), [t.payments,t.applications]);
-  const outstanding = charges.filter((c) => c.status !== "Void" && c.status !== "Paid").reduce((s, c) => s + Number(c.outstanding || 0), 0);
-  const paid = charges.reduce((s, c) => s + Number(c.amount_paid || 0), 0);
+  const {activeTenancy,charges}=t,payments=t.receipts.payments;
+  const {outstanding,paid}=t.stats;
 
   const pay = async () => {
     if (busy || !activeTenancy) return;
@@ -43,6 +41,7 @@ export default function MyRent() {
     finally { setBusy(false); }
   };
 
+  if(t.error)return <p role="alert" className="text-destructive">Could not load your rent account. <button onClick={t.reload} className="underline">Try again</button></p>;
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
   return (
@@ -51,13 +50,13 @@ export default function MyRent() {
 
       {paymentMessage&&<p role="status" className="mb-4 text-sm text-primary">{paymentMessage}</p>}
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Total Charged" value={KES(charges.reduce((s, c) => s + Number(c.amount || 0), 0))} icon={Receipt} accent="slate" />
+        <StatCard label="Total Charged" value={KES(t.stats.charged)} icon={Receipt} accent="slate" />
         <StatCard label="Total Paid" value={KES(paid)} icon={Wallet} accent="emerald" />
         <StatCard label="Outstanding" value={KES(outstanding)} icon={Wallet} accent={outstanding > 0 ? "rose" : "emerald"} />
       </div>
 
       <SectionCard title="Rent Ledger">
-        {charges.length === 0 ? <EmptyState icon={Wallet} title="No charges yet" /> : (
+        {t.ledger.isPending?<p className="text-sm text-muted-foreground">Loading ledger…</p>:charges.length === 0 ? <EmptyState icon={Wallet} title="No charges yet" /> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500"><th className="pb-2 font-medium">Period</th><th className="pb-2 font-medium">Bill</th><th className="pb-2 font-medium">Due</th><th className="pb-2 text-right font-medium">Amount</th><th className="pb-2 text-right font-medium">Paid</th><th className="pb-2 text-right font-medium">Outstanding</th><th className="pb-2 text-right font-medium">Status</th></tr></thead>
@@ -77,11 +76,12 @@ export default function MyRent() {
             </table>
           </div>
         )}
+        <RecordPageControls page={t.ledger}/>
       </SectionCard>
 
       <PendingPayments readOnly/>
       <SectionCard title="Payment History" className="mt-6">
-        {payments.length === 0 ? <EmptyState icon={Receipt} title="No payments yet" /> : (
+        {t.receipts.error?<p role="alert" className="text-destructive">Could not load payment history. <button className="underline" onClick={t.receipts.refresh}>Try again</button></p>:t.receipts.loading?<p className="text-sm text-muted-foreground">Loading payment history…</p>:payments.length === 0 ? <EmptyState icon={Receipt} title="No payments yet" /> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500"><th className="pb-2 font-medium">Reference</th><th className="pb-2 font-medium">Date</th><th className="pb-2 font-medium">Method</th><th className="pb-2 text-right font-medium">Amount</th><th className="pb-2 text-right font-medium">Receipt</th></tr></thead>
@@ -99,6 +99,7 @@ export default function MyRent() {
             </table>
           </div>
         )}
+        {t.receipts.hasMore&&<Button variant="outline" className="mt-4" disabled={t.receipts.loadingMore} onClick={()=>t.receipts.loadMore()}>{t.receipts.loadingMore?'Loading…':'Load more payments'}</Button>}
       </SectionCard>
 
       <Dialog open={payOpen} onOpenChange={open=>!busy&&setPayOpen(open)}>

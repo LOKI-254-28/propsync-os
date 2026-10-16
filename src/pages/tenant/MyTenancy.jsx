@@ -1,5 +1,7 @@
 import React, { useMemo } from "react";
-import { useTenantData } from "@/lib/useTenantData";
+import useTenantTenancyPage from '@/hooks/useTenantTenancyPage';
+import TenantTenancyTotals from '@/components/tenants/TenantTenancyTotals';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { KES, daysBetween, todayISO } from "@/lib/finance";
 import { PageHeader, SectionCard, StatusBadge, EmptyState } from "@/components/ui-bits";
 import { ScrollText, FileText, Wrench, Bell } from "lucide-react";
@@ -7,22 +9,19 @@ import TenancyRating from '@/components/reviews/TenancyRating';
 import { downloadFile } from '@/lib/files';
 
 export default function MyTenancy() {
-  const t = useTenantData();
-  const tenancies = useMemo(() => [...t.tenancies].sort((a, b) => new Date(b.start_date) - new Date(a.start_date)), [t.tenancies]);
-  const active = tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
+  const t=useTenantTenancyPage();
+  const tenancies=t.items;
 
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
   return (
     <div>
       <PageHeader title="My Tenancies" description="Your current and previous rentals, agreements and ratings." />
-      {tenancies.length === 0 ? <EmptyState icon={ScrollText} title="No tenancy records" /> : (
+      <RecordPageControls page={t} search placeholder="Search tenancies…"/>
+      {t.isPending?<p className="py-6 text-sm text-muted-foreground">Loading tenancies…</p>:tenancies.length === 0 ? <EmptyState icon={ScrollText} title="No tenancy records" /> : (
         <div className="space-y-6">
           {tenancies.map((ten) => {
-            const charges = t.charges.filter((c) => c.tenancy_id === ten.id);
-            const outstanding = charges.filter((c) => c.status !== "Void" && c.status !== "Paid").reduce((s, c) => s + Number(c.outstanding || 0), 0);
-            const maint = t.maintenance.filter((m) => m.tenancy_id === ten.id);
-            const notices = t.notices.filter((n) => n.tenancy_id === ten.id);
+
             const daysToExpiry = ten.expected_end_date ? daysBetween(todayISO(), ten.expected_end_date) : null;
             return (
               <SectionCard key={ten.id} title={ten.tenancy_reference} actions={<StatusBadge status={ten.status} />}>
@@ -39,11 +38,7 @@ export default function MyTenancy() {
                   <Info label="Grace period" value={`${ten.grace_period_days} days`} />
                   <Info label="Notice period" value={`${ten.notice_period_days} days`} />
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-3 rounded-lg bg-slate-50 p-3 text-center">
-                  <div><p className="text-xs text-slate-500">Charges</p><p className="font-semibold">{charges.length}</p></div>
-                  <div><p className="text-xs text-slate-500">Outstanding</p><p className={`font-semibold ${outstanding > 0 ? "text-rose-600" : "text-emerald-700"}`}>{KES(outstanding)}</p></div>
-                  <div><p className="text-xs text-slate-500">Maintenance</p><p className="font-semibold">{maint.length}</p></div>
-                </div>
+                <TenantTenancyTotals id={ten.id} charges={{rows:t.chargeTotals}} maintenance={{rows:t.maintenanceTotals}}/>
                 {ten.agreement_document_url && <button type="button" onClick={()=>downloadFile(ten.agreement_document_url)} className="mt-3 inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:underline"><FileText className="h-4 w-4" />View tenancy agreement</button>}
                 <TenancyRating tenancy={ten} />
               </SectionCard>
@@ -51,6 +46,7 @@ export default function MyTenancy() {
           })}
         </div>
       )}
+      <RecordPageControls page={t}/>
     </div>
   );
 }

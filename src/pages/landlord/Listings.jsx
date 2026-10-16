@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { usePortfolioData } from "@/lib/useAppData";
+import useLandlordRecordPage from '@/hooks/useLandlordRecordPage';
+import EntityPicker from '@/components/account/EntityPicker';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { KES, genRef, logAudit, todayISO } from "@/lib/finance";
 import { secureCreate } from "@/lib/secureCreate";
@@ -16,20 +18,16 @@ import PropertyPhotos from '@/components/PropertyPhotos';
 const empty = { property_id: "", unit_id: "", listing_type: "Rent", price: 0, description: "", images: [] };
 
 export default function Listings() {
-  const data = usePortfolioData();
   const { submitting, run } = useCrud();
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editRec, setEditRec] = useState(null);
   const [viewRec, setViewRec] = useState(null);
-  const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
   const [form, setForm] = useState(empty);
 
-  const list = useMemo(() => (data.listings || [])
-    .filter((l) => !filter || l.listing_type === filter)
-    .filter((l) => !search || l.property_name?.toLowerCase().includes(search.toLowerCase()) || l.unit_number?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => new Date(b.created_date) - new Date(a.created_date)), [data.listings, search, filter]);
+  const data=useLandlordRecordPage('Listing',['property_name','unit_number'],'-created_date',filter?{listing_type:filter}:{});
+  const {search,setSearch}=data,list=data.items;
 
   const openCreate = () => { setForm(empty); setEditRec(null); setOpen(true); };
   const openEdit = (rec) => { setForm({ property_id: rec.property_id, unit_id: rec.unit_id, listing_type: rec.listing_type, price: rec.price, description: rec.description || "", images: rec.images || [] }); setEditRec(rec); setOpen(true); };
@@ -39,8 +37,7 @@ export default function Listings() {
     if (!form.price || Number(form.price) <= 0) { toast({ title: "Validation error", description: "Price must be greater than zero.", variant: "destructive" }); return; }
     await run(async () => {
       const me = await base44.auth.me();
-      const prop = data.properties.find((p) => p.id === form.property_id);
-      const unit = data.units.find((u) => u.id === form.unit_id);
+      const [prop,unit]=await Promise.all([base44.entities.Property.get(form.property_id),form.unit_id?base44.entities.Unit.get(form.unit_id):null]);
       if (editRec) {
         await base44.entities.Listing.update(editRec.id, {
           property_id: form.property_id, property_name: prop?.name || "",
@@ -85,7 +82,7 @@ export default function Listings() {
           <option key="Rent">Rent</option>
         </select>
       </div>
-      {list.length === 0 ?         <EmptyState icon={Tag} title="No listings yet" description="Create a listing to offer a property for rent." /> : (
+      {data.isPending?<p className="py-6 text-sm text-muted-foreground">Loading listings…</p>:list.length === 0 ?         <EmptyState icon={Tag} title="No listings yet" description="Create a listing to offer a property for rent." /> : (
         <SectionCard>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -118,22 +115,17 @@ export default function Listings() {
         </SectionCard>
       )}
 
+      <RecordPageControls page={data}/>
       {/* Create / Edit dialog */}
       <Dialog open={open} onOpenChange={value => !uploading && !submitting && setOpen(value)}>
         <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editRec ? "Edit Listing" : "Add Listing"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <Field label="Property">
-              <select value={form.property_id} onChange={(e) => setForm({ ...form, property_id: e.target.value, unit_id: "" })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                <option value="">Select property...</option>
-                {data.properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <EntityPicker entity="Property" query={data.scope} value={form.property_id} selectedLabel={editRec?.property_name} onChange={property_id=>setForm({...form,property_id,unit_id:''})} placeholder="Select property…"/>
             </Field>
             <Field label="Unit (optional)">
-              <select value={form.unit_id} onChange={(e) => setForm({ ...form, unit_id: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                <option value="">No specific unit</option>
-                {data.units.filter((u) => u.property_id === form.property_id).map((u) => <option key={u.id} value={u.id}>{u.unit_number}</option>)}
-              </select>
+              <EntityPicker entity="Unit" query={{...data.scope,property_id:form.property_id}} fields={['unit_number']} value={form.unit_id} selectedLabel={editRec?.unit_number} disabled={!form.property_id} onChange={unit_id=>setForm({...form,unit_id})} placeholder="No specific unit"/>
             </Field>
             <Field label="Listing type">
               <select value={form.listing_type} onChange={(e) => setForm({ ...form, listing_type: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">

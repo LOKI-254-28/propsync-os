@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { usePortfolioData } from "@/lib/useAppData";
+import useContractorPage from '@/hooks/useContractorPage';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { secureCreate } from "@/lib/secureCreate";
 import { toast } from "@/components/ui/use-toast";
 import { KES } from "@/lib/finance";
@@ -14,14 +15,11 @@ import ContractorAccountAccess from '@/components/maintenance/ContractorAccountA
 const SERVICES = ["Plumbing", "Electrical", "Structural", "Appliance", "Security", "Cleaning", "General", "HVAC", "Landscaping"];
 
 export default function Contractors() {
-  const data = usePortfolioData();
+  const data=useContractorPage();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", company: "", contact_person: "", phone: "", email: "", services: [], notes: "" });
 
-  const list = useMemo(() => data.contractors.map((c) => {
-    const jobs = data.maintenance.filter((m) => m.contractor_id === c.id);
-    return { ...c, jobsCount: jobs.length, totalCost: jobs.reduce((s, m) => s + Number(m.actual_cost || 0), 0) };
-  }), [data.contractors, data.maintenance]);
+  const list=data.items;
 
   const create = async () => {
     if (!form.name) return;
@@ -42,7 +40,9 @@ export default function Contractors() {
     <div>
       <PageHeader title="Contractors" description="Manage contractors and track their maintenance assignments and costs." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Add Contractor</Button>} />
 
-      {list.length === 0 ? <EmptyState icon={HardHat} title="No contractors yet" /> : (
+      <RecordPageControls page={data} search placeholder="Search contractors…"/>
+      {data.totals.error&&<p role="alert" className="text-sm text-destructive">Could not load contractor totals. <button className="underline" onClick={()=>data.totals.refetch()}>Try again</button></p>}
+      {data.isPending?<p className="py-6 text-sm text-muted-foreground">Loading contractors…</p>:list.length === 0 ? <EmptyState icon={HardHat} title="No contractors yet" /> : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {list.map((c) => (
             <div key={c.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -56,8 +56,8 @@ export default function Contractors() {
               </div>
               {c.services?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{c.services.map((s) => <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{s}</span>)}</div>}
               <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-center">
-                <div><p className="text-sm font-semibold text-slate-900">{c.jobsCount}</p><p className="text-[10px] uppercase text-slate-500">Jobs</p></div>
-                <div><p className="text-sm font-semibold text-slate-900">{KES(c.totalCost)}</p><p className="text-[10px] uppercase text-slate-500">Total Cost</p></div>
+                <div><p className="text-sm font-semibold text-slate-900">{data.totals.isPending||data.totals.error?'…':c.jobsCount}</p><p className="text-[10px] uppercase text-slate-500">Jobs</p></div>
+                <div><p className="text-sm font-semibold text-slate-900">{data.totals.isPending||data.totals.error?'…':KES(c.totalCost)}</p><p className="text-[10px] uppercase text-slate-500">Total Cost</p></div>
               </div>
               <ContractorAccountAccess contractor={c} onChanged={data.reload}/>
             </div>
@@ -65,6 +65,7 @@ export default function Contractors() {
         </div>
       )}
 
+      <RecordPageControls page={data}/>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Add Contractor</DialogTitle></DialogHeader>

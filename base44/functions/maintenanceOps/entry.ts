@@ -11,7 +11,10 @@ export default async function(req:Request):Promise<Response> {
     for(const key of ['message','public_message','internal_notes','resolution_notes'])if(body[key]!=null&&(typeof body[key]!=='string'||body[key].length>3000))return Response.json({error:'Use text up to 3,000 characters.'},{status:400});
     if(body.action==='mine'||body.action==='assigned') {
       const scope=body.action==='assigned'?await assignedMaintenanceScope(sr,user):null;
-      const page=await sr.entities.Maintenance.filter(scope?scope.query:{tenant_user_id:user.id},{sort:'-created_date',limit:50,cursor:body.cursor || undefined});
+      if(body.search!=null&&(typeof body.search!=='string'||body.search.length>100))return Response.json({error:'Search text must be up to 100 characters.'},{status:400});
+      const text=(body.search||'').trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      const search=text?{$or:['ticket_number','title','description'].map(field=>({[field]:{$regex:text,$options:'i'}}))}:{};
+      const page=await sr.entities.Maintenance.filter({$and:[scope?scope.query:{tenant_user_id:user.id},search]},{sort:body.action==='mine'?'-date_reported':'-created_date',limit:50,cursor:body.cursor || undefined});
       let items=page.items;
       if(scope&&items.length) {
         const properties=await sr.entities.Property.filter({id:{$in:[...new Set(items.map(t=>t.property_id))]}},'-created_date',50);

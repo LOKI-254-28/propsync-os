@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { usePortfolioData } from "@/lib/useAppData";
+import useLandlordRecordPage from '@/hooks/useLandlordRecordPage';
+import EntityPicker from '@/components/account/EntityPicker';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { genRef, logAudit, notify, todayISO } from "@/lib/finance";
 import { secureCreate } from "@/lib/secureCreate";
@@ -12,21 +14,21 @@ import { ClipboardCheck, Plus, Calendar } from "lucide-react";
 import InspectionDetails from '@/components/inspections/InspectionDetails';
 
 export default function Inspections() {
-  const data = usePortfolioData();
+  const data=useLandlordRecordPage('Inspection',['inspection_reference','unit_number','type'],'-scheduled_date');
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(null);
   const [form, setForm] = useState({ type: "Routine", unit_id: "", scheduled_date: todayISO(), notes: "" });
   const [result, setResult] = useState({ condition_rating: "Good", defects: "", notes: "" });
-  const [busy, setBusy] = useState(false);
-
-  const list = useMemo(() => [...data.inspections].sort((a, b) => new Date(b.scheduled_date || b.created_date) - new Date(a.scheduled_date || a.created_date)), [data.inspections]);
+  const [busy, setBusy] = useState(false),[error,setError]=useState('');
+  const list=data.items;
 
   const create = async () => {
-    if (!form.unit_id) return;
-    setBusy(true);
-    const me = await base44.auth.me();
-    const unit = data.units.find((u) => u.id === form.unit_id);
-    const tenancy = data.tenancies.find((t) => t.unit_id === unit.id && ["Active", "Expiring Soon", "Notice Given"].includes(t.status));
+    if (busy || !form.unit_id) return;
+    setBusy(true);setError('');
+    try {
+    const unit=await base44.entities.Unit.get(form.unit_id);
+    const {items}=await base44.entities.Tenancy.filter({...data.scope,unit_id:unit.id,status:{$in:['Active','Expiring Soon','Notice Given']}},{sort:'-created_date',limit:1});
+    const tenancy=items[0];
     const ref = genRef("INS");
     const rec = await secureCreate("Inspection", {
       inspection_reference: ref, type: form.type,
@@ -38,18 +40,21 @@ export default function Inspections() {
     setBusy(false);
     setOpen(false);
     setForm({ type: "Routine", unit_id: "", scheduled_date: todayISO(), notes: "" });
-    data.reload();
+    await data.reload();
+    }catch(e){setError(e.response?.data?.error||e.message);}finally{setBusy(false);}
   };
 
   const complete = async () => {
-    if (!view) return;
-    setBusy(true);
+    if (busy || !view) return;
+    setBusy(true);setError('');
+    try {
     const me = await base44.auth.me();
     await base44.entities.Inspection.update(view.id, { status: "Completed", completed_date: todayISO(), condition_rating: result.condition_rating, defects: result.defects, notes: result.notes });
     await logAudit({ user: me, action: "Inspection Completed", entity: "Inspection", entity_id: view.id, entity_name: view.inspection_reference });
     setBusy(false);
     setView(null);
-    data.reload();
+    await data.reload();
+    }catch(e){setError(e.response?.data?.error||e.message);}finally{setBusy(false);}
   };
 
   if (data.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
@@ -58,7 +63,8 @@ export default function Inspections() {
     <div>
       <PageHeader title="Inspections" description="Schedule and record property inspections." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Schedule Inspection</Button>} />
 
-      {list.length === 0 ? <EmptyState icon={ClipboardCheck} title="No inspections scheduled" /> : (
+      <RecordPageControls page={data} search placeholder="Search inspections…"/>
+      {data.isPending?<p className="py-6 text-sm text-muted-foreground">Loading inspections…</p>:list.length === 0 ? <EmptyState icon={ClipboardCheck} title="No inspections scheduled" /> : (
         <SectionCard>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -83,15 +89,18 @@ export default function Inspections() {
         </SectionCard>
       )}
 
+      <RecordPageControls page={data}/>
+      {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Schedule Inspection</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <Field label="Type"><select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{["Pre-tenancy", "Move-in", "Routine", "Maintenance", "Move-out", "Final"].map((t) => <option key={t}>{t}</option>)}</select></Field>
-            <Field label="Unit"><select value={form.unit_id} onChange={(e) => setForm({ ...form, unit_id: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">Select unit...</option>{data.units.map((u) => <option key={u.id} value={u.id}>{u.unit_number} — {u.property_name}</option>)}</select></Field>
+            <Field label="Unit"><EntityPicker entity="Unit" query={data.scope} fields={['unit_number','property_name']} value={form.unit_id} onChange={unit_id=>setForm({...form,unit_id})} placeholder="Select unit…"/></Field>
             <Field label="Scheduled date"><Input type="date" value={form.scheduled_date} onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })} /></Field>
             <Field label="Notes"><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></Field>
           </div>
+          {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
           <DialogFooter><Button onClick={create} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Scheduling..." : "Schedule"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
@@ -114,6 +123,7 @@ export default function Inspections() {
               ) : (
                 <div className="space-y-2 text-sm"><Info label="Condition" value={view.condition_rating} /><Info label="Defects" value={view.defects || "—"} /><Info label="Notes" value={view.notes || "—"} /></div>
               )}
+              {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
               {view.status !== "Completed" && <DialogFooter><Button onClick={complete} disabled={busy} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Saving..." : "Mark Completed"}</Button></DialogFooter>}
             </>
           )}

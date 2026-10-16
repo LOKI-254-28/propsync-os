@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { usePortfolioData } from "@/lib/useAppData";
+import useLandlordRecordPage from '@/hooks/useLandlordRecordPage';
+import EntityPicker from '@/components/account/EntityPicker';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { genRef, notify, todayISO } from "@/lib/finance";
 import { secureCreate } from "@/lib/secureCreate";
@@ -13,23 +15,21 @@ import { Bell, Plus, Search } from "lucide-react";
 const TYPES = ["Rent Reminder", "Arrears Notice", "Breach Notice", "Rent Increase", "Inspection Notice", "Vacation Acknowledgement", "Termination Notice", "General Notice"];
 
 export default function Notices() {
-  const data = usePortfolioData();
-  const [search, setSearch] = useState("");
+  const data=useLandlordRecordPage('Notice',['subject','tenant_name','notice_reference'],'-date_issued');
+  const {search,setSearch}=data;
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ type: "General Notice", tenancy_id: "", subject: "", content: "", channel: "In-app" });
   const [busy, setBusy] = useState(false);
   const [error,setError]=useState('');
 
-  const list = useMemo(() => data.notices
-    .filter((n) => !search || n.subject?.toLowerCase().includes(search.toLowerCase()) || n.tenant_name?.toLowerCase().includes(search.toLowerCase()) || n.notice_reference?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => new Date(b.date_issued || b.created_date) - new Date(a.date_issued || a.created_date)), [data.notices, search]);
+  const list=data.items;
 
   const create = async () => {
     if (!form.subject) return;
     setBusy(true);setError('');
     try {
     const me = await base44.auth.me();
-    const tenancy = data.tenancies.find((t) => t.id === form.tenancy_id);
+    const tenancy = form.tenancy_id ? await base44.entities.Tenancy.get(form.tenancy_id) : null;
     const ref = genRef("NOT");
     const rec = await secureCreate("Notice", {
       notice_reference: ref, type: form.type, date_issued: todayISO(), sender: me?.email || "Landlord",
@@ -56,7 +56,7 @@ export default function Notices() {
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search notices..." className="pl-9" />
       </div>
 
-      {list.length === 0 ? <EmptyState icon={Bell} title="No notices issued" /> : (
+      {data.isPending?<p className="py-6 text-sm text-muted-foreground">Loading notices…</p>:list.length === 0 ? <EmptyState icon={Bell} title="No notices issued" /> : (
         <SectionCard>
           <div className="space-y-3">
             {list.map((n) => (
@@ -72,12 +72,13 @@ export default function Notices() {
         </SectionCard>
       )}
 
+      <RecordPageControls page={data}/>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Issue Notice</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <Field label="Type"><select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{TYPES.map((t) => <option key={t}>{t}</option>)}</select></Field>
-            <Field label="Tenancy (recipient)"><select value={form.tenancy_id} onChange={(e) => setForm({ ...form, tenancy_id: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">Select tenancy...</option>{data.tenancies.filter((t) => ["Active", "Expiring Soon", "Notice Given"].includes(t.status)).map((t) => <option key={t.id} value={t.id}>{t.tenant_name} — {t.unit_number}</option>)}</select></Field>
+            <Field label="Tenancy (recipient)"><EntityPicker entity="Tenancy" query={{...data.scope,status:{$in:['Active','Expiring Soon','Notice Given']}}} fields={['tenant_name','unit_number','property_name']} value={form.tenancy_id} onChange={tenancy_id=>setForm({...form,tenancy_id})} placeholder="Select tenancy…"/></Field>
             <Field label="Channel"><select value={form.channel} onChange={(e) => setForm({ ...form, channel: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{["In-app", "Email", "SMS", "WhatsApp", "Manual"].map((c) => <option key={c}>{c}</option>)}</select></Field>
             <Field label="Subject"><Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} /></Field>
             <Field label="Content"><Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={4} /></Field>

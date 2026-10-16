@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { useTenantData } from "@/lib/useTenantData";
+import useTenantIdentity from '@/hooks/useTenantIdentity';
+import useActiveTenantTenancy from '@/hooks/useActiveTenantTenancy';
+import useFunctionPage from '@/hooks/useFunctionPage';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { PageHeader, SectionCard, StatusBadge, EmptyState, Field } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -12,7 +16,9 @@ import { openDocument } from '@/lib/openDocument';
 const TENANT_CATEGORIES = ["ID/Passport", "KRA PIN", "Proof of Income", "Employer Letter", "Other"];
 
 export default function MyDocuments() {
-  const t = useTenantData();
+  const t=useTenantIdentity(),[search,setSearch]=useState('');
+  const page=useFunctionPage('documentOps',{action:'list',search:useDebouncedValue(search)},'Document','documents',!t.loading);
+  const tenancy=useActiveTenantTenancy(!t.loading);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: "", category: "ID/Passport" });
   const [uploaded, setUploaded] = useState(null);
@@ -20,7 +26,7 @@ export default function MyDocuments() {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState("");
 
-  const list = useMemo(() => [...t.documents].sort((a, b) => new Date(b.date_uploaded || b.created_date) - new Date(a.date_uploaded || a.created_date)), [t.documents]);
+  const list=page.items;
 
   if (t.loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" /></div>;
 
@@ -30,17 +36,18 @@ export default function MyDocuments() {
     setErr("");
     setBusy(true);
     try {
-      const tenancy = t.tenancies.find((x) => ["Active", "Expiring Soon", "Notice Given"].includes(x.status));
+      if(tenancy.error)throw tenancy.error;
+      if(tenancy.isPending)throw new Error('Please wait for your tenancy details to load.');
       const res = await base44.functions.invoke("documentOps", {
         action: "tenant_upload",
         file_uri: uploaded.file_uri, file_name: uploaded.file_name, mime_type: uploaded.mime_type, size: uploaded.size,
-        title: form.title, category: form.category, tenancy_id: tenancy?.id || "",
+        title: form.title, category: form.category, tenancy_id: tenancy.data?.id || "",
       });
       if (res.data?.error) throw new Error(res.data.error);
       setOpen(false);
       setForm({ title: "", category: "ID/Passport" });
       setUploaded(null);
-      t.reload();
+      page.refetch();
     } catch (e) {
       setErr(e.response?.data?.error || e.message || "Failed to upload.");
     } finally {
@@ -61,7 +68,7 @@ export default function MyDocuments() {
     if (!confirm(`Delete "${d.title}"?`)) return;
     try {
       await base44.functions.invoke("documentOps", { action: "tenant_delete", document_id: d.id });
-      t.reload();
+      page.refetch();
     } catch (e) {
       alert("Failed: " + (e.message || "error"));
     }
@@ -70,7 +77,8 @@ export default function MyDocuments() {
   return (
     <div>
       <PageHeader title="Documents" description="Your tenancy documents and uploads." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Upload Document</Button>} />
-      {list.length === 0 ? <EmptyState icon={FolderOpen} title="No documents" description="Documents shared by your landlord and your own uploads will appear here." /> : (
+      <RecordPageControls page={{...page,search,setSearch,error:t.error||page.error,refetch:t.error?t.refetch:page.refetch}} search placeholder="Search documents…"/>
+      {page.isPending?<p className="py-6 text-sm text-muted-foreground">Loading documents…</p>:list.length === 0 ? <EmptyState icon={FolderOpen} title="No documents" description="Documents shared by your landlord and your own uploads will appear here." /> : (
         <SectionCard>
           <div className="space-y-2">
             {list.map((d) => (
@@ -94,6 +102,7 @@ export default function MyDocuments() {
         </SectionCard>
       )}
 
+      <RecordPageControls page={page}/>
       <Dialog open={open} onOpenChange={value => !busy && !uploading && setOpen(value)}>
         <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Upload Document</DialogTitle></DialogHeader>
@@ -105,8 +114,9 @@ export default function MyDocuments() {
             </Field>
             <Field label="File"><FileUploadButton disabled={busy} onUploaded={setUploaded} onBusyChange={setUploading} label="Choose file" /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
+            {tenancy.error&&<p role="alert" className="text-sm text-destructive">Could not load your tenancy. <button className="underline" onClick={()=>tenancy.refetch()}>Try again</button></p>}
           </div>
-          <DialogFooter><Button onClick={submit} disabled={busy || uploading || !uploaded} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Uploading..." : "Submit for Review"}</Button></DialogFooter>
+          <DialogFooter><Button onClick={submit} disabled={busy || uploading || !uploaded || tenancy.isPending || !!tenancy.error} className="bg-emerald-600 hover:bg-emerald-700">{busy ? "Uploading..." : "Submit for Review"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

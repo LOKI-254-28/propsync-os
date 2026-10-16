@@ -24,7 +24,10 @@ export default async function(req: Request): Promise<Response> {
       const access = await documentAccess(sr, user);
       if (action === 'list') {
         if (body.cursor && (typeof body.cursor !== 'string' || body.cursor.length > 4096)) return Response.json({ error: 'Invalid page.' }, { status: 400 });
-        const page = await sr.entities.Document.filter(access.query, { sort: '-created_date', limit: 100, cursor: body.cursor });
+        if(body.search!=null&&(typeof body.search!=='string'||body.search.length>100))return Response.json({error:'Search text must be up to 100 characters.'},{status:400});
+        const text=(body.search||'').trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        const search=text?{$or:['title','category','file_name'].map(field=>({[field]:{$regex:text,$options:'i'}}))}:{};
+        const page = await sr.entities.Document.filter({$and:[access.query,search]}, { sort: '-date_uploaded', limit: 50, cursor: body.cursor });
         const documents = page.items.filter(access.canRead).map(doc => {
           if (access.staff) return doc;
           const { notes, ...visible } = doc;

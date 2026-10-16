@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { usePortfolioData } from "@/lib/useAppData";
+import useExpensePage from '@/hooks/useExpensePage';
+import EntityPicker from '@/components/account/EntityPicker';
+import RecordPageControls from '@/components/account/RecordPageControls';
 import { base44 } from "@/api/base44Client";
 import { KES, todayISO } from "@/lib/finance";
 import { secureCreate } from "@/lib/secureCreate";
@@ -15,26 +17,20 @@ import { toast } from "@/components/ui/use-toast";
 const CATEGORIES = ["Repairs", "Maintenance", "Utilities", "Management", "Security", "Cleaning", "Insurance", "Taxes/Fees", "Other"];
 
 export default function Expenses() {
-  const data = usePortfolioData();
+  const data = useExpensePage();
+  const {search,setSearch}=data;
   const { submitting, run } = useCrud();
-  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ property_id: "", unit_id: "", category: "Maintenance", description: "", amount: 0, date: todayISO(), vendor: "", payment_reference: "", recurring: false, notes: "" });
 
-  const list = useMemo(() => data.expenses
-    .filter((e) => !search || e.description?.toLowerCase().includes(search.toLowerCase()) || e.vendor?.toLowerCase().includes(search.toLowerCase()) || e.category?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => new Date(b.date) - new Date(a.date)), [data.expenses, search]);
-
-  const total = list.reduce((s, e) => s + Number(e.amount || 0), 0);
-  const byCategory = CATEGORIES.map((c) => ({ c, total: data.expenses.filter((e) => e.category === c).reduce((s, e) => s + Number(e.amount || 0), 0) })).filter((x) => x.total > 0);
+  const list=data.items;
+  const {total,byCategory}=data;
 
   const create = async () => {
     if (!form.property_id) { toast({ title: "Validation error", description: "Property is required.", variant: "destructive" }); return; }
     if (!form.amount || Number(form.amount) <= 0) { toast({ title: "Validation error", description: "Amount must be greater than zero.", variant: "destructive" }); return; }
     await run(async () => {
-      const prop = data.properties.find((p) => p.id === form.property_id);
-      const unit = data.units.find((u) => u.id === form.unit_id);
-      await secureCreate("Expense", { ...form, amount: Number(form.amount), property_name: prop?.name, unit_number: unit?.unit_number || "" });
+      await secureCreate("Expense", { ...form, amount: Number(form.amount) });
       setOpen(false);
       setForm({ property_id: "", unit_id: "", category: "Maintenance", description: "", amount: 0, date: todayISO(), vendor: "", payment_reference: "", recurring: false, notes: "" });
       data.reload();
@@ -48,9 +44,9 @@ export default function Expenses() {
       <PageHeader title="Expenses" description="Track property expenses feeding into financial reports." actions={<Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700"><Plus className="mr-1.5 h-4 w-4" />Record Expense</Button>} />
 
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Total Expenses" value={KES(total)} icon={Receipt} accent="gold" />
-        <StatCard label="Records" value={list.length} icon={Receipt} accent="slate" />
-        <StatCard label="Categories" value={byCategory.length} icon={Receipt} accent="blue" />
+        <StatCard label="Total Expenses" value={data.summaryLoading?'…':KES(total)} icon={Receipt} accent="gold" />
+        <StatCard label="Records" value={data.summaryLoading?'…':data.count} icon={Receipt} accent="slate" />
+        <StatCard label="Categories" value={data.summaryLoading?'…':byCategory.length} icon={Receipt} accent="blue" />
       </div>
 
       {byCategory.length > 0 && (
@@ -65,7 +61,7 @@ export default function Expenses() {
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search expenses..." className="pl-9" />
       </div>
 
-      {list.length === 0 ? <EmptyState icon={Receipt} title="No expenses recorded" /> : (
+      {data.isPending?<p className="py-6 text-sm text-muted-foreground">Loading expenses…</p>:list.length === 0 ? <EmptyState icon={Receipt} title="No expenses recorded" /> : (
         <SectionCard>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -78,12 +74,13 @@ export default function Expenses() {
         </SectionCard>
       )}
 
+      <RecordPageControls page={data}/>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Record Expense</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
-            <Field label="Property"><select value={form.property_id} onChange={(e) => setForm({ ...form, property_id: e.target.value, unit_id: "" })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">Select property...</option>{data.properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></Field>
-            <Field label="Unit (optional)"><select value={form.unit_id} onChange={(e) => setForm({ ...form, unit_id: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">—</option>{data.units.filter((u) => u.property_id === form.property_id).map((u) => <option key={u.id} value={u.id}>{u.unit_number}</option>)}</select></Field>
+            <Field label="Property"><EntityPicker entity="Property" query={data.scope} value={form.property_id} onChange={property_id=>setForm({...form,property_id,unit_id:''})} placeholder="Select property…"/></Field>
+            <Field label="Unit (optional)"><EntityPicker entity="Unit" query={{...data.scope,property_id:form.property_id}} fields={['unit_number']} value={form.unit_id} disabled={!form.property_id} onChange={unit_id=>setForm({...form,unit_id})} placeholder="No specific unit"/></Field>
             <Field label="Category"><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
             <Field label="Description"><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
             <Field label="Amount"><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} /></Field>

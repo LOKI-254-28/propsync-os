@@ -68,6 +68,11 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "assistant_guidance_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the user wants proactive app guidance. Can be switched off or back on."
     }
   },
   "required": [

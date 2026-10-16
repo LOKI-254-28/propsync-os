@@ -1,0 +1,37 @@
+export default function guideTips(path) {
+  const key = path.split('/').filter(Boolean).pop();
+  const tips = {
+    dashboard: 'Start with your portfolio summary, then open the relevant section for details.',
+    admin: 'Review the overview, then use navigation to manage users or property operations.',
+    portal: 'Review your home and rent summary. If no tenancy is linked, browse homes and apply.',
+    properties: 'Add or open a property, then manage its details and units.',
+    units: 'Review unit availability and open a unit to see its details.',
+    tenants: 'Use the directory for tenant profiles and the tenancies tab for rental records.',
+    applications: 'Open an application to review its current stage and available next steps.',
+    'site-visits': 'Open a visit to review the proposed schedule and available responses.',
+    rent: 'Review charges and payments. Open an approved payment for its receipt.',
+    arrears: 'Review outstanding balances before choosing a reminder or notice.',
+    'payment-details': 'Keep your payment instructions current so tenants pay the correct account.',
+    maintenance: 'Open a request to review its status, updates and available actions.',
+    inspections: 'Open an inspection to review the checklist, photos and response options.',
+    documents: 'Find the relevant document and open it to view its contents.',
+    notices: 'Open a notice, read it carefully and acknowledge it where available.',
+    feedback: 'Open a feedback thread to read responses or share a concern.',
+    chat: 'Choose the relevant conversation before sending a message.',
+    vacation: 'Review your tenancy before submitting or following up on a vacation notice.',
+    'vacation-requests': 'Review the notice, dates and handover requirements before responding.',
+    'my-tenancies': 'Open your tenancy to review the agreement, rent and related records.',
+    listings: 'Browse available homes, open the property and select a unit to apply.',
+    'my-listings': 'Review listing details and availability before publishing.',
+    expenses: 'Record the expense against the correct property with its supporting details.',
+    contractors: 'Review contractor details and assigned maintenance work.',
+    reports: 'Choose the report and period relevant to your question.',
+    comparison: 'Select properties to compare their recorded performance.',
+    profile: 'Review your contact details and save any profile changes.',
+    settings: 'Review the available settings before saving changes.',
+    staff: 'Review each staff member’s access before changing permissions.',
+    users: 'Review the user and intended role before making an account change.',
+    notifications: 'Open an update to reach the related record.',
+  };
+  return tips[key] || 'Use this page’s controls to review details. Ask me for a short walkthrough of your next step.';
+}

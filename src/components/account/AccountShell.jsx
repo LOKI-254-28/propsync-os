@@ -5,6 +5,7 @@ import AccountSurface from '@/components/account/AccountSurface';
 import AccountNavigation from '@/components/account/AccountNavigation';
 import AccountSidebar from '@/components/account/AccountSidebar';
 import AccountTopbar from '@/components/account/AccountTopbar';
+import GuideAssistant from '@/components/assistant/GuideAssistant';
 
 export default function AccountShell({ children, items, role, orgName = 'PropWiz', profilePath, fallbackName, counts = {}, unread = 0, onLogout, greeting, extraNavigation }) {
   const [open, setOpen] = useState(false);
@@ -25,5 +26,6 @@ export default function AccountShell({ children, items, role, orgName = 'PropWiz
       <AccountTopbar items={items} role={role} greeting={greeting} unread={unread} menuRef={menuRef} open={open} onOpen={() => setOpen(true)}/>
       <main id="account-content" tabIndex={-1} className="account-content page-container outline-none">{children}</main>
     </div>
+    <GuideAssistant items={items} role={role}/>
   </AccountSurface>;
 }
